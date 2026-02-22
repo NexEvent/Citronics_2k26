@@ -1,0 +1,69 @@
+{
+  "app": {
+    "name": "EventHub",
+    "tagline": "Discover, organize & manage events"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "events": "Events",
+    "tickets": "Tickets",
+    "speakers": "Speakers",
+    "venues": "Venues",
+    "schedule": "Schedule",
+    "registrations": "Registrations",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "close": "Close",
+    "upload": "Upload",
+    "download": "Download"
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "success": "Success",
+    "error": "Error",
+    "noData": "No data found",
+    "offline": "You are offline"
+  },
+  "pagination": {
+    "page": "Page",
+    "of": "of",
+    "rowsPerPage": "Rows per page",
+    "showing": "Showing {{from}} to {{to}} of {{total}}"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Enter a valid email address",
+    "minLength": "Minimum {{min}} characters",
+    "maxLength": "Maximum {{max}} characters",
+    "url": "Enter a valid URL",
+    "date": "Enter a valid date"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password"
+  }
+}

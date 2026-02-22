@@ -1,0 +1,62 @@
+{
+  "title": "Events",
+  "subtitle": "Manage and organize your events",
+  "createEvent": "Create Event",
+  "editEvent": "Edit Event",
+  "deleteEvent": "Delete Event",
+  "viewEvent": "View Event",
+  "publishEvent": "Publish Event",
+  "unpublishEvent": "Unpublish Event",
+  "duplicateEvent": "Duplicate Event",
+  "fields": {
+    "title": "Event Title",
+    "description": "Description",
+    "category": "Category",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "timezone": "Timezone",
+    "venue": "Venue",
+    "capacity": "Capacity",
+    "status": "Status",
+    "tags": "Tags",
+    "coverImage": "Cover Image",
+    "ticketPrice": "Ticket Price",
+    "isFree": "Free Event",
+    "isPublic": "Public Event",
+    "featured": "Featured"
+  },
+  "categories": {
+    "conference": "Conference",
+    "workshop": "Workshop",
+    "concert": "Concert",
+    "exhibition": "Exhibition",
+    "networking": "Networking",
+    "sports": "Sports",
+    "festival": "Festival",
+    "webinar": "Webinar",
+    "other": "Other"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published",
+    "cancelled": "Cancelled",
+    "completed": "Completed",
+    "postponed": "Postponed"
+  },
+  "stats": {
+    "totalEvents": "Total Events",
+    "upcomingEvents": "Upcoming Events",
+    "activeEvents": "Active Events",
+    "totalAttendees": "Total Attendees"
+  },
+  "messages": {
+    "createSuccess": "Event created successfully",
+    "updateSuccess": "Event updated successfully",
+    "deleteSuccess": "Event deleted successfully",
+    "publishSuccess": "Event published successfully",
+    "deleteConfirm": "Are you sure you want to delete this event?",
+    "notFound": "Event not found"
+  }
+}

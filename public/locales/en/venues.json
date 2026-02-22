@@ -1,0 +1,28 @@
+{
+  "title": "Venues",
+  "subtitle": "Manage event venues and locations",
+  "createVenue": "Add Venue",
+  "editVenue": "Edit Venue",
+  "fields": {
+    "name": "Venue Name",
+    "address": "Address",
+    "city": "City",
+    "state": "State / Province",
+    "country": "Country",
+    "postalCode": "Postal Code",
+    "capacity": "Total Capacity",
+    "description": "Description",
+    "amenities": "Amenities",
+    "mapLink": "Map Link",
+    "photos": "Venue Photos",
+    "contactName": "Contact Person",
+    "contactEmail": "Contact Email",
+    "contactPhone": "Contact Phone"
+  },
+  "messages": {
+    "createSuccess": "Venue added successfully",
+    "updateSuccess": "Venue updated successfully",
+    "deleteSuccess": "Venue removed successfully",
+    "deleteConfirm": "Remove this venue?"
+  }
+}

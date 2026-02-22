@@ -1,0 +1,88 @@
+/* Global styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Public Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* NProgress Styles */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: #7367F0;
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px #7367F0, 0 0 5px #7367F0;
+  opacity: 1;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(75, 70, 92, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(75, 70, 92, 0.5);
+}
+
+/* Perfect Scrollbar Overrides */
+.ps__rail-y,
+.ps__rail-x {
+  z-index: 1;
+}
+
+.ps__rail-y:hover,
+.ps__rail-x:hover,
+.ps__rail-y:focus,
+.ps__rail-x:focus,
+.ps__rail-y.ps--clicking,
+.ps__rail-x.ps--clicking {
+  background-color: #E4E6E8;
+}
+
+.ps__thumb-y,
+.ps__thumb-x {
+  background-color: #AAAAAF !important;
+}

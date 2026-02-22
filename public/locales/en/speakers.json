@@ -1,0 +1,26 @@
+{
+  "title": "Speakers",
+  "subtitle": "Manage event speakers and presenters",
+  "createSpeaker": "Add Speaker",
+  "editSpeaker": "Edit Speaker",
+  "fields": {
+    "name": "Full Name",
+    "bio": "Biography",
+    "jobTitle": "Job Title",
+    "company": "Company / Organization",
+    "email": "Email",
+    "phone": "Phone",
+    "photo": "Profile Photo",
+    "linkedIn": "LinkedIn URL",
+    "twitter": "Twitter Handle",
+    "website": "Website",
+    "expertise": "Areas of Expertise",
+    "featured": "Featured Speaker"
+  },
+  "messages": {
+    "createSuccess": "Speaker added successfully",
+    "updateSuccess": "Speaker updated successfully",
+    "deleteSuccess": "Speaker removed successfully",
+    "deleteConfirm": "Remove this speaker?"
+  }
+}

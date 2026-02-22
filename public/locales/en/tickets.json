@@ -1,0 +1,51 @@
+{
+  "title": "Tickets",
+  "subtitle": "Manage event tickets and check-ins",
+  "createTicket": "Create Ticket Type",
+  "editTicket": "Edit Ticket",
+  "myTickets": "My Tickets",
+  "scanTicket": "Scan Ticket",
+  "checkIn": "Check In",
+  "fields": {
+    "name": "Ticket Name",
+    "description": "Description",
+    "price": "Price",
+    "quantity": "Quantity Available",
+    "quantitySold": "Quantity Sold",
+    "saleStart": "Sale Starts",
+    "saleEnd": "Sale Ends",
+    "isTransferable": "Transferable",
+    "perOrderMin": "Min per Order",
+    "perOrderMax": "Max per Order",
+    "status": "Status",
+    "ticketNumber": "Ticket Number",
+    "attendeeName": "Attendee Name",
+    "attendeeEmail": "Attendee Email",
+    "qrCode": "QR Code"
+  },
+  "status": {
+    "available": "Available",
+    "soldOut": "Sold Out",
+    "paused": "Paused",
+    "upcoming": "Upcoming",
+    "used": "Used",
+    "cancelled": "Cancelled",
+    "refunded": "Refunded"
+  },
+  "messages": {
+    "purchaseSuccess": "Ticket purchased successfully",
+    "checkInSuccess": "Checked in successfully",
+    "alreadyCheckedIn": "Already checked in",
+    "invalidTicket": "Invalid ticket",
+    "soldOut": "This ticket type is sold out",
+    "saleNotStarted": "Ticket sales have not started yet",
+    "saleEnded": "Ticket sales have ended"
+  },
+  "summary": {
+    "totalTickets": "Total Tickets",
+    "ticketsSold": "Tickets Sold",
+    "ticketsAvailable": "Available",
+    "checkedIn": "Checked In",
+    "revenue": "Revenue"
+  }
+}

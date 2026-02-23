@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+﻿import { useRef, useState, useEffect } from 'react'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
@@ -10,7 +10,6 @@ import { STATS } from './mockData'
 
 const MotionBox = motion(Box)
 
-// ── Animated counter hook ─────────────────────────────────────────────────────
 function useCounter(target, duration = 1800, started = false) {
   const [count, setCount] = useState(0)
   useEffect(() => {
@@ -19,7 +18,6 @@ function useCounter(target, duration = 1800, started = false) {
     const step = ts => {
       if (!start) start = ts
       const progress = Math.min((ts - start) / duration, 1)
-      // easeOutCubic
       const eased = 1 - Math.pow(1 - progress, 3)
       setCount(Math.floor(eased * target))
       if (progress < 1) requestAnimationFrame(step)
@@ -30,7 +28,6 @@ function useCounter(target, duration = 1800, started = false) {
   return count
 }
 
-// ── Single stat card ──────────────────────────────────────────────────────────
 function StatCard({ stat, index, started }) {
   const theme = useTheme()
   const count = useCounter(stat.value, 1600 + index * 100, started)
@@ -42,26 +39,21 @@ function StatCard({ stat, index, started }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.6, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -6, transition: { duration: 0.25 } }}
       sx={{
-        p: 3.5,
-        borderRadius: '20px',
-        background: alpha(theme.palette.background.paper, 0.7),
-        border: `1px solid ${alpha(color, 0.15)}`,
+        position: 'relative',
+        p: 4,
+        borderRadius: '24px',
+        background: alpha(theme.palette.background.paper, 0.5),
+        border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
         backdropFilter: 'blur(16px)',
         textAlign: 'center',
-        position: 'relative',
         overflow: 'hidden',
         cursor: 'default',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          background: `linear-gradient(90deg, ${alpha(color, 0)}, ${color}, ${alpha(color, 0)})`,
-          opacity: 0.8
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          border: `1px solid ${alpha(color, 0.3)}`,
+          transform: 'translateY(-4px)',
+          boxShadow: `0 20px 60px ${alpha(color, 0.1)}`
         }
       }}
     >
@@ -69,13 +61,12 @@ function StatCard({ stat, index, started }) {
       <Box
         sx={{
           position: 'absolute',
-          width: 120,
-          height: 120,
+          width: 160,
+          height: 160,
           borderRadius: '50%',
-          background: alpha(color, 0.08),
-          filter: 'blur(30px)',
-          top: -20,
-          right: -20,
+          background: `radial-gradient(circle, ${alpha(color, 0.06)}, transparent)`,
+          top: -40,
+          right: -40,
           pointerEvents: 'none'
         }}
       />
@@ -83,37 +74,35 @@ function StatCard({ stat, index, started }) {
       {/* Icon */}
       <Box
         sx={{
-          width: 56,
-          height: 56,
-          borderRadius: '16px',
-          background: alpha(color, 0.12),
+          width: 52,
+          height: 52,
+          borderRadius: '14px',
+          background: alpha(color, 0.1),
+          border: `1px solid ${alpha(color, 0.15)}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           mx: 'auto',
-          mb: 2,
-          border: `1px solid ${alpha(color, 0.2)}`
+          mb: 2.5
         }}
       >
-        <Icon icon={stat.icon} fontSize={28} style={{ color }} />
+        <Icon icon={stat.icon} fontSize={26} style={{ color }} />
       </Box>
 
       {/* Value */}
       <Typography
         variant='h3'
         sx={{
-          fontWeight: 800,
-          fontSize: { xs: '2.2rem', md: '2.6rem' },
+          fontWeight: 900,
+          fontSize: { xs: '2.2rem', md: '2.8rem' },
           lineHeight: 1,
           mb: 0.5,
-          background: `linear-gradient(135deg, ${color}, ${alpha(color, 0.7)})`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
+          color: theme.palette.text.primary,
           fontVariantNumeric: 'tabular-nums'
         }}
       >
         {count}
-        {stat.suffix}
+        <Box component='span' sx={{ color, fontSize: '0.7em' }}>{stat.suffix}</Box>
       </Typography>
 
       <Typography variant='body2' sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}>
@@ -135,11 +124,10 @@ export default function StatsSection() {
       sx={{
         py: { xs: 10, md: 14 },
         position: 'relative',
-        background: `linear-gradient(180deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.primary.main, 0.02)} 50%, ${theme.palette.background.default} 100%)`
+        background: theme.palette.background.default
       }}
     >
       <Container maxWidth='lg'>
-        {/* Section header */}
         <MotionBox
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -157,24 +145,18 @@ export default function StatsSection() {
               borderRadius: '100px',
               background: alpha(theme.palette.primary.main, 0.08),
               border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
-              mb: 2
+              mb: 2.5
             }}
           >
-            <Icon icon='tabler:star' fontSize={14} style={{ color: theme.palette.primary.main }} />
+            <Icon icon='tabler:chart-dots-3' fontSize={14} style={{ color: theme.palette.primary.main }} />
             <Typography variant='caption' sx={{ color: theme.palette.primary.main, fontWeight: 600, letterSpacing: 1.5 }}>
               BY THE NUMBERS
             </Typography>
           </Box>
-          <Typography
-            variant='h3'
-            sx={{ fontWeight: 700, mb: 1.5, color: theme.palette.text.primary }}
-          >
+          <Typography variant='h3' sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.5px' }}>
             Citronics at a Glance
           </Typography>
-          <Typography
-            variant='body1'
-            sx={{ color: theme.palette.text.secondary, maxWidth: 500, mx: 'auto' }}
-          >
+          <Typography variant='body1' sx={{ color: theme.palette.text.secondary, maxWidth: 500, mx: 'auto', lineHeight: 1.7 }}>
             Three days of knowledge, competition, and celebration. Built by students, for students.
           </Typography>
         </MotionBox>

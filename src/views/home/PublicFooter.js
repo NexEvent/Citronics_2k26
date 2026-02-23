@@ -1,4 +1,4 @@
-import Box from '@mui/material/Box'
+﻿import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
@@ -13,8 +13,7 @@ const MotionBox = motion(Box)
 const QUICK_LINKS = [
   { label: 'Events', href: '#events' },
   { label: 'Schedule', href: '#schedule' },
-  { label: 'About Us', href: '#stats' },
-  { label: 'Contact', href: '#' },
+  { label: 'About', href: '#about' },
   { label: 'Login / Register', href: '/login' }
 ]
 
@@ -26,7 +25,7 @@ const SOCIAL_LINKS = [
 ]
 
 const CONTACT_INFO = [
-  { icon: 'tabler:map-pin', text: 'GTU Campus, Chandkheda, Ahmedabad, Gujarat — 382424' },
+  { icon: 'tabler:map-pin', text: 'GTU Campus, Chandkheda, Ahmedabad, Gujarat \u2014 382424' },
   { icon: 'tabler:phone', text: '+91 98765 43210' },
   { icon: 'tabler:mail', text: 'citronics@college.edu.in' }
 ]
@@ -49,29 +48,13 @@ export default function PublicFooter() {
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        background: `linear-gradient(180deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.primary.main, 0.04)} 100%)`,
-        borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`
+        bgcolor: '#0a0a12',
+        borderTop: `1px solid ${alpha('#fff', 0.06)}`
       }}
     >
-      {/* Background glow */}
-      <Box
-        sx={{
-          position: 'absolute',
-          width: 400,
-          height: 400,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.06)}, transparent)`,
-          bottom: -100,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          filter: 'blur(40px)',
-          pointerEvents: 'none'
-        }}
-      />
-
       <Container maxWidth='lg' sx={{ position: 'relative', pt: { xs: 8, md: 10 }, pb: 4 }}>
         <Grid container spacing={5}>
-          {/* Brand column */}
+          {/* Brand */}
           <Grid item xs={12} md={4}>
             <MotionBox
               initial={{ opacity: 0, y: 20 }}
@@ -79,7 +62,6 @@ export default function PublicFooter() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              {/* Logo */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                 <Box
                   sx={{
@@ -90,7 +72,7 @@ export default function PublicFooter() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.35)}`
+                    boxShadow: `0 0 20px ${alpha(theme.palette.primary.main, 0.35)}`
                   }}
                 >
                   <Icon icon='tabler:bolt' fontSize={22} style={{ color: '#fff' }} />
@@ -109,17 +91,16 @@ export default function PublicFooter() {
                   >
                     CITRONICS
                   </Typography>
-                  <Typography variant='caption' sx={{ color: theme.palette.text.secondary, lineHeight: 1, fontSize: '0.6rem', letterSpacing: '1.5px' }}>
+                  <Typography variant='caption' sx={{ color: alpha('#fff', 0.3), lineHeight: 1, fontSize: '0.6rem', letterSpacing: '1.5px' }}>
                     TECHNICAL FEST 2026
                   </Typography>
                 </Box>
               </Box>
 
-              <Typography variant='body2' sx={{ color: theme.palette.text.secondary, mb: 3, lineHeight: 1.8, maxWidth: 280 }}>
-                The flagship technical festival of our college — celebrating innovation, engineering excellence, and student talent since 2010.
+              <Typography variant='body2' sx={{ color: alpha('#fff', 0.4), mb: 3, lineHeight: 1.8, maxWidth: 280 }}>
+                The flagship technical festival \u2014 celebrating innovation, engineering excellence, and student talent since 2010.
               </Typography>
 
-              {/* Social icons */}
               <Box sx={{ display: 'flex', gap: 1 }}>
                 {SOCIAL_LINKS.map(s => (
                   <IconButton
@@ -129,8 +110,8 @@ export default function PublicFooter() {
                     aria-label={s.label}
                     size='small'
                     sx={{
-                      border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
-                      color: theme.palette.text.secondary,
+                      border: `1px solid ${alpha('#fff', 0.08)}`,
+                      color: alpha('#fff', 0.4),
                       transition: 'all 0.2s ease',
                       '&:hover': {
                         background: alpha(theme.palette.primary.main, 0.1),
@@ -154,7 +135,7 @@ export default function PublicFooter() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <Typography variant='overline' sx={{ color: theme.palette.text.primary, fontWeight: 700, letterSpacing: 1.5, mb: 2, display: 'block' }}>
+              <Typography variant='overline' sx={{ color: alpha('#fff', 0.7), fontWeight: 700, letterSpacing: 1.5, mb: 2, display: 'block' }}>
                 Quick Links
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -168,7 +149,7 @@ export default function PublicFooter() {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 0.75,
-                      color: theme.palette.text.secondary,
+                      color: alpha('#fff', 0.4),
                       textDecoration: 'none',
                       fontSize: '0.875rem',
                       transition: 'color 0.2s',
@@ -191,7 +172,7 @@ export default function PublicFooter() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Typography variant='overline' sx={{ color: theme.palette.text.primary, fontWeight: 700, letterSpacing: 1.5, mb: 2, display: 'block' }}>
+              <Typography variant='overline' sx={{ color: alpha('#fff', 0.7), fontWeight: 700, letterSpacing: 1.5, mb: 2, display: 'block' }}>
                 Contact Us
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -203,7 +184,7 @@ export default function PublicFooter() {
                         width: 28,
                         height: 28,
                         borderRadius: '8px',
-                        background: alpha(theme.palette.primary.main, 0.1),
+                        background: alpha(theme.palette.primary.main, 0.08),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -212,7 +193,7 @@ export default function PublicFooter() {
                     >
                       <Icon icon={icon} fontSize={14} style={{ color: theme.palette.primary.main }} />
                     </Box>
-                    <Typography variant='caption' sx={{ color: theme.palette.text.secondary, lineHeight: 1.6 }}>
+                    <Typography variant='caption' sx={{ color: alpha('#fff', 0.4), lineHeight: 1.6 }}>
                       {text}
                     </Typography>
                   </Box>
@@ -222,12 +203,11 @@ export default function PublicFooter() {
           </Grid>
         </Grid>
 
-        <Divider sx={{ my: 4, borderColor: alpha(theme.palette.divider, 0.5) }} />
+        <Divider sx={{ my: 4, borderColor: alpha('#fff', 0.06) }} />
 
-        {/* Bottom bar */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
-          <Typography variant='caption' sx={{ color: theme.palette.text.disabled }}>
-            © 2026 Citronics. All rights reserved. Built with ❤️ by the Citronics Tech Team.
+          <Typography variant='caption' sx={{ color: alpha('#fff', 0.25) }}>
+            \u00A9 2026 Citronics. All rights reserved. Built with \u2764\uFE0F by the Citronics Tech Team.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             {['Privacy Policy', 'Terms of Service'].map(l => (
@@ -236,7 +216,7 @@ export default function PublicFooter() {
                 variant='caption'
                 component='a'
                 href='#'
-                sx={{ color: theme.palette.text.disabled, textDecoration: 'none', '&:hover': { color: theme.palette.primary.main } }}
+                sx={{ color: alpha('#fff', 0.25), textDecoration: 'none', '&:hover': { color: theme.palette.primary.main } }}
               >
                 {l}
               </Typography>

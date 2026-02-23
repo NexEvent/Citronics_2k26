@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import AppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
 import Box from '@mui/material/Box'
@@ -18,9 +18,9 @@ import Icon from 'src/components/Icon'
 
 const NAV_LINKS = [
   { label: 'Home', href: '#hero' },
+  { label: 'About', href: '#about' },
   { label: 'Events', href: '#events' },
-  { label: 'Schedule', href: '#schedule' },
-  { label: 'About', href: '#stats' }
+  { label: 'Schedule', href: '#schedule' }
 ]
 
 const MotionBox = motion(Box)
@@ -30,10 +30,8 @@ export default function PublicNavbar() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('hero')
-
   const scrolled = useScrollTrigger({ disableHysteresis: true, threshold: 40 })
 
-  // Smooth scroll handler
   const handleNavClick = (e, href) => {
     e.preventDefault()
     const id = href.replace('#', '')
@@ -42,13 +40,12 @@ export default function PublicNavbar() {
     setDrawerOpen(false)
   }
 
-  // Track active section on scroll
   useEffect(() => {
-    const sections = ['hero', 'stats', 'events', 'schedule']
+    const sections = ['hero', 'about', 'stats', 'events', 'schedule']
     const handleScroll = () => {
       for (let i = sections.length - 1; i >= 0; i--) {
         const el = document.getElementById(sections[i])
-        if (el && window.scrollY >= el.offsetTop - 100) {
+        if (el && window.scrollY >= el.offsetTop - 120) {
           setActiveSection(sections[i])
           break
         }
@@ -63,18 +60,10 @@ export default function PublicNavbar() {
       elevation={0}
       sx={{
         backdropFilter: 'blur(20px)',
-        backgroundColor: scrolled
-          ? alpha(theme.palette.background.paper, 0.9)
-          : 'transparent',
-        borderBottom: scrolled
-          ? `1px solid ${alpha(theme.palette.divider, 0.5)}`
-          : 'none',
-        transition: theme.transitions.create(['background-color', 'border-bottom', 'box-shadow'], {
-          duration: 300
-        }),
-        boxShadow: scrolled
-          ? `0 4px 24px ${alpha(theme.palette.primary.main, 0.1)}`
-          : 'none'
+        backgroundColor: scrolled ? alpha('#0a0a12', 0.85) : 'transparent',
+        borderBottom: scrolled ? `1px solid ${alpha('#fff', 0.06)}` : 'none',
+        transition: theme.transitions.create(['background-color', 'border-bottom', 'box-shadow'], { duration: 300 }),
+        boxShadow: 'none'
       }}
     >
       <Toolbar sx={{ py: 1, maxWidth: 1200, mx: 'auto', width: '100%', px: { xs: 2, md: 4 } }}>
@@ -94,7 +83,7 @@ export default function PublicNavbar() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+              boxShadow: `0 0 20px ${alpha(theme.palette.primary.main, 0.4)}`
             }}
           >
             <Icon icon='tabler:bolt' fontSize={20} style={{ color: '#fff' }} />
@@ -103,20 +92,18 @@ export default function PublicNavbar() {
             <Typography
               variant='h6'
               sx={{
-                fontWeight: 700,
+                fontWeight: 800,
                 lineHeight: 1,
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.info.main})`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                letterSpacing: '0.5px'
+                letterSpacing: '0.5px',
+                fontSize: '1rem'
               }}
             >
               CITRONICS
             </Typography>
-            <Typography
-              variant='caption'
-              sx={{ color: theme.palette.text.secondary, lineHeight: 1, fontSize: '0.6rem', letterSpacing: '1.5px' }}
-            >
+            <Typography variant='caption' sx={{ color: alpha('#fff', 0.35), lineHeight: 1, fontSize: '0.55rem', letterSpacing: '1.5px' }}>
               TECHNICAL FEST 2026
             </Typography>
           </Box>
@@ -132,6 +119,7 @@ export default function PublicNavbar() {
           >
             {NAV_LINKS.map(link => {
               const isActive = activeSection === link.href.replace('#', '')
+
               return (
                 <Button
                   key={link.href}
@@ -144,8 +132,9 @@ export default function PublicNavbar() {
                     borderRadius: '8px',
                     fontSize: '0.875rem',
                     fontWeight: isActive ? 600 : 400,
-                    color: isActive ? theme.palette.primary.main : theme.palette.text.secondary,
-                    backgroundColor: isActive ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
+                    textTransform: 'none',
+                    color: isActive ? theme.palette.primary.main : alpha('#fff', 0.55),
+                    backgroundColor: isActive ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
                     '&:hover': {
                       backgroundColor: alpha(theme.palette.primary.main, 0.08),
                       color: theme.palette.primary.main
@@ -158,7 +147,7 @@ export default function PublicNavbar() {
               )
             })}
 
-            <Box sx={{ width: 1, height: 24, bgcolor: theme.palette.divider, mx: 1 }} />
+            <Box sx={{ width: 1, height: 24, bgcolor: alpha('#fff', 0.1), mx: 1 }} />
 
             <Button
               variant='contained'
@@ -168,10 +157,12 @@ export default function PublicNavbar() {
               sx={{
                 borderRadius: '8px',
                 px: 2.5,
+                textTransform: 'none',
+                fontWeight: 600,
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.35)}`,
+                boxShadow: `0 0 20px ${alpha(theme.palette.primary.main, 0.35)}`,
                 '&:hover': {
-                  boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.5)}`
+                  boxShadow: `0 0 30px ${alpha(theme.palette.primary.main, 0.5)}`
                 }
               }}
             >
@@ -183,7 +174,7 @@ export default function PublicNavbar() {
         {/* Mobile hamburger */}
         {isMobile && (
           <IconButton onClick={() => setDrawerOpen(true)}>
-            <Icon icon='tabler:menu-2' style={{ color: theme.palette.text.primary }} />
+            <Icon icon='tabler:menu-2' style={{ color: '#fff' }} />
           </IconButton>
         )}
       </Toolbar>
@@ -195,19 +186,28 @@ export default function PublicNavbar() {
         onClose={() => setDrawerOpen(false)}
         PaperProps={{
           sx: {
-            width: 240,
+            width: 260,
             pt: 2,
-            background: alpha(theme.palette.background.paper, 0.97),
-            backdropFilter: 'blur(20px)'
+            background: alpha('#0a0a12', 0.97),
+            backdropFilter: 'blur(20px)',
+            borderLeft: `1px solid ${alpha('#fff', 0.06)}`
           }
         }}
       >
         <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant='subtitle1' fontWeight={700} color='primary'>
+          <Typography
+            variant='subtitle1'
+            fontWeight={700}
+            sx={{
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.info.main})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}
+          >
             CITRONICS
           </Typography>
           <IconButton size='small' onClick={() => setDrawerOpen(false)}>
-            <Icon icon='tabler:x' />
+            <Icon icon='tabler:x' style={{ color: alpha('#fff', 0.6) }} />
           </IconButton>
         </Box>
         <List>
@@ -217,8 +217,17 @@ export default function PublicNavbar() {
               component='a'
               href={link.href}
               onClick={e => handleNavClick(e, link.href)}
+              sx={{
+                borderRadius: '8px',
+                mx: 1,
+                mb: 0.5,
+                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) }
+              }}
             >
-              <ListItemText primary={link.label} />
+              <ListItemText
+                primary={link.label}
+                primaryTypographyProps={{ sx: { color: alpha('#fff', 0.7), fontWeight: 500 } }}
+              />
             </ListItemButton>
           ))}
           <Box sx={{ px: 2, pt: 2 }}>
@@ -228,8 +237,11 @@ export default function PublicNavbar() {
               component={Link}
               href='/login'
               sx={{
-                borderRadius: '8px',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
+                borderRadius: '10px',
+                textTransform: 'none',
+                fontWeight: 600,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.info.main})`,
+                boxShadow: `0 0 20px ${alpha(theme.palette.primary.main, 0.35)}`
               }}
             >
               Login

@@ -1,225 +1,156 @@
--- ============================================================
--- Citronics — Event Management Platform
--- PostgreSQL Schema
--- ============================================================
+- Enums
+CREATE TYPE user_role AS ENUM ('student', 'admin', 'organizer');
+CREATE TYPE booking_status AS ENUM ('pending', 'confirmed', 'cancelled');
+CREATE TYPE payment_status AS ENUM ('pending', 'success', 'failed', 'refunded');
+CREATE TYPE event_status AS ENUM ('draft', 'published', 'active', 'cancelled', 'completed');
+CREATE TYPE event_visibility AS ENUM ('public', 'private', 'invite_only', 'college_only');
 
--- ── 1. USERS ─────────────────────────────────────────────────
--- Roles: Owner | Admin | Head | Student
--- Owner  → full access
--- Admin  → manage events, speakers, venues, tickets
--- Head   → scoped to assigned events (see event_heads)
--- Student → register & view own tickets
-CREATE TABLE IF NOT EXISTS users (
-    id            SERIAL PRIMARY KEY,
-    email         VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255)        NOT NULL,
-    first_name    VARCHAR(100),
-    last_name     VARCHAR(100),
-    phone         VARCHAR(20),
-    role          VARCHAR(20)  NOT NULL DEFAULT 'Student'
-                               CHECK (role IN ('Owner','Admin','Head','Student')),
-    status        VARCHAR(20)  NOT NULL DEFAULT 'active'
-                               CHECK (status IN ('active','inactive','suspended')),
-    avatar_url    TEXT,
-    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- Users table
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    phone VARCHAR(20) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role user_role NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- ── 2. VENUES ────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS venues (
-    id            SERIAL PRIMARY KEY,
-    name          VARCHAR(255) NOT NULL,
-    description   TEXT,
-    address       VARCHAR(255),
-    city          VARCHAR(100),
-    state         VARCHAR(100),
-    country       VARCHAR(100) DEFAULT 'India',
-    postal_code   VARCHAR(20),
-    capacity      INTEGER,
-    amenities     TEXT[],          -- e.g. ARRAY['Wi-Fi','Parking','AC']
-    map_link      TEXT,
-    contact_name  VARCHAR(150),
-    contact_email VARCHAR(255),
-    contact_phone VARCHAR(20),
-    status        VARCHAR(20)  NOT NULL DEFAULT 'active'
-                               CHECK (status IN ('active','inactive')),
-    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_phone ON users(phone);
+CREATE INDEX idx_users_role ON users(role);
+
+-- Students table
+CREATE TABLE students (
+    user_id BIGINT PRIMARY KEY,
+    student_id VARCHAR(50) UNIQUE,
+    college VARCHAR(255) NOT NULL,
+    city VARCHAR(255) NOT NULL,
+    referred_by BIGINT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (referred_by) REFERENCES students(user_id) ON DELETE SET NULL
 );
 
--- ── 3. EVENTS ────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS events (
-    id            SERIAL PRIMARY KEY,
-    title         VARCHAR(255) NOT NULL,
-    description   TEXT,
-    category      VARCHAR(50)  NOT NULL DEFAULT 'other'
-                               CHECK (category IN (
-                                   'conference','workshop','concert','exhibition',
-                                   'networking','sports','festival','webinar','other'
-                               )),
-    start_date    TIMESTAMP    NOT NULL,
-    end_date      TIMESTAMP    NOT NULL,
-    timezone      VARCHAR(60)  NOT NULL DEFAULT 'Asia/Kolkata',
-    venue_id      INTEGER      REFERENCES venues(id) ON DELETE SET NULL,
-    capacity      INTEGER,
-    cover_image   TEXT,
-    tags          TEXT[],
-    is_free       BOOLEAN      NOT NULL DEFAULT FALSE,
-    is_public     BOOLEAN      NOT NULL DEFAULT TRUE,
-    featured      BOOLEAN      NOT NULL DEFAULT FALSE,
-    status        VARCHAR(20)  NOT NULL DEFAULT 'draft'
-                               CHECK (status IN (
-                                   'draft','published','cancelled','completed','postponed'
-                               )),
-    created_by    INTEGER      REFERENCES users(id) ON DELETE SET NULL,
-    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE INDEX idx_students_college ON students(college);
+CREATE INDEX idx_students_city ON students(city);
+CREATE INDEX idx_students_referred_by ON students(referred_by);
+
+-- Enforce student role
+CREATE OR REPLACE FUNCTION enforce_student_role()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (SELECT role FROM users WHERE id = NEW.user_id) != 'student' THEN
+        RAISE EXCEPTION 'User must have role ''student'' to be in students table';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_students_role
+BEFORE INSERT OR UPDATE ON students
+FOR EACH ROW EXECUTE FUNCTION enforce_student_role();
+
+-- Departments table (no soft delete)
+CREATE TABLE departments (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Backward-compat view used by dashboard queries (event_date → start_date alias)
-CREATE OR REPLACE VIEW events_v AS
-    SELECT *, start_date AS event_date FROM events;
-
--- ── 4. EVENT HEADS ───────────────────────────────────────────
--- Maps users with role='Head' to the events they manage
-CREATE TABLE IF NOT EXISTS event_heads (
-    id         SERIAL PRIMARY KEY,
-    event_id   INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    user_id    INTEGER NOT NULL REFERENCES users(id)  ON DELETE CASCADE,
-    assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (event_id, user_id)
+-- Events table (no soft delete)
+CREATE TABLE events (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL CHECK (end_time > start_time),
+    venue VARCHAR(255),
+    max_tickets INTEGER NOT NULL CHECK (max_tickets > 0),
+    ticket_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00 CHECK (ticket_price >= 0),
+    department_id BIGINT,
+    created_by BIGINT,
+    status event_status NOT NULL DEFAULT 'draft',
+    visibility event_visibility NOT NULL DEFAULT 'public',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- ── 5. SPEAKERS ──────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS speakers (
-    id            SERIAL PRIMARY KEY,
-    name          VARCHAR(150) NOT NULL,
-    bio           TEXT,
-    job_title     VARCHAR(150),
-    company       VARCHAR(150),
-    email         VARCHAR(255),
-    phone         VARCHAR(20),
-    photo_url     TEXT,
-    linkedin_url  TEXT,
-    twitter_handle VARCHAR(100),
-    website       TEXT,
-    expertise     TEXT[],       -- e.g. ARRAY['AI','Cloud','Security']
-    featured      BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE INDEX idx_events_department_id ON events(department_id);
+CREATE INDEX idx_events_start_time ON events(start_time);
+CREATE INDEX idx_events_status ON events(status);
+CREATE INDEX idx_events_created_by ON events(created_by);
+CREATE INDEX idx_events_active_published ON events(status, start_time) WHERE status IN ('published', 'active');
+
+-- Bookings table
+CREATE TABLE bookings (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    event_id BIGINT NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    price_at_booking DECIMAL(10, 2) NOT NULL CHECK (price_at_booking >= 0),
+    total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
+    status booking_status NOT NULL DEFAULT 'pending',
+    expires_at TIMESTAMP WITH TIME ZONE,
+    booked_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CHECK (total_amount = quantity * price_at_booking),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
--- ── 6. EVENT SPEAKERS ────────────────────────────────────────
--- A speaker can appear at multiple events; each appearance has its own session
-CREATE TABLE IF NOT EXISTS event_speakers (
-    id             SERIAL PRIMARY KEY,
-    event_id       INTEGER NOT NULL REFERENCES events(id)   ON DELETE CASCADE,
-    speaker_id     INTEGER NOT NULL REFERENCES speakers(id) ON DELETE CASCADE,
-    session_title  VARCHAR(255),
-    session_start  TIMESTAMP,
-    session_end    TIMESTAMP,
-    UNIQUE (event_id, speaker_id)
+CREATE UNIQUE INDEX idx_bookings_unique_confirmed ON bookings (user_id, event_id) WHERE status = 'confirmed';
+
+CREATE INDEX idx_bookings_user_id ON bookings(user_id);
+CREATE INDEX idx_bookings_event_id_status ON bookings(event_id, status);
+CREATE INDEX idx_bookings_status_expires_at ON bookings(status, expires_at);
+
+-- Tickets table (dropped transferred_to)
+CREATE TABLE tickets (
+    id BIGSERIAL PRIMARY KEY,
+    booking_id BIGINT NOT NULL,
+    qr_code UUID NOT NULL UNIQUE,
+    check_in_at TIMESTAMP WITH TIME ZONE,
+    check_in_by BIGINT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+    FOREIGN KEY (check_in_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- ── 7. TICKET TYPES ──────────────────────────────────────────
--- Each event can have multiple ticket types (e.g. Early Bird, General, VIP)
-CREATE TABLE IF NOT EXISTS ticket_types (
-    id               SERIAL PRIMARY KEY,
-    event_id         INTEGER      NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    name             VARCHAR(150) NOT NULL,
-    description      TEXT,
-    price            DECIMAL(10,2) NOT NULL DEFAULT 0,
-    quantity         INTEGER,          -- NULL = unlimited
-    quantity_sold    INTEGER      NOT NULL DEFAULT 0,
-    sale_start       TIMESTAMP,
-    sale_end         TIMESTAMP,
-    is_transferable  BOOLEAN      NOT NULL DEFAULT TRUE,
-    per_order_min    INTEGER      NOT NULL DEFAULT 1,
-    per_order_max    INTEGER,
-    status           VARCHAR(20)  NOT NULL DEFAULT 'available'
-                                  CHECK (status IN (
-                                      'available','sold_out','paused','upcoming'
-                                  )),
-    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE INDEX idx_tickets_booking_id ON tickets(booking_id);
+CREATE INDEX idx_tickets_qr_code ON tickets(qr_code);
+CREATE INDEX idx_tickets_check_in_at ON tickets(check_in_at);
+CREATE INDEX idx_tickets_check_in_by ON tickets(check_in_by);
+
+-- Payments table
+CREATE TABLE payments (
+    id BIGSERIAL PRIMARY KEY,
+    booking_id BIGINT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL CHECK (amount >= 0),
+    gateway VARCHAR(50) NOT NULL DEFAULT 'HDFC',
+    gateway_version VARCHAR(20),
+    transaction_id VARCHAR(255),
+    idempotency_key VARCHAR(255) NOT NULL UNIQUE,
+    raw_payload JSONB,
+    webhook_signature VARCHAR(255),
+    webhook_received_at TIMESTAMP WITH TIME ZONE,
+    status payment_status NOT NULL DEFAULT 'pending',
+    paid_at TIMESTAMP WITH TIME ZONE,
+    refund_amount DECIMAL(10, 2) CHECK (refund_amount >= 0),
+    refund_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
 );
 
--- ── 8. REGISTRATIONS ─────────────────────────────────────────
--- One row per user × event purchase (may cover multiple tickets)
-CREATE TABLE IF NOT EXISTS registrations (
-    id               SERIAL PRIMARY KEY,
-    user_id          INTEGER      NOT NULL REFERENCES users(id)        ON DELETE RESTRICT,
-    event_id         INTEGER      NOT NULL REFERENCES events(id)       ON DELETE RESTRICT,
-    ticket_type_id   INTEGER      REFERENCES ticket_types(id)          ON DELETE SET NULL,
-    quantity         INTEGER      NOT NULL DEFAULT 1,
-    amount_paid      DECIMAL(10,2) NOT NULL DEFAULT 0,
-    payment_status   VARCHAR(20)  NOT NULL DEFAULT 'pending'
-                                  CHECK (payment_status IN (
-                                      'pending','paid','failed','refunded'
-                                  )),
-    payment_ref      VARCHAR(150),   -- gateway transaction / reference ID
-    status           VARCHAR(20)  NOT NULL DEFAULT 'confirmed'
-                                  CHECK (status IN (
-                                      'confirmed','cancelled','waitlisted'
-                                  )),
-    notes            TEXT,
-    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- ── 9. TICKETS ────────────────────────────────────────────────
--- Individual tickets issued per registration (one per seat/entry)
-CREATE TABLE IF NOT EXISTS tickets (
-    id               SERIAL PRIMARY KEY,
-    registration_id  INTEGER      NOT NULL REFERENCES registrations(id) ON DELETE CASCADE,
-    event_id         INTEGER      NOT NULL REFERENCES events(id)         ON DELETE RESTRICT,
-    ticket_type_id   INTEGER      REFERENCES ticket_types(id)            ON DELETE SET NULL,
-    ticket_number    VARCHAR(50)  UNIQUE NOT NULL,
-    qr_code          TEXT,
-    attendee_name    VARCHAR(200),
-    attendee_email   VARCHAR(255),
-    status           VARCHAR(20)  NOT NULL DEFAULT 'sold'
-                                  CHECK (status IN (
-                                      'sold','used','cancelled','refunded'
-                                  )),
-    checked_in_at    TIMESTAMP,
-    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- ── INDEXES ──────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_events_status       ON events(status);
-CREATE INDEX IF NOT EXISTS idx_events_start_date   ON events(start_date);
-CREATE INDEX IF NOT EXISTS idx_events_venue_id     ON events(venue_id);
-CREATE INDEX IF NOT EXISTS idx_events_created_by   ON events(created_by);
-
-CREATE INDEX IF NOT EXISTS idx_event_heads_user_id  ON event_heads(user_id);
-CREATE INDEX IF NOT EXISTS idx_event_heads_event_id ON event_heads(event_id);
-
-CREATE INDEX IF NOT EXISTS idx_ticket_types_event_id ON ticket_types(event_id);
-
-CREATE INDEX IF NOT EXISTS idx_registrations_user_id  ON registrations(user_id);
-CREATE INDEX IF NOT EXISTS idx_registrations_event_id ON registrations(event_id);
-CREATE INDEX IF NOT EXISTS idx_registrations_payment  ON registrations(payment_status);
-CREATE INDEX IF NOT EXISTS idx_registrations_created  ON registrations(created_at);
-
-CREATE INDEX IF NOT EXISTS idx_tickets_registration_id ON tickets(registration_id);
-CREATE INDEX IF NOT EXISTS idx_tickets_event_id        ON tickets(event_id);
-CREATE INDEX IF NOT EXISTS idx_tickets_status          ON tickets(status);
-CREATE INDEX IF NOT EXISTS idx_tickets_number          ON tickets(ticket_number);
-
--- ── SEED DATA ────────────────────────────────────────────────
--- Default Owner account  (password: Admin@123)
--- Hash generated with: bcrypt.hashSync('Admin@123', 10)
-INSERT INTO users (email, password_hash, first_name, last_name, role, status)
-VALUES (
-    'admin@citronics.in',
-    '$2a$10$X9z1h4e0ZkGJzFxwK4Qu5.omVQjrV9gBqwDXNF3MIVAnV0Wgt5T3u',
-    'Admin', 'Citronics', 'Owner', 'active'
-)
-ON CONFLICT (email) DO NOTHING;
-
--- Sample venue
-INSERT INTO venues (name, city, state, country, capacity, status)
-VALUES ('Main Auditorium', 'Surat', 'Gujarat', 'India', 500, 'active')
-ON CONFLICT DO NOTHING;
+CREATE INDEX idx_payments_booking_id ON payments(booking_id);
+CREATE INDEX idx_payments_status ON payments(status);
+CREATE INDEX idx_payments_idempotency_key ON payments(idempotency_key);

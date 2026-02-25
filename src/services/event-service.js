@@ -25,8 +25,6 @@ const eventService = {
         slug,
         name,
         description,
-        icon,
-        palette_key AS "paletteKey",
         images,
         sort_order
       FROM categories
@@ -44,8 +42,6 @@ const eventService = {
         slug,
         name,
         description,
-        icon,
-        palette_key AS "paletteKey",
         images
       FROM categories
       WHERE slug = $1
@@ -112,14 +108,11 @@ const eventService = {
         e.registered,
         e.prize,
         e.tags,
-        e.palette_key   AS "paletteKey",
         e.featured,
         e.status,
         e.images,
         c.slug          AS dept,
-        c.name          AS "categoryName",
-        c.icon          AS "categoryIcon",
-        c.palette_key   AS "categoryPaletteKey"
+        c.name          AS "categoryName"
       FROM events e
       LEFT JOIN categories c ON c.id = e.category_id
       WHERE ${where}
@@ -210,12 +203,10 @@ const eventService = {
         e.registered,
         e.prize,
         e.tags,
-        e.palette_key   AS "paletteKey",
         e.featured,
         e.images,
         c.slug          AS dept,
-        c.name          AS "categoryName",
-        c.icon          AS "categoryIcon"
+        c.name          AS "categoryName"
       FROM events e
       LEFT JOIN categories c ON c.id = e.category_id
       WHERE e.featured = TRUE

@@ -1,13 +1,4 @@
--- ============================================================================
--- Migration 003: Add categories table & enhance events for public pages
--- Date: 2026-02-25
--- Description:
---   1. Create a `categories` table (departments/tracks) with icon, palette key,
---      and Cloudinary images (JSONB).
---   2. Add columns to `events` for tagline, prize, tags, featured flag,
---      seat tracking, palette key, and Cloudinary images (JSONB).
---   3. Link events → categories via category_id FK.
--- ============================================================================
+
 
 -- ── Categories (departments / event tracks) ────────────────────────────────
 CREATE TABLE IF NOT EXISTS categories (

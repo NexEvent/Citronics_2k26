@@ -1,7 +1,7 @@
 /**
  * Seed Script — Citronics
  *
- * Inserts the mock data (categories + events) into the database.
+ * Inserts departments + events + home-page config into the database.
  * Run AFTER migrations are up to date.
  *
  * Usage:
@@ -42,49 +42,16 @@ const db = pgp(getConnectionConfig())
 
 // ── Seed Data ──────────────────────────────────────────────────────────────────
 
-const CATEGORIES = [
-  {
-    slug: 'all',
-    name: 'All Events',
-    description: 'View all events across departments',
-    images: [],
-    sort_order: 0
-  },
-  {
-    slug: 'cse',
-    name: 'Computer Science',
-    description: 'Coding, hackathons, AI/ML challenges, cybersecurity CTFs and more',
-    images: [],
-    sort_order: 1
-  },
-  {
-    slug: 'ece',
-    name: 'Electronics & Comm.',
-    description: 'Circuit design, robotics, IoT projects, signal processing',
-    images: [],
-    sort_order: 2
-  },
-  {
-    slug: 'mech',
-    name: 'Mechanical Engg.',
-    description: 'CAD modelling, thermodynamics, bridge design, workshop challenges',
-    images: [],
-    sort_order: 3
-  },
-  {
-    slug: 'civil',
-    name: 'Civil Engineering',
-    description: 'Concrete design, surveying, structural analysis competitions',
-    images: [],
-    sort_order: 4
-  },
-  {
-    slug: 'mgmt',
-    name: 'Management',
-    description: 'Business pitches, marketing contests, startup showcases',
-    images: [],
-    sort_order: 5
-  }
+/**
+ * Departments — uses the existing departments table (id, name, description).
+ * No schema changes; we just INSERT rows.
+ */
+const DEPARTMENTS = [
+  { name: 'Computer Science', description: 'Coding, hackathons, AI/ML challenges, cybersecurity CTFs and more' },
+  { name: 'Electronics & Comm.', description: 'Circuit design, robotics, IoT projects, signal processing' },
+  { name: 'Mechanical Engg.', description: 'CAD modelling, thermodynamics, bridge design, workshop challenges' },
+  { name: 'Civil Engineering', description: 'Concrete design, surveying, structural analysis competitions' },
+  { name: 'Management', description: 'Business pitches, marketing contests, startup showcases' }
 ]
 
 const EVENTS = [
@@ -93,360 +60,250 @@ const EVENTS = [
     name: 'HackVerse 2k26',
     tagline: '24-hour National Level Hackathon',
     description: 'HackVerse 2k26 is our flagship 24-hour national level hackathon where teams of up to 4 compete to build innovative solutions. With mentors from top tech companies, swag kits, and a massive prize pool, this is the ultimate coding marathon. Tracks include AI/ML, Web3, HealthTech, and Sustainability.',
-    category_slug: 'cse',
+    department_name: 'Computer Science',
     start_time: '2026-03-15 10:00:00+05:30',
     end_time: '2026-03-16 10:00:00+05:30',
     venue: 'Innovation Lab, Block A',
-    max_tickets: 200,
-    registered: 148,
-    prize: '₹50,000',
-    tags: ['Coding', 'AI', 'Web3'],
-    palette_key: 'primary',
-    featured: true,
-    status: 'published',
-    images: []
+    max_tickets: 200, registered: 148, prize: '\u20b950,000',
+    tags: ['Coding', 'AI', 'Web3'], featured: true, status: 'published', images: []
   },
   {
     name: 'Code Sprint',
     tagline: 'Competitive Programming Face-off',
-    description: 'A fast-paced competitive programming contest. Solve algorithmic challenges across 3 rounds — easy, medium, and hard. Top performers get direct interview invites from our sponsoring companies. Languages allowed: C++, Java, Python.',
-    category_slug: 'cse',
+    description: 'A fast-paced competitive programming contest. Solve algorithmic challenges across 3 rounds. Top performers get direct interview invites from our sponsoring companies. Languages allowed: C++, Java, Python.',
+    department_name: 'Computer Science',
     start_time: '2026-03-16 09:00:00+05:30',
     end_time: '2026-03-16 13:00:00+05:30',
     venue: 'Computer Lab 302',
-    max_tickets: 100,
-    registered: 87,
-    prize: '₹10,000',
-    tags: ['DSA', 'Algorithms'],
-    palette_key: 'primary',
-    featured: false,
-    status: 'published',
-    images: []
+    max_tickets: 100, registered: 87, prize: '\u20b910,000',
+    tags: ['DSA', 'Algorithms'], featured: false, status: 'published', images: []
   },
   {
     name: 'UI/UX Showdown',
     tagline: 'Design the Future of Interfaces',
     description: 'Compete to create the best user interface and experience for a given problem statement. Judged on usability, aesthetics, innovation, and accessibility. Tools allowed: Figma, Adobe XD, Sketch.',
-    category_slug: 'cse',
+    department_name: 'Computer Science',
     start_time: '2026-03-16 11:00:00+05:30',
     end_time: '2026-03-16 17:00:00+05:30',
     venue: 'Design Studio, Block C',
-    max_tickets: 60,
-    registered: 44,
-    prize: '₹8,000',
-    tags: ['Design', 'Figma', 'UX'],
-    palette_key: 'primary',
-    featured: false,
-    status: 'published',
-    images: []
+    max_tickets: 60, registered: 44, prize: '\u20b98,000',
+    tags: ['Design', 'Figma', 'UX'], featured: false, status: 'published', images: []
   },
   {
     name: 'CTF Battleground',
-    tagline: 'Capture The Flag — Cybersecurity Showdown',
-    description: 'A multi-round cybersecurity Capture The Flag competition. Challenges span web exploitation, reverse engineering, cryptography, and forensics. Beginners welcome — warm-up challenges provided.',
-    category_slug: 'cse',
+    tagline: 'Capture The Flag \u2014 Cybersecurity Showdown',
+    description: 'A multi-round cybersecurity Capture The Flag competition. Challenges span web exploitation, reverse engineering, cryptography, and forensics. Beginners welcome.',
+    department_name: 'Computer Science',
     start_time: '2026-03-17 14:00:00+05:30',
     end_time: '2026-03-17 20:00:00+05:30',
     venue: 'Networking Lab',
-    max_tickets: 80,
-    registered: 61,
-    prize: '₹15,000',
-    tags: ['Security', 'CTF', 'Linux'],
-    palette_key: 'primary',
-    featured: true,
-    status: 'published',
-    images: []
+    max_tickets: 80, registered: 61, prize: '\u20b915,000',
+    tags: ['Security', 'CTF', 'Linux'], featured: true, status: 'published', images: []
   },
   // ECE
   {
     name: 'Circuit Arena',
     tagline: 'Build. Solder. Conquer.',
     description: 'Design and build functional circuits within a time limit. Components provided on-the-spot. Judged on correctness, efficiency, and creativity. Arduino and breadboard kits available.',
-    category_slug: 'ece',
+    department_name: 'Electronics & Comm.',
     start_time: '2026-03-15 09:00:00+05:30',
     end_time: '2026-03-15 17:00:00+05:30',
     venue: 'Electronics Lab 201',
-    max_tickets: 80,
-    registered: 55,
-    prize: '₹12,000',
-    tags: ['Circuits', 'Arduino', 'IoT'],
-    palette_key: 'info',
-    featured: true,
-    status: 'published',
-    images: []
+    max_tickets: 80, registered: 55, prize: '\u20b912,000',
+    tags: ['Circuits', 'Arduino', 'IoT'], featured: true, status: 'published', images: []
   },
   {
     name: 'Robo Rumble',
     tagline: 'Autonomous Robot Battle Royale',
-    description: 'Build autonomous robots that navigate obstacle courses and battle head-to-head. Categories: line follower, maze solver, and sumo bot. Pre-registration required with robot specs.',
-    category_slug: 'ece',
+    description: 'Build autonomous robots that navigate obstacle courses and battle head-to-head. Line follower, maze solver, and sumo bot categories. Pre-registration required with robot specs.',
+    department_name: 'Electronics & Comm.',
     start_time: '2026-03-17 15:00:00+05:30',
     end_time: '2026-03-17 20:00:00+05:30',
     venue: 'Main Arena, Ground Floor',
-    max_tickets: 50,
-    registered: 38,
-    prize: '₹20,000',
-    tags: ['Robotics', 'Embedded', 'Automation'],
-    palette_key: 'info',
-    featured: true,
-    status: 'published',
-    images: []
+    max_tickets: 50, registered: 38, prize: '\u20b920,000',
+    tags: ['Robotics', 'Embedded', 'Automation'], featured: true, status: 'published', images: []
   },
   {
     name: 'Signal & Spectrum',
     tagline: 'DSP & Communications Quiz',
     description: 'A quiz competition covering Digital Signal Processing, VLSI design, and communication systems. Three rounds with increasing difficulty. Individual participation only.',
-    category_slug: 'ece',
+    department_name: 'Electronics & Comm.',
     start_time: '2026-03-16 13:00:00+05:30',
     end_time: '2026-03-16 16:00:00+05:30',
     venue: 'Seminar Hall B',
-    max_tickets: 120,
-    registered: 74,
-    prize: '₹6,000',
-    tags: ['DSP', 'VLSI', 'Communication'],
-    palette_key: 'info',
-    featured: false,
-    status: 'published',
-    images: []
+    max_tickets: 120, registered: 74, prize: '\u20b96,000',
+    tags: ['DSP', 'VLSI', 'Communication'], featured: false, status: 'published', images: []
   },
   // Mech
   {
     name: 'CAD Masters',
     tagline: 'Speed Modelling & Engineering Design',
     description: 'Speed modelling competition using SolidWorks or AutoCAD. Given a physical object, replicate it digitally with full specifications. Judged on accuracy, speed, and design elegance.',
-    category_slug: 'mech',
+    department_name: 'Mechanical Engg.',
     start_time: '2026-03-15 10:00:00+05:30',
     end_time: '2026-03-15 16:00:00+05:30',
     venue: 'Mech Design Lab',
-    max_tickets: 60,
-    registered: 42,
-    prize: '₹10,000',
-    tags: ['SolidWorks', 'AutoCAD', '3D'],
-    palette_key: 'warning',
-    featured: false,
-    status: 'published',
-    images: []
+    max_tickets: 60, registered: 42, prize: '\u20b910,000',
+    tags: ['SolidWorks', 'AutoCAD', '3D'], featured: false, status: 'published', images: []
   },
   {
     name: 'Thermo Wars',
     tagline: 'Thermodynamics Problem Solving Contest',
     description: 'Solve real-world thermodynamics and fluid mechanics problems. Calculators allowed, reference sheets provided. Teams of 2.',
-    category_slug: 'mech',
+    department_name: 'Mechanical Engg.',
     start_time: '2026-03-16 12:00:00+05:30',
     end_time: '2026-03-16 16:00:00+05:30',
     venue: 'Class Room 401',
-    max_tickets: 100,
-    registered: 56,
-    prize: '₹7,000',
-    tags: ['Thermodynamics', 'Mechanics'],
-    palette_key: 'warning',
-    featured: false,
-    status: 'published',
-    images: []
+    max_tickets: 100, registered: 56, prize: '\u20b97,000',
+    tags: ['Thermodynamics', 'Mechanics'], featured: false, status: 'published', images: []
   },
   {
     name: 'Bridge Bonanza',
     tagline: 'Design & Load-Test a Mini Bridge',
     description: 'Design and construct a mini bridge using provided materials. Bridges will be load-tested to destruction. Highest load-to-weight ratio wins. Safety gear provided.',
-    category_slug: 'mech',
+    department_name: 'Mechanical Engg.',
     start_time: '2026-03-17 09:00:00+05:30',
     end_time: '2026-03-17 16:00:00+05:30',
     venue: 'Workshop Area',
-    max_tickets: 40,
-    registered: 35,
-    prize: '₹8,500',
-    tags: ['Structures', 'Materials', 'Design'],
-    palette_key: 'warning',
-    featured: true,
-    status: 'published',
-    images: []
+    max_tickets: 40, registered: 35, prize: '\u20b98,500',
+    tags: ['Structures', 'Materials', 'Design'], featured: true, status: 'published', images: []
   },
   // Civil
   {
     name: 'Concrete Cosmos',
     tagline: 'Concrete Mix Design Competition',
     description: 'Design and test concrete mixes for optimal strength. Teams prepare cube specimens, test compressive strength, and present their methodology. Lab equipment provided.',
-    category_slug: 'civil',
+    department_name: 'Civil Engineering',
     start_time: '2026-03-15 11:00:00+05:30',
     end_time: '2026-03-15 17:00:00+05:30',
     venue: 'Civil Engineering Lab',
-    max_tickets: 60,
-    registered: 40,
-    prize: '₹9,000',
-    tags: ['Concrete', 'Structural', 'Mix Design'],
-    palette_key: 'success',
-    featured: false,
-    status: 'published',
-    images: []
+    max_tickets: 60, registered: 40, prize: '\u20b99,000',
+    tags: ['Concrete', 'Structural', 'Mix Design'], featured: false, status: 'published', images: []
   },
   {
     name: 'Survey Sprint',
     tagline: 'Precision Surveying Relay Race',
     description: 'Teams race to complete surveying tasks using precision instruments. GPS, total stations, and levels provided. Judged on accuracy and speed.',
-    category_slug: 'civil',
+    department_name: 'Civil Engineering',
     start_time: '2026-03-16 10:00:00+05:30',
     end_time: '2026-03-16 14:00:00+05:30',
     venue: 'College Campus Ground',
-    max_tickets: 50,
-    registered: 32,
-    prize: '₹6,500',
-    tags: ['Surveying', 'GPS', 'Topography'],
-    palette_key: 'success',
-    featured: false,
-    status: 'published',
-    images: []
+    max_tickets: 50, registered: 32, prize: '\u20b96,500',
+    tags: ['Surveying', 'GPS', 'Topography'], featured: false, status: 'published', images: []
   },
   // Management
   {
     name: 'Shark Tank Pitch',
     tagline: 'Pitch Your Startup to Real Investors',
     description: 'Present your startup idea to a panel of real investors and industry leaders. Top pitches receive mentorship and potential pre-seed funding. Business plan template provided.',
-    category_slug: 'mgmt',
+    department_name: 'Management',
     start_time: '2026-03-15 14:00:00+05:30',
     end_time: '2026-03-15 18:00:00+05:30',
     venue: 'Auditorium, Main Building',
-    max_tickets: 30,
-    registered: 28,
-    prize: '₹25,000',
-    tags: ['Startup', 'Pitch', 'Business'],
-    palette_key: 'error',
-    featured: true,
-    status: 'published',
-    images: []
+    max_tickets: 30, registered: 28, prize: '\u20b925,000',
+    tags: ['Startup', 'Pitch', 'Business'], featured: true, status: 'published', images: []
   },
   {
     name: 'Ad Mad Show',
     tagline: 'Creative Marketing & Branding Contest',
     description: 'Create and present a brand campaign for a random product. Judged on creativity, brand storytelling, and audience engagement. Props and materials provided.',
-    category_slug: 'mgmt',
+    department_name: 'Management',
     start_time: '2026-03-16 15:00:00+05:30',
     end_time: '2026-03-16 19:00:00+05:30',
     venue: 'Seminar Hall A',
-    max_tickets: 80,
-    registered: 55,
-    prize: '₹8,000',
-    tags: ['Marketing', 'Branding', 'Creative'],
-    palette_key: 'error',
-    featured: false,
-    status: 'published',
-    images: []
+    max_tickets: 80, registered: 55, prize: '\u20b98,000',
+    tags: ['Marketing', 'Branding', 'Creative'], featured: false, status: 'published', images: []
   }
 ]
 
 const SCHEDULE_DAYS = [
   {
-    date: 'March 15',
-    day: 'Day 1',
-    theme: 'Ignition',
+    date: 'March 15', day: 'Day 1', theme: 'Ignition',
     highlights: [
-      { time: '09:00 AM', event_name: 'Inauguration Ceremony', dept: 'all', palette_key: 'primary' },
-      { time: '10:00 AM', event_name: 'HackVerse 2k26 Kickoff', dept: 'cse', palette_key: 'primary' },
-      { time: '10:00 AM', event_name: 'Circuit Arena Begins', dept: 'ece', palette_key: 'info' },
-      { time: '02:00 PM', event_name: 'Shark Tank Pitch', dept: 'mgmt', palette_key: 'error' },
-      { time: '06:00 PM', event_name: 'Cultural Night — DJ & Live Band', dept: 'all', palette_key: 'warning' }
+      { time: '09:00 AM', event_name: 'Inauguration Ceremony', dept: 'all', paletteKey: 'primary' },
+      { time: '10:00 AM', event_name: 'HackVerse 2k26 Kickoff', dept: 'cse', paletteKey: 'primary' },
+      { time: '10:00 AM', event_name: 'Circuit Arena Begins', dept: 'ece', paletteKey: 'info' },
+      { time: '02:00 PM', event_name: 'Shark Tank Pitch', dept: 'mgmt', paletteKey: 'error' },
+      { time: '06:00 PM', event_name: 'Cultural Night \u2014 DJ & Live Band', dept: 'all', paletteKey: 'warning' }
     ]
   },
   {
-    date: 'March 16',
-    day: 'Day 2',
-    theme: 'Velocity',
+    date: 'March 16', day: 'Day 2', theme: 'Velocity',
     highlights: [
-      { time: '09:00 AM', event_name: 'Code Sprint', dept: 'cse', palette_key: 'primary' },
-      { time: '10:00 AM', event_name: 'Survey Sprint', dept: 'civil', palette_key: 'success' },
-      { time: '01:00 PM', event_name: 'Signal & Spectrum Quiz', dept: 'ece', palette_key: 'info' },
-      { time: '03:00 PM', event_name: 'Ad Mad Show', dept: 'mgmt', palette_key: 'error' },
-      { time: '07:00 PM', event_name: 'Fashion Show & Talent Night', dept: 'all', palette_key: 'warning' }
+      { time: '09:00 AM', event_name: 'Code Sprint', dept: 'cse', paletteKey: 'primary' },
+      { time: '10:00 AM', event_name: 'Survey Sprint', dept: 'civil', paletteKey: 'success' },
+      { time: '01:00 PM', event_name: 'Signal & Spectrum Quiz', dept: 'ece', paletteKey: 'info' },
+      { time: '03:00 PM', event_name: 'Ad Mad Show', dept: 'mgmt', paletteKey: 'error' },
+      { time: '07:00 PM', event_name: 'Fashion Show & Talent Night', dept: 'all', paletteKey: 'warning' }
     ]
   },
   {
-    date: 'March 17',
-    day: 'Day 3',
-    theme: 'Zenith',
+    date: 'March 17', day: 'Day 3', theme: 'Zenith',
     highlights: [
-      { time: '09:00 AM', event_name: 'Bridge Bonanza', dept: 'mech', palette_key: 'warning' },
-      { time: '02:00 PM', event_name: 'CTF Battleground Finals', dept: 'cse', palette_key: 'primary' },
-      { time: '03:00 PM', event_name: 'Robo Rumble Grand Finale', dept: 'ece', palette_key: 'info' },
-      { time: '05:00 PM', event_name: 'Award Ceremony & Closing', dept: 'all', palette_key: 'success' },
-      { time: '08:00 PM', event_name: 'Grand Celebration Night', dept: 'all', palette_key: 'primary' }
+      { time: '09:00 AM', event_name: 'Bridge Bonanza', dept: 'mech', paletteKey: 'warning' },
+      { time: '02:00 PM', event_name: 'CTF Battleground Finals', dept: 'cse', paletteKey: 'primary' },
+      { time: '03:00 PM', event_name: 'Robo Rumble Grand Finale', dept: 'ece', paletteKey: 'info' },
+      { time: '05:00 PM', event_name: 'Award Ceremony & Closing', dept: 'all', paletteKey: 'success' },
+      { time: '08:00 PM', event_name: 'Grand Celebration Night', dept: 'all', paletteKey: 'primary' }
     ]
   }
 ]
 
 // ── Insert Functions ───────────────────────────────────────────────────────────
 
-async function insertCategories(t) {
-  console.log('  ⏳ Inserting categories...')
+async function insertDepartments(t) {
+  console.log('  \u23f3 Inserting departments...')
 
-  for (const cat of CATEGORIES) {
+  for (const dept of DEPARTMENTS) {
     await t.none(
-      `INSERT INTO categories (slug, name, description, icon, palette_key, images, sort_order)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
-       ON CONFLICT (slug) DO UPDATE SET
-         name = EXCLUDED.name,
+      `INSERT INTO departments (name, description)
+       VALUES ($1, $2)
+       ON CONFLICT (name) DO UPDATE SET
          description = EXCLUDED.description,
-         icon = EXCLUDED.icon,
-         palette_key = EXCLUDED.palette_key,
-         images = EXCLUDED.images,
-         sort_order = EXCLUDED.sort_order,
-         updated_at = CURRENT_TIMESTAMP`,
-      [cat.slug, cat.name, cat.description, cat.icon, cat.palette_key, JSON.stringify(cat.images), cat.sort_order]
+         updated_at  = CURRENT_TIMESTAMP`,
+      [dept.name, dept.description]
     )
   }
 
-  console.log(`    ✓ ${CATEGORIES.length} categories upserted`)
+  console.log(`    \u2713 ${DEPARTMENTS.length} departments upserted`)
 }
 
 async function insertEvents(t) {
-  console.log('  ⏳ Inserting events...')
+  console.log('  \u23f3 Inserting events...')
 
   for (const evt of EVENTS) {
-    // Look up category_id from slug
-    const cat = await t.oneOrNone(
-      `SELECT id FROM categories WHERE slug = $1`,
-      [evt.category_slug]
+    // Look up department_id from name
+    const dept = await t.oneOrNone(
+      `SELECT id FROM departments WHERE name = $1`,
+      [evt.department_name]
     )
 
     await t.none(
       `INSERT INTO events (
         name, description, tagline, start_time, end_time, venue,
-        max_tickets, registered, prize, tags, palette_key, featured,
-        status, visibility, images, category_id
+        max_tickets, registered, prize, tags, featured,
+        status, visibility, images, department_id
       ) VALUES (
         $1, $2, $3, $4, $5, $6,
-        $7, $8, $9, $10, $11, $12,
-        $13, 'public', $14::jsonb, $15
+        $7, $8, $9, $10, $11,
+        $12, 'public', $13::jsonb, $14
       )
       ON CONFLICT DO NOTHING`,
       [
-        evt.name,
-        evt.description,
-        evt.tagline,
-        evt.start_time,
-        evt.end_time,
-        evt.venue,
-        evt.max_tickets,
-        evt.registered,
-        evt.prize,
-        evt.tags,
-        evt.palette_key,
-        evt.featured,
-        evt.status,
-        JSON.stringify(evt.images),
-        cat?.id || null
+        evt.name, evt.description, evt.tagline, evt.start_time, evt.end_time, evt.venue,
+        evt.max_tickets, evt.registered, evt.prize, evt.tags, evt.featured,
+        evt.status, JSON.stringify(evt.images), dept?.id || null
       ]
     )
   }
 
-  console.log(`    ✓ ${EVENTS.length} events inserted`)
+  console.log(`    \u2713 ${EVENTS.length} events inserted`)
 }
 
-async function insertSchedule(t) {
-  // Schedule is stored as site_config JSON — no separate table needed
-  // We store it in a simple key-value config table, or just leave it
-  // as static data. For now we'll use a site_config table.
-  console.log('  ⏳ Inserting schedule data...')
+async function insertSiteConfig(t) {
+  console.log('  \u23f3 Inserting site config data...')
 
-  // Create site_config table if not exists (lightweight key-value)
+  // Create site_config table if not exists
   await t.none(`
     CREATE TABLE IF NOT EXISTS site_config (
       key        VARCHAR(100) PRIMARY KEY,
@@ -455,36 +312,24 @@ async function insertSchedule(t) {
     )
   `)
 
-  await t.none(
-    `INSERT INTO site_config (key, value)
-     VALUES ('schedule_days', $1::jsonb)
-     ON CONFLICT (key) DO UPDATE SET
-       value = EXCLUDED.value,
-       updated_at = CURRENT_TIMESTAMP`,
-    [JSON.stringify(SCHEDULE_DAYS)]
+  const upsert = (key, value) => t.none(
+    `INSERT INTO site_config (key, value) VALUES ($1, $2::jsonb)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+    [key, JSON.stringify(value)]
   )
 
-  // Also store stats data
-  const STATS = [
+  await upsert('schedule_days', SCHEDULE_DAYS)
+
+  await upsert('home_stats', [
     { label: 'Events', value: 24, suffix: '+', icon: 'tabler:calendar-event', paletteKey: 'primary' },
     { label: 'Participants', value: 2000, suffix: '+', icon: 'tabler:users', paletteKey: 'info' },
     { label: 'Departments', value: 5, suffix: '', icon: 'tabler:building-community', paletteKey: 'success' },
     { label: 'Prize Pool', value: 2, suffix: 'L+', icon: 'tabler:trophy', paletteKey: 'warning' },
     { label: 'Workshops', value: 12, suffix: '+', icon: 'tabler:hammer', paletteKey: 'secondary' },
     { label: 'Sponsors', value: 15, suffix: '+', icon: 'tabler:heart-handshake', paletteKey: 'error' }
-  ]
+  ])
 
-  await t.none(
-    `INSERT INTO site_config (key, value)
-     VALUES ('home_stats', $1::jsonb)
-     ON CONFLICT (key) DO UPDATE SET
-       value = EXCLUDED.value,
-       updated_at = CURRENT_TIMESTAMP`,
-    [JSON.stringify(STATS)]
-  )
-
-  // Store sponsors data
-  const SPONSORS = [
+  await upsert('sponsors', [
     { name: 'TechCorp', tier: 'Title Sponsor' },
     { name: 'InnovateLabs', tier: 'Gold' },
     { name: 'DesignHub', tier: 'Gold' },
@@ -493,19 +338,9 @@ async function insertSchedule(t) {
     { name: 'BuildSmart', tier: 'Silver' },
     { name: 'CodeAcademy', tier: 'Partner' },
     { name: 'StartupGuj', tier: 'Partner' }
-  ]
+  ])
 
-  await t.none(
-    `INSERT INTO site_config (key, value)
-     VALUES ('sponsors', $1::jsonb)
-     ON CONFLICT (key) DO UPDATE SET
-       value = EXCLUDED.value,
-       updated_at = CURRENT_TIMESTAMP`,
-    [JSON.stringify(SPONSORS)]
-  )
-
-  // Store testimonials
-  const TESTIMONIALS = [
+  await upsert('testimonials', [
     {
       name: 'Arjun Patel',
       role: 'CSE Student, Citronics 2025',
@@ -531,31 +366,11 @@ async function insertSchedule(t) {
       role: 'Civil Engineering, Citronics 2024',
       quote: 'The survey competition was incredibly well-organized. Precision instruments, real terrain, and a spirit of healthy competition.'
     }
-  ]
+  ])
 
-  await t.none(
-    `INSERT INTO site_config (key, value)
-     VALUES ('testimonials', $1::jsonb)
-     ON CONFLICT (key) DO UPDATE SET
-       value = EXCLUDED.value,
-       updated_at = CURRENT_TIMESTAMP`,
-    [JSON.stringify(TESTIMONIALS)]
-  )
+  await upsert('hero_words', ['Innovation', 'Technology', 'Excellence', 'Passion', 'Tomorrow'])
 
-  // Store hero words
-  const HERO_WORDS = ['Innovation', 'Technology', 'Excellence', 'Passion', 'Tomorrow']
-
-  await t.none(
-    `INSERT INTO site_config (key, value)
-     VALUES ('hero_words', $1::jsonb)
-     ON CONFLICT (key) DO UPDATE SET
-       value = EXCLUDED.value,
-       updated_at = CURRENT_TIMESTAMP`,
-    [JSON.stringify(HERO_WORDS)]
-  )
-
-  // Store highlights (about section)
-  const HIGHLIGHTS = [
+  await upsert('highlights', [
     {
       title: '24+ Events',
       description: 'From hackathons and robotics to design sprints and business pitches across five departments.',
@@ -580,37 +395,20 @@ async function insertSchedule(t) {
       icon: 'tabler:music',
       paletteKey: 'error'
     }
-  ]
+  ])
 
-  await t.none(
-    `INSERT INTO site_config (key, value)
-     VALUES ('highlights', $1::jsonb)
-     ON CONFLICT (key) DO UPDATE SET
-       value = EXCLUDED.value,
-       updated_at = CURRENT_TIMESTAMP`,
-    [JSON.stringify(HIGHLIGHTS)]
-  )
+  await upsert('event_start_date', '2026-03-15T09:00:00')
 
-  // Store event start date
-  await t.none(
-    `INSERT INTO site_config (key, value)
-     VALUES ('event_start_date', $1::jsonb)
-     ON CONFLICT (key) DO UPDATE SET
-       value = EXCLUDED.value,
-       updated_at = CURRENT_TIMESTAMP`,
-    [JSON.stringify('2026-03-15T09:00:00')]
-  )
-
-  console.log('    ✓ Schedule, stats, sponsors, testimonials, highlights, hero words seeded')
+  console.log('    \u2713 Schedule, stats, sponsors, testimonials, highlights, hero words seeded')
 }
 
 async function clearSeedData(t) {
-  console.log('  ⏳ Clearing existing seed data...')
+  console.log('  \u23f3 Clearing existing seed data...')
   await t.none('DELETE FROM events WHERE status = $1', ['published'])
-  await t.none('DELETE FROM categories')
-  await t.none('DELETE FROM site_config WHERE key IN ($1, $2, $3, $4, $5, $6, $7)',
+  await t.none('DELETE FROM departments')
+  await t.none(`DELETE FROM site_config WHERE key IN ($1, $2, $3, $4, $5, $6, $7)`,
     ['schedule_days', 'home_stats', 'sponsors', 'testimonials', 'hero_words', 'highlights', 'event_start_date'])
-  console.log('    ✓ Cleared')
+  console.log('    \u2713 Cleared')
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
@@ -620,21 +418,21 @@ async function main() {
 
   try {
     const { now } = await db.one('SELECT NOW() AS now')
-    console.log(`\n🔌 Connected to database (server time: ${now})\n`)
+    console.log(`\n\ud83d\udd0c Connected to database (server time: ${now})\n`)
 
     await db.tx(async t => {
       if (command === 'reset') {
         await clearSeedData(t)
       }
 
-      await insertCategories(t)
+      await insertDepartments(t)
       await insertEvents(t)
-      await insertSchedule(t)
+      await insertSiteConfig(t)
     })
 
-    console.log('\n✓ Seeding complete!\n')
+    console.log('\n\u2713 Seeding complete!\n')
   } catch (err) {
-    console.error(`\n✗ Seed error: ${err.message}\n`)
+    console.error(`\n\u2717 Seed error: ${err.message}\n`)
     console.error(err.stack)
     process.exit(1)
   } finally {

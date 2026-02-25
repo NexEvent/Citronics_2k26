@@ -18,6 +18,7 @@ export const fontFamilyBody = [
 ].join(',')
 
 export const fontFamilyHeading = [
+  '"Plus Jakarta Sans"',
   '"Space Grotesk"',
   'Inter',
   'sans-serif'

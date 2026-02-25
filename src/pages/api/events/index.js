@@ -5,11 +5,11 @@ import eventService from 'src/services/event-service'
  * GET — List published events with optional filters.
  *
  * Query params:
- *   category  — category slug ('cse', 'ece', etc. or 'all')
- *   search    — search term (matches name, tagline, venue)
- *   sort      — 'newest' | 'oldest' | 'popular'
- *   page      — page number (1-based, default 1)
- *   limit     — items per page (default 14, max 50)
+ *   departmentId — department ID (numeric, omit for all)
+ *   search       — search term (matches name, tagline, venue)
+ *   sort         — 'newest' | 'oldest' | 'popular'
+ *   page         — page number (1-based, default 1)
+ *   limit        — items per page (default 14, max 50)
  *
  * Public endpoint — no authentication required.
  */
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     const {
-      category = 'all',
+      departmentId,
       search = '',
       sort = 'newest',
       page = '1',
@@ -31,17 +31,18 @@ export default async function handler(req, res) {
     const pageNum = Math.max(1, parseInt(page) || 1)
     const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 14))
     const offset = (pageNum - 1) * limitNum
+    const deptId = departmentId ? parseInt(departmentId) || null : null
 
     const [events, total] = await Promise.all([
       eventService.getPublishedEvents({
-        categorySlug: category,
+        departmentId: deptId,
         search,
         sort,
         limit: limitNum,
         offset
       }),
       eventService.countPublishedEvents({
-        categorySlug: category,
+        departmentId: deptId,
         search
       })
     ])

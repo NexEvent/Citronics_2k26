@@ -181,13 +181,13 @@ function EventCard({ event, index }) {
   )
 }
 
-export default function EventsSection({ events: EVENTS = [], categories: DEPARTMENTS = [] }) {
+export default function EventsSection({ events: EVENTS = [], departments: DEPARTMENTS = [] }) {
   const c = useAppPalette()
   const [activeDept, setActiveDept] = useState('all')
 
-  const filtered = activeDept === 'all' ? EVENTS : EVENTS.filter(e => e.dept === activeDept)
+  const filtered = activeDept === 'all' ? EVENTS : EVENTS.filter(e => e.departmentId === activeDept)
   const activeDeptData = DEPARTMENTS.find(d => d.id === activeDept)
-  const activeColor = activeDeptData ? (c.theme.palette[activeDeptData.paletteKey]?.main || c.primary) : c.primary
+  const activeColor = c.primary
 
   return (
     <Box
@@ -249,15 +249,39 @@ export default function EventsSection({ events: EVENTS = [], categories: DEPARTM
               gap: 1
             }}
           >
+            {/* "All" button */}
+            <Button
+              onClick={() => setActiveDept('all')}
+              startIcon={<Icon icon='tabler:apps' fontSize={16} />}
+              sx={{
+                px: 2.5,
+                py: 1,
+                borderRadius: '12px',
+                fontWeight: activeDept === 'all' ? 600 : 400,
+                fontSize: '0.85rem',
+                whiteSpace: 'nowrap',
+                textTransform: 'none',
+                color: activeDept === 'all' ? c.primary : c.textSecondary,
+                background: activeDept === 'all' ? alpha(c.primary, 0.1) : 'transparent',
+                border: `1px solid ${activeDept === 'all' ? alpha(c.primary, 0.3) : c.dividerA50}`,
+                transition: 'all 0.25s ease',
+                '&:hover': {
+                  background: alpha(c.primary, 0.08),
+                  color: c.primary,
+                  borderColor: alpha(c.primary, 0.3)
+                }
+              }}
+            >
+              All Events
+            </Button>
             {DEPARTMENTS.map(dept => {
-              const dColor = c.theme.palette[dept.paletteKey]?.main || c.primary
               const isActive = activeDept === dept.id
 
               return (
                 <Button
                   key={dept.id}
                   onClick={() => setActiveDept(dept.id)}
-                  startIcon={<Icon icon={dept.icon} fontSize={16} />}
+                  startIcon={<Icon icon='tabler:building' fontSize={16} />}
                   sx={{
                     px: 2.5,
                     py: 1,
@@ -266,18 +290,18 @@ export default function EventsSection({ events: EVENTS = [], categories: DEPARTM
                     fontSize: '0.85rem',
                     whiteSpace: 'nowrap',
                     textTransform: 'none',
-                    color: isActive ? dColor : c.textSecondary,
-                    background: isActive ? alpha(dColor, 0.1) : 'transparent',
-                    border: `1px solid ${isActive ? alpha(dColor, 0.3) : c.dividerA50}`,
+                    color: isActive ? c.primary : c.textSecondary,
+                    background: isActive ? alpha(c.primary, 0.1) : 'transparent',
+                    border: `1px solid ${isActive ? alpha(c.primary, 0.3) : c.dividerA50}`,
                     transition: 'all 0.25s ease',
                     '&:hover': {
-                      background: alpha(dColor, 0.08),
-                      color: dColor,
-                      borderColor: alpha(dColor, 0.3)
+                      background: alpha(c.primary, 0.08),
+                      color: c.primary,
+                      borderColor: alpha(c.primary, 0.3)
                     }
                   }}
                 >
-                  {dept.label}
+                  {dept.name}
                 </Button>
               )
             })}
@@ -317,7 +341,7 @@ export default function EventsSection({ events: EVENTS = [], categories: DEPARTM
         >
           <Typography variant='body2' sx={{ color: c.textSecondary }}>
             Showing <strong style={{ color: activeColor }}>{filtered.length}</strong> event{filtered.length !== 1 ? 's' : ''}
-            {activeDept !== 'all' && ` in ${activeDeptData?.label}`}
+            {activeDept !== 'all' && ` in ${activeDeptData?.name}`}
           </Typography>
         </MotionBox>
       </Container>

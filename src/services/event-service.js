@@ -9,67 +9,55 @@ import { dbAny, dbOneOrNone } from 'src/lib/database'
  * Naming convention:
  *   getAll*()     → list queries (dbAny)
  *   get*ById()    → single-row lookups (dbOneOrNone)
- *   get*BySlug()  → single-row lookups (dbOneOrNone)
  */
 const eventService = {
-  // ── Categories ─────────────────────────────────────────────────────────────
+  // ── Departments ────────────────────────────────────────────────────────────
 
   /**
-   * All categories ordered by sort_order.
+   * All departments ordered by name.
    * Used for filter dropdowns on events page and home events section.
    */
-  async getAllCategories() {
+  async getAllDepartments() {
     return dbAny(`
-      SELECT
-        id,
-        slug,
-        name,
-        description,
-        images,
-        sort_order
-      FROM categories
-      ORDER BY sort_order ASC
+      SELECT id, name, description
+      FROM departments
+      ORDER BY name ASC
     `)
   },
 
   /**
-   * Single category by slug (e.g. 'cse', 'ece').
+   * Single department by ID.
    */
-  async getCategoryBySlug(slug) {
+  async getDepartmentById(id) {
     return dbOneOrNone(`
-      SELECT
-        id,
-        slug,
-        name,
-        description,
-        images
-      FROM categories
-      WHERE slug = $1
-    `, [slug])
+      SELECT id, name, description
+      FROM departments
+      WHERE id = $1
+    `, [id])
   },
 
   // ── Events ─────────────────────────────────────────────────────────────────
 
   /**
-   * Published events with category info.
-   * Supports optional filtering by category slug.
+   * Published events with department info.
+   * Supports optional filtering by department ID.
    *
    * @param {object} opts
-   * @param {string} [opts.categorySlug] - Filter by category slug (omit or 'all' for all)
+   * @param {number} [opts.departmentId] - Filter by department ID (omit for all)
    * @param {string} [opts.search]       - Search in name, tagline, venue
    * @param {string} [opts.sort]         - 'newest' | 'oldest' | 'popular'
    * @param {number} [opts.limit]        - Max results (default 50)
    * @param {number} [opts.offset]       - Offset for pagination (default 0)
    */
-  async getPublishedEvents({ categorySlug, search, sort = 'newest', limit = 50, offset = 0 } = {}) {
+  async getPublishedEvents({ departmentId, search, sort = 'newest', limit = 50, offset = 0 } = {}) {
     const conditions = [`e.status = 'published'`, `e.visibility = 'public'`]
     const params = []
     let paramIndex = 1
 
-    // Category filter
-    if (categorySlug && categorySlug !== 'all') {
-      conditions.push(`c.slug = $${paramIndex}`)
-      params.push(categorySlug)
+    // Department filter
+    if (departmentId) {
+      conditions.push(`d.id = $${paramIndex}`)
+      params.push(departmentId)
       paramIndex++
     }
 
@@ -111,10 +99,10 @@ const eventService = {
         e.featured,
         e.status,
         e.images,
-        c.slug          AS dept,
-        c.name          AS "categoryName"
+        d.id            AS "departmentId",
+        d.name          AS "departmentName"
       FROM events e
-      LEFT JOIN categories c ON c.id = e.category_id
+      LEFT JOIN departments d ON d.id = e.department_id
       WHERE ${where}
       ORDER BY e.featured DESC, ${orderBy}
       ${limitClause}
@@ -124,14 +112,14 @@ const eventService = {
   /**
    * Count of published events (for pagination).
    */
-  async countPublishedEvents({ categorySlug, search } = {}) {
+  async countPublishedEvents({ departmentId, search } = {}) {
     const conditions = [`e.status = 'published'`, `e.visibility = 'public'`]
     const params = []
     let paramIndex = 1
 
-    if (categorySlug && categorySlug !== 'all') {
-      conditions.push(`c.slug = $${paramIndex}`)
-      params.push(categorySlug)
+    if (departmentId) {
+      conditions.push(`d.id = $${paramIndex}`)
+      params.push(departmentId)
       paramIndex++
     }
 
@@ -149,7 +137,7 @@ const eventService = {
     const row = await dbOneOrNone(`
       SELECT COUNT(*)::int AS total
       FROM events e
-      LEFT JOIN categories c ON c.id = e.category_id
+      LEFT JOIN departments d ON d.id = e.department_id
       WHERE ${where}
     `, params)
 
@@ -157,7 +145,7 @@ const eventService = {
   },
 
   /**
-   * Single event by ID with full details + category info.
+   * Single event by ID with full details + department info.
    */
   async getEventById(id) {
     return dbOneOrNone(`
@@ -178,11 +166,10 @@ const eventService = {
         e.images,
         e.ticket_price,
         e.created_at,
-        c.id            AS "categoryId",
-        c.slug          AS dept,
-        c.name          AS "categoryName"
+        d.id            AS "departmentId",
+        d.name          AS "departmentName"
       FROM events e
-      LEFT JOIN categories c ON c.id = e.category_id
+      LEFT JOIN departments d ON d.id = e.department_id
       WHERE e.id = $1
     `, [id])
   },
@@ -205,10 +192,10 @@ const eventService = {
         e.tags,
         e.featured,
         e.images,
-        c.slug          AS dept,
-        c.name          AS "categoryName"
+        d.id            AS "departmentId",
+        d.name          AS "departmentName"
       FROM events e
-      LEFT JOIN categories c ON c.id = e.category_id
+      LEFT JOIN departments d ON d.id = e.department_id
       WHERE e.featured = TRUE
         AND e.status = 'published'
         AND e.visibility = 'public'

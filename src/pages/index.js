@@ -2,11 +2,12 @@ import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
-import NeuralBackground from 'src/components/NeuralBackground'
 import PublicNavbar from 'src/views/home/PublicNavbar'
 import HeroSection from 'src/views/home/HeroSection'
 import AboutSection from 'src/views/home/AboutSection'
+import UpcomingEventsScroller from 'src/views/home/UpcomingEventsScroller'
 import StatsSection from 'src/views/home/StatsSection'
+import ThisWeekEvents from 'src/views/home/ThisWeekEvents'
 import EventsSection from 'src/views/home/EventsSection'
 import ScheduleSection from 'src/views/home/ScheduleSection'
 import TestimonialsSection from 'src/views/home/TestimonialsSection'
@@ -31,16 +32,14 @@ const Home = () => {
   // Show a brief loader while data is fetching on first load
   if (homeLoading && !homeData) {
     return (
-      <NeuralBackground>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-          <CircularProgress color='primary' />
-        </Box>
-      </NeuralBackground>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress color='primary' />
+      </Box>
     )
   }
 
   const {
-    categories = [],
+    departments = [],
     events = [],
     scheduleDays = [],
     stats = [],
@@ -52,20 +51,20 @@ const Home = () => {
   } = homeData || {}
 
   return (
-    <NeuralBackground>
-      <Box sx={{ overflowX: 'hidden' }}>
+    <Box sx={{ overflowX: 'hidden' }}>
         <PublicNavbar />
         <HeroSection heroWords={heroWords} eventStartDate={eventStartDate} />
+        <UpcomingEventsScroller events={events} />
         <AboutSection highlights={highlights} />
         <StatsSection stats={stats} />
-        <EventsSection events={events} categories={categories} />
+        <ThisWeekEvents events={events} />
+        <EventsSection events={events} departments={departments} />
         <ScheduleSection scheduleDays={scheduleDays} />
         <TestimonialsSection testimonials={testimonials} />
         <SponsorsSection sponsors={sponsors} />
         <CTABanner />
         <PublicFooter />
-      </Box>
-    </NeuralBackground>
+    </Box>
   )
 }
 

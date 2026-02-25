@@ -5,7 +5,7 @@ import axios from 'axios'
 
 /**
  * Fetch all home page data in a single API call.
- * Returns: categories, events, scheduleDays, stats, sponsors,
+ * Returns: departments, events, scheduleDays, stats, sponsors,
  *          testimonials, highlights, heroWords, eventStartDate
  */
 export const fetchHomeData = createAsyncThunk(
@@ -52,16 +52,16 @@ export const fetchEventById = createAsyncThunk(
 )
 
 /**
- * Fetch all categories.
+ * Fetch all departments.
  */
-export const fetchCategories = createAsyncThunk(
-  'events/fetchCategories',
+export const fetchDepartments = createAsyncThunk(
+  'events/fetchDepartments',
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get('/api/categories')
+      const { data } = await axios.get('/api/departments')
       return data.data
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to fetch categories')
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch departments')
     }
   }
 )
@@ -78,9 +78,9 @@ const initialState = {
   pagination: { page: 1, limit: 14, total: 0, totalPages: 0 },
   eventsLoading: false,
 
-  // Categories
-  categories: [],
-  categoriesLoading: false,
+  // Departments
+  departments: [],
+  departmentsLoading: false,
 
   // Single event detail
   currentEvent: null,
@@ -112,9 +112,9 @@ const eventsSlice = createSlice({
       .addCase(fetchHomeData.fulfilled, (state, action) => {
         state.homeLoading = false
         state.homeData = action.payload
-        // Also populate categories from home data
-        if (action.payload.categories) {
-          state.categories = action.payload.categories
+        // Also populate departments from home data
+        if (action.payload.departments) {
+          state.departments = action.payload.departments
         }
       })
       .addCase(fetchHomeData.rejected, (state, action) => {
@@ -151,16 +151,16 @@ const eventsSlice = createSlice({
         state.error = action.payload
       })
 
-      // ── fetchCategories ──
-      .addCase(fetchCategories.pending, state => {
-        state.categoriesLoading = true
+      // ── fetchDepartments ──
+      .addCase(fetchDepartments.pending, state => {
+        state.departmentsLoading = true
       })
-      .addCase(fetchCategories.fulfilled, (state, action) => {
-        state.categoriesLoading = false
-        state.categories = action.payload || []
+      .addCase(fetchDepartments.fulfilled, (state, action) => {
+        state.departmentsLoading = false
+        state.departments = action.payload || []
       })
-      .addCase(fetchCategories.rejected, (state, action) => {
-        state.categoriesLoading = false
+      .addCase(fetchDepartments.rejected, (state, action) => {
+        state.departmentsLoading = false
         state.error = action.payload
       })
   }

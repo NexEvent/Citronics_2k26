@@ -17,362 +17,25 @@ import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import { motion, AnimatePresence } from 'framer-motion'
 import Icon from 'src/components/Icon'
-import { fetchEvents, fetchCategories } from 'src/store/slices/eventsSlice'
-import { fontFamilyHeading } from 'src/theme/typography'
+import { fetchEvents, fetchDepartments } from 'src/store/slices/eventsSlice'
 
 const MotionBox = motion(Box)
 
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Constants
- * ═════════════════════════════════════════════════════════════════════════ */
+const EVENTS_PER_PAGE = 6
 
-const HERO_IMAGES = [
-  '/images/image1.jpg',
-  '/images/image2.jpg',
-  '/images/image3.jpg'
-]
+/* ── Helpers ──────────────────────────────────────────────────────────────── */
 
-const EVENTS_PER_PAGE = 5
-
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Hero Image Carousel
- * ═════════════════════════════════════════════════════════════════════════ */
-
-function HeroCarousel() {
-  const c = useAppPalette()
-  const [current, setCurrent] = useState(0)
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent(prev => (prev + 1) % HERO_IMAGES.length)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [])
-
-  return (
-    <Box
-      sx={{
-        position: 'relative',
-        width: '100%',
-        height: { xs: 280, sm: 380, md: 480 },
-        overflow: 'hidden',
-        borderRadius: { xs: 0, md: '0 0 24px 24px' }
-      }}
-    >
-      {/* Images */}
-      <AnimatePresence mode='wait'>
-        <MotionBox
-          key={current}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: 0.8, ease: 'easeInOut' }}
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `url(${HERO_IMAGES[current]})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        />
-      </AnimatePresence>
-
-      {/* Gradient overlay */}
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          background: `linear-gradient(180deg, transparent 0%, ${c.bgDefaultA92} 100%)`,
-          zIndex: 1
-        }}
-      />
-
-      {/* Title overlay */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 2,
-          px: { xs: 3, md: 6 },
-          pb: { xs: 4, md: 6 }
-        }}
-      >
-        <MotionBox
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-        >
-          <Typography
-            variant='h2'
-            sx={{
-              fontFamily: fontFamilyHeading,
-              fontWeight: 900,
-              letterSpacing: '-1px',
-              textTransform: 'uppercase',
-              background: `linear-gradient(135deg, ${c.primaryLight}, ${c.info})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 1
-            }}
-          >
-            Events
-          </Typography>
-          <Typography
-            variant='h6'
-            sx={{
-              fontWeight: 400,
-              fontStyle: 'italic',
-              color: 'text.disabled',
-              letterSpacing: '0.5px'
-            }}
-          >
-            Innovation & Technology at Citronics 2026
-          </Typography>
-        </MotionBox>
-      </Box>
-
-      {/* Dots indicator */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: { xs: 12, md: 20 },
-          right: { xs: 16, md: 32 },
-          zIndex: 3,
-          display: 'flex',
-          gap: 1
-        }}
-      >
-        {HERO_IMAGES.map((_, i) => (
-          <Box
-            key={i}
-            role='button'
-            tabIndex={0}
-            aria-label={`Go to slide ${i + 1}`}
-            onClick={() => setCurrent(i)}
-            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCurrent(i) } }}
-            sx={{
-              width: i === current ? 28 : 10,
-              height: 10,
-              borderRadius: '100px',
-              background:
-                i === current
-                  ? `linear-gradient(90deg, ${c.primary}, ${c.info})`
-                  : c.whiteA25,
-              cursor: 'pointer',
-              transition: 'all 0.4s ease'
-            }}
-          />
-        ))}
-      </Box>
-    </Box>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Event Row Card (list style — with image placeholder)
- * ═════════════════════════════════════════════════════════════════════════ */
-
-function EventRow({ event, index }) {
-  const c = useAppPalette()
-  const router = useRouter()
-  const color = c.primary
-  const fillPct = event.seats > 0 ? Math.round(((event.registered || 0) / event.seats) * 100) : 0
-  const almostFull = fillPct >= 80
-  const imageUrl = getEventImage(event)
-  const fallbackIcon = 'tabler:calendar-event'
-
-  return (
-    <MotionBox
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.4, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
-      sx={{
-        display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 2, sm: 2.5 },
-        borderRadius: '14px',
-        background: c.bgPaperA60,
-        border: `1px solid ${c.dividerA30}`,
-        backdropFilter: 'blur(12px)',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          border: `1px solid ${alpha(color, 0.25)}`,
-          boxShadow: `0 8px 32px ${alpha(color, 0.08)}`,
-          transform: 'translateY(-2px)'
-        }
-      }}
-    >
-      {/* Date block */}
-      <Box sx={{ minWidth: 68, textAlign: 'center', flexShrink: 0, py: 0.5 }}>
-        <Typography
-          variant='caption'
-          sx={{
-            fontFamily: fontFamilyHeading,
-            color: 'text.primary',
-            fontWeight: 700,
-            display: 'block',
-            fontSize: '0.78rem'
-          }}
-        >
-          {event.date.split(',')[0]}
-        </Typography>
-        <Typography variant='caption' sx={{ color: 'text.disabled', fontSize: '0.7rem' }}>
-          {event.date.split(',')[1]?.trim()}
-        </Typography>
-      </Box>
-
-      {/* Event image placeholder */}
-      <Box
-        sx={{
-          width: { xs: '100%', sm: 100 },
-          height: { xs: 140, sm: 72 },
-          borderRadius: '10px',
-          overflow: 'hidden',
-          flexShrink: 0,
-          position: 'relative',
-          background: alpha(color, 0.08),
-          border: `1px solid ${alpha(color, 0.12)}`
-        }}
-      >
-        {imageUrl ? (
-          <Box
-            component='img'
-            src={imageUrl}
-            alt={event.name || event.title}
-            onError={e => {
-              e.target.style.display = 'none'
-              if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'
-            }}
-            sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : null}
-        {/* Fallback icon — shown when no image */}
-        <Box
-          sx={{
-            display: imageUrl ? 'none' : 'flex',
-            position: 'absolute',
-            inset: 0,
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <Icon icon={fallbackIcon} fontSize={28} style={{ color: alpha(color, 0.5) }} />
-        </Box>
-      </Box>
-
-      {/* Event info */}
-      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-        {almostFull && (
-          <Chip
-            label={fillPct >= 95 ? 'Almost Full!' : `${event.seats - (event.registered || 0)} Spots Left`}
-            size='small'
-            sx={{
-              mb: 0.5,
-              height: 22,
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              background: c.errorA15,
-              color: c.error,
-              border: `1px solid ${c.errorA20}`
-            }}
-          />
-        )}
-        <Typography
-          variant='subtitle1'
-          sx={{
-            fontFamily: fontFamilyHeading,
-            fontWeight: 700,
-            color: 'text.primary',
-            mb: 0.3,
-            textTransform: 'uppercase',
-            letterSpacing: '0.3px'
-          }}
-        >
-          {event.title}
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
-          <Icon icon='tabler:map-pin' fontSize={14} style={{ color: c.textSecondary }} />
-          <Typography variant='caption' sx={{ color: 'text.secondary' }}>
-            {event.venue}
-          </Typography>
-          <Typography variant='caption' sx={{ color: 'text.disabled' }}>•</Typography>
-          <Typography variant='caption' sx={{ color: 'text.secondary' }}>
-            {event.time}
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Actions */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0 }}>
-        <Button
-          variant='contained'
-          size='small'
-          sx={{
-            minWidth: 110,
-            borderRadius: '8px',
-            fontFamily: fontFamilyHeading,
-            fontWeight: 700,
-            fontSize: '0.78rem',
-            textTransform: 'none',
-            background: `linear-gradient(135deg, ${color}, ${alpha(color, 0.7)})`,
-            boxShadow: `0 4px 16px ${alpha(color, 0.25)}`,
-            '&:hover': {
-              boxShadow: `0 6px 24px ${alpha(color, 0.35)}`,
-              transform: 'translateY(-1px)'
-            },
-            transition: 'all 0.2s ease'
-          }}
-        >
-          Register
-        </Button>
-        <Button
-          variant='outlined'
-          size='small'
-          onClick={() => router.push(`/events/${event.id}`)}
-          sx={{
-            minWidth: 110,
-            borderRadius: '8px',
-            fontFamily: fontFamilyHeading,
-            fontWeight: 600,
-            fontSize: '0.78rem',
-            textTransform: 'none',
-            borderColor: c.dividerA30,
-            color: 'text.secondary',
-            '&:hover': {
-              borderColor: alpha(color, 0.4),
-              background: alpha(color, 0.06),
-              color: 'text.primary'
-            }
-          }}
-        >
-          More Info
-        </Button>
-      </Box>
-    </MotionBox>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Helpers
- * ═════════════════════════════════════════════════════════════════════════ */
-
-function formatEventDate(iso) {
-  if (!iso) return ''
-  const date = new Date(iso)
-  const day = date.toLocaleDateString('en-IN', { weekday: 'short' })
-  const dateStr = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
-  return `${day}, ${dateStr}`
+function parseEventDate(iso) {
+  if (!iso) return { full: '' }
+  const d = new Date(iso)
+  const weekday = d.toLocaleDateString('en-US', { weekday: 'long' })
+  const month = d.toLocaleDateString('en-US', { month: 'long' })
+  return { full: `${weekday}, ${month} ${d.getDate()}, ${d.getFullYear()}` }
 }
 
 function formatEventTime(iso) {
   if (!iso) return ''
-  return new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
 function getEventImage(event) {
@@ -383,33 +46,260 @@ function getEventImage(event) {
   return null
 }
 
+/* ── EventCard ────────────────────────────────────────────────────────────── */
+
+function EventCard({ event, index }) {
+  const c = useAppPalette()
+  const router = useRouter()
+  const accent = c.primary
+  const imageUrl = getEventImage(event)
+  const spotsLeft = event.seats > 0 ? event.seats - (event.registered || 0) : null
+  const almostFull = spotsLeft !== null && spotsLeft <= Math.ceil(event.seats * 0.2)
+  const dateParsed = parseEventDate(event.start_time)
+  const time = formatEventTime(event.start_time)
+
+  const meta = [
+    { label: 'Date', value: dateParsed.full },
+    { label: 'Time', value: time },
+    event.venue && { label: 'Venue', value: event.venue },
+    event.prize && { label: 'Prize', value: event.prize }
+  ].filter(Boolean)
+
+  return (
+    <MotionBox
+      layout
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.35, delay: index * 0.04, ease: [0.25, 1, 0.5, 1] }}
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        borderRadius: '16px',
+        border: `1.5px solid ${alpha(accent, 0.22)}`,
+        background: c.isDark ? alpha(c.bgPaper, 0.45) : alpha(c.bgPaper, 0.85),
+        backdropFilter: 'blur(12px)',
+        overflow: 'hidden',
+        transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
+        '&:hover': {
+          borderColor: alpha(accent, 0.48),
+          boxShadow: `0 8px 40px ${alpha(accent, 0.1)}`
+        }
+      }}
+    >
+      {/* Image */}
+      <Box
+        sx={{
+          width: { xs: '100%', md: 200 },
+          minHeight: { xs: 180, md: 180 },
+          flexShrink: 0,
+          position: 'relative',
+          overflow: 'hidden',
+          bgcolor: alpha(accent, 0.06)
+        }}
+      >
+        {imageUrl ? (
+          <Box
+            component='img'
+            src={imageUrl}
+            alt={event.title}
+            loading='lazy'
+            onError={e => {
+              e.target.style.display = 'none'
+              if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'
+            }}
+            sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : null}
+        <Box
+          sx={{
+            display: imageUrl ? 'none' : 'flex',
+            position: 'absolute',
+            inset: 0,
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <Icon icon='tabler:calendar-event' fontSize={36} style={{ color: alpha(accent, 0.35) }} />
+        </Box>
+      </Box>
+
+      {/* Content */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          p: { xs: 2.5, md: 3 },
+          gap: { xs: 2, sm: 3 }
+        }}
+      >
+        {/* Left: info */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant='h6'
+            sx={{
+              fontWeight: 700,
+              fontSize: { xs: '1.05rem', md: '1.1rem' },
+              lineHeight: 1.35,
+              mb: 0.75,
+              letterSpacing: '-0.01em',
+              color: 'text.primary'
+            }}
+          >
+            {event.title}
+          </Typography>
+
+          {event.tagline && (
+            <Typography
+              variant='body2'
+              sx={{
+                color: 'text.secondary',
+                fontSize: '0.82rem',
+                lineHeight: 1.55,
+                mb: 2,
+                maxWidth: 520,
+                opacity: 0.85
+              }}
+            >
+              {event.tagline}
+            </Typography>
+          )}
+
+          {almostFull && spotsLeft !== null && (
+            <Chip
+              label={spotsLeft <= 0 ? 'Sold Out' : `${spotsLeft} Spot${spotsLeft !== 1 ? 's' : ''} Left`}
+              size='small'
+              sx={{
+                mb: 2,
+                height: 24,
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+                background: spotsLeft <= 0 ? c.errorA15 : alpha(c.warning, 0.12),
+                color: spotsLeft <= 0 ? c.error : c.warning,
+                border: `1px solid ${spotsLeft <= 0 ? c.errorA20 : alpha(c.warning, 0.2)}`,
+                '& .MuiChip-label': { px: 1.5 }
+              }}
+            />
+          )}
+
+          {/* Metadata table */}
+          <Box
+            component='table'
+            sx={{
+              borderCollapse: 'collapse',
+              '& td': { py: 0.35, verticalAlign: 'top', fontSize: '0.8rem', lineHeight: 1.6 },
+              '& td:first-of-type': { color: 'text.disabled', pr: 3, whiteSpace: 'nowrap', fontWeight: 500 },
+              '& td:last-of-type': { color: 'text.primary', fontWeight: 600 }
+            }}
+          >
+            <tbody>
+              {meta.map(({ label, value }) => (
+                <tr key={label}>
+                  <td>{label}:</td>
+                  <td>{value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Box>
+        </Box>
+
+        {/* Right: actions */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            alignItems: { xs: 'stretch', sm: 'flex-end' },
+            gap: 1.25,
+            flexShrink: 0,
+            pt: { xs: 0, sm: 0.5 }
+          }}
+        >
+          <Button
+            variant='contained'
+            size='small'
+            disableElevation
+            sx={{
+              minWidth: 130,
+              height: 38,
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              bgcolor: accent,
+              color: c.primaryContrast,
+              '&:hover': { bgcolor: c.primaryDark, boxShadow: `0 4px 20px ${alpha(accent, 0.3)}` },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Register
+          </Button>
+          <Button
+            variant='text'
+            size='small'
+            onClick={() => router.push(`/events/${event.id}`)}
+            sx={{
+              minWidth: 130,
+              height: 36,
+              borderRadius: '8px',
+              fontWeight: 600,
+              fontSize: '0.76rem',
+              letterSpacing: '0.03em',
+              textTransform: 'none',
+              color: 'text.secondary',
+              border: `1px solid ${c.dividerA30}`,
+              '&:hover': {
+                borderColor: alpha(accent, 0.35),
+                color: 'text.primary',
+                background: alpha(accent, 0.05)
+              }
+            }}
+          >
+            More Info
+          </Button>
+        </Box>
+      </Box>
+    </MotionBox>
+  )
+}
+
+
 /* ═══════════════════════════════════════════════════════════════════════════
  *  Loading Skeleton
  * ═════════════════════════════════════════════════════════════════════════ */
 
-function EventRowSkeleton() {
+function EventCardSkeleton() {
   const c = useAppPalette()
-
   return (
     <Box
       sx={{
         display: 'flex',
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 2, sm: 2.5 },
-        borderRadius: '14px',
-        background: c.bgPaperA60,
-        border: `1px solid ${c.dividerA30}`
+        flexDirection: { xs: 'column', md: 'row' },
+        borderRadius: '16px',
+        border: `1.5px solid ${c.dividerA30}`,
+        background: c.isDark ? alpha(c.bgPaper, 0.35) : alpha(c.bgPaper, 0.7),
+        overflow: 'hidden'
       }}
     >
-      <Skeleton width={68} height={60} sx={{ borderRadius: '10px' }} />
-      <Skeleton width={100} height={72} sx={{ borderRadius: '10px', display: { xs: 'none', sm: 'block' } }} />
-      <Box sx={{ flexGrow: 1 }}>
-        <Skeleton width='60%' height={20} sx={{ mb: 1 }} />
-        <Skeleton width='40%' height={16} />
-      </Box>
-      <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-        <Skeleton width={110} height={34} sx={{ borderRadius: '8px' }} />
-        <Skeleton width={110} height={34} sx={{ borderRadius: '8px' }} />
+      <Skeleton
+        variant='rectangular'
+        sx={{ width: { xs: '100%', md: 200 }, height: { xs: 160, md: 180 }, flexShrink: 0 }}
+      />
+      <Box sx={{ flex: 1, p: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
+        <Box sx={{ flex: 1 }}>
+          <Skeleton width='55%' height={24} sx={{ mb: 1 }} />
+          <Skeleton width='80%' height={16} sx={{ mb: 2.5 }} />
+          <Skeleton width='40%' height={14} sx={{ mb: 0.75 }} />
+          <Skeleton width='30%' height={14} sx={{ mb: 0.75 }} />
+          <Skeleton width='35%' height={14} />
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, alignItems: 'flex-end' }}>
+          <Skeleton width={130} height={38} sx={{ borderRadius: '8px' }} />
+          <Skeleton width={130} height={36} sx={{ borderRadius: '8px' }} />
+        </Box>
       </Box>
     </Box>
   )
@@ -422,7 +312,7 @@ function EventRowSkeleton() {
 export default function EventsPageView() {
   const c = useAppPalette()
   const dispatch = useDispatch()
-  const { events, pagination, eventsLoading, categories } = useSelector(state => state.events)
+  const { events, pagination, eventsLoading, departments } = useSelector(state => state.events)
 
   const [activeDept, setActiveDept] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -443,7 +333,7 @@ export default function EventsPageView() {
   useEffect(() => {
     dispatch(
       fetchEvents({
-        categorySlug: activeDept === 'all' ? undefined : activeDept,
+        departmentId: activeDept === 'all' ? undefined : activeDept,
         search: debouncedSearch,
         sort: sortOrder,
         page,
@@ -452,12 +342,12 @@ export default function EventsPageView() {
     )
   }, [dispatch, activeDept, debouncedSearch, sortOrder, page])
 
-  // Fetch categories on mount
+  // Fetch departments on mount
   useEffect(() => {
-    if (!categories || categories.length === 0) {
-      dispatch(fetchCategories())
+    if (!departments || departments.length === 0) {
+      dispatch(fetchDepartments())
     }
-  }, [dispatch, categories])
+  }, [dispatch, departments])
 
   const handleDeptChange = useCallback(e => {
     setActiveDept(e.target.value)
@@ -471,144 +361,156 @@ export default function EventsPageView() {
   const inputSx = {
     '& .MuiOutlinedInput-root': {
       borderRadius: '10px',
-      background: c.bgPaperA70,
+      background: c.isDark ? alpha(c.bgPaper, 0.5) : alpha(c.bgPaper, 0.9),
       backdropFilter: 'blur(8px)',
-      color: 'text.primary',
-      fontFamily: fontFamilyHeading,
-      fontSize: '0.88rem',
+      fontSize: '0.85rem',
+      fontWeight: 500,
       '& fieldset': { borderColor: c.dividerA30 },
-      '&:hover fieldset': { borderColor: c.dividerA60 },
-      '&.Mui-focused fieldset': { borderColor: c.primaryA50 }
+      '&:hover fieldset': { borderColor: c.dividerA50 },
+      '&.Mui-focused fieldset': { borderColor: alpha(c.primary, 0.5) }
     },
-    '& .MuiInputAdornment-root': { color: 'text.secondary' },
-    '& .MuiSelect-icon': { color: 'text.secondary' }
+    '& .MuiInputAdornment-root': { color: 'text.disabled' },
+    '& .MuiSelect-icon': { color: 'text.disabled' }
   }
 
   const totalPages = pagination?.totalPages || 1
+  const totalCount = pagination?.total || 0
 
   return (
     <Box component='section' aria-label='Events'>
-      {/* ── Hero carousel ──────────────────────────────────────────── */}
-      <HeroCarousel />
+      <Container maxWidth='lg'>
 
-      {/* ── Filter bar: search + category dropdown + sort ──────────── */}
-      <Container maxWidth='lg' sx={{ mt: { xs: 3, md: 5 }, mb: { xs: 2, md: 3 } }}>
+        {/* Page Header */}
         <MotionBox
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.45 }}
+          sx={{
+            display: 'flex',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: 'space-between',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1.5,
+            mb: { xs: 3, md: 4 }
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {!eventsLoading && totalCount > 0 && (
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: `2px solid ${alpha(c.primary, 0.4)}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: c.primary }}>
+                  {totalCount}
+                </Typography>
+              </Box>
+            )}
+            <Typography
+              variant='h4'
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: '1.6rem', md: '2rem' },
+                letterSpacing: '-0.02em',
+                lineHeight: 1.2
+              }}
+            >
+              Upcoming Events
+            </Typography>
+          </Box>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary', fontSize: '0.82rem', maxWidth: 280, textAlign: { xs: 'left', sm: 'right' }, lineHeight: 1.5, opacity: 0.8 }}
+          >
+            All upcoming events at Citronics 2026.
+          </Typography>
+        </MotionBox>
+
+        {/* Filter Bar */}
+        <MotionBox
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.08 }}
           sx={{
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
             alignItems: { xs: 'stretch', sm: 'center' },
-            gap: 2
+            gap: 1.5,
+            mb: { xs: 3, md: 4 },
+            pb: { xs: 2.5, md: 3 },
+            borderBottom: `1px solid ${c.dividerA30}`
           }}
         >
-          {/* Search bar */}
           <TextField
-            placeholder='Search Events'
+            placeholder='Search events...'
             value={searchQuery}
             onChange={handleSearch}
             size='small'
             aria-label='Search events'
-            sx={{ ...inputSx, flexGrow: 1, maxWidth: { sm: 320 } }}
+            sx={{ ...inputSx, flexGrow: 1, maxWidth: { sm: 300 } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position='start'>
-                  <Icon icon='tabler:search' fontSize={18} />
+                  <Icon icon='tabler:search' fontSize={17} />
                 </InputAdornment>
               )
             }}
           />
 
-          {/* Category dropdown */}
-          <FormControl size='small' sx={{ minWidth: 180, ...inputSx }}>
+          <FormControl size='small' sx={{ minWidth: 170, ...inputSx }}>
             <Select
               value={activeDept}
               onChange={handleDeptChange}
               displayEmpty
-              aria-label='Filter by category'
-              sx={{ color: 'text.primary', '& .MuiSelect-select': { py: 1 } }}
+              aria-label='Filter by department'
+              sx={{ '& .MuiSelect-select': { py: 1 } }}
             >
-              <MenuItem value='all'>All Categories</MenuItem>
-              {categories.filter(cat => cat.slug !== 'all').map(cat => (
-                <MenuItem key={cat.slug} value={cat.slug}>
-                  {cat.name}
-                </MenuItem>
+              <MenuItem value='all'>All Departments</MenuItem>
+              {departments.map(dept => (
+                <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
               ))}
             </Select>
           </FormControl>
 
           <Box sx={{ flexGrow: 1 }} />
 
-          {/* Sort dropdown */}
           <FormControl size='small' sx={{ minWidth: 130, ...inputSx }}>
             <Select
               value={sortOrder}
               onChange={e => { setSortOrder(e.target.value); setPage(1) }}
               aria-label='Sort order'
-              sx={{ color: 'text.primary', '& .MuiSelect-select': { py: 1 } }}
+              sx={{ '& .MuiSelect-select': { py: 1 } }}
             >
               <MenuItem value='newest'>Newest</MenuItem>
               <MenuItem value='oldest'>Oldest</MenuItem>
-              <MenuItem value='popular'>Most Popular</MenuItem>
+              <MenuItem value='popular'>Popular</MenuItem>
             </Select>
           </FormControl>
         </MotionBox>
-      </Container>
 
-      {/* ── Events list ────────────────────────────────────────────── */}
-      <Container maxWidth='lg' sx={{ py: { xs: 2, md: 4 } }}>
-        {/* Results count */}
-        {!eventsLoading && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography
-              variant='body2'
-              sx={{
-                color: 'text.secondary',
-                fontFamily: fontFamilyHeading,
-                '& strong': { color: 'text.primary' }
-              }}
-            >
-              Showing <strong>{events.length}</strong> of <strong>{pagination?.total || 0}</strong> events
-            </Typography>
-          </Box>
-        )}
-
-        {/* Event rows */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {/* Events List */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 4 }}>
           <AnimatePresence mode='wait'>
             {eventsLoading ? (
-              // Loading state — show skeletons
-              Array.from({ length: EVENTS_PER_PAGE }).map((_, i) => (
-                <EventRowSkeleton key={`skeleton-${i}`} />
-              ))
+              Array.from({ length: EVENTS_PER_PAGE }).map((_, i) => <EventCardSkeleton key={`sk-${i}`} />)
             ) : events.length > 0 ? (
-              // Events loaded
-              events.map((event, i) => (
-                <EventRow
-                  key={event.id}
-                  event={{
-                    ...event,
-                    date: formatEventDate(event.start_time),
-                    time: formatEventTime(event.start_time)
-                  }}
-                  index={i}
-                />
-              ))
+              events.map((ev, i) => <EventCard key={ev.id} event={ev} index={i} />)
             ) : (
-              // No events found
               <MotionBox
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                sx={{ textAlign: 'center', py: 10 }}
+                sx={{ textAlign: 'center', py: 12, borderRadius: '16px', border: `1.5px dashed ${c.dividerA30}` }}
               >
-                <Icon icon='tabler:mood-empty' fontSize={48} style={{ color: c.textDisabled }} />
-                <Typography
-                  variant='body1'
-                  sx={{ color: 'text.secondary', mt: 2, fontFamily: fontFamilyHeading }}
-                >
-                  No events found. Try a different search or category.
+                <Icon icon='tabler:calendar-off' fontSize={44} style={{ color: c.textDisabled }} />
+                <Typography variant='body1' sx={{ color: 'text.secondary', mt: 2, fontWeight: 500 }}>
+                  No events found. Try a different search or department.
                 </Typography>
               </MotionBox>
             )}
@@ -617,7 +519,7 @@ export default function EventsPageView() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', pb: 6 }}>
             <Pagination
               count={totalPages}
               page={page}
@@ -626,23 +528,26 @@ export default function EventsPageView() {
               disabled={eventsLoading}
               sx={{
                 '& .MuiPaginationItem-root': {
-                  fontFamily: fontFamilyHeading,
                   fontWeight: 600,
-                  borderRadius: '50%',
+                  fontSize: '0.82rem',
+                  borderRadius: '10px',
                   color: 'text.secondary',
                   border: `1px solid ${c.dividerA30}`,
-                  '&:hover': { background: 'action.hover' },
+                  minWidth: 38,
+                  height: 38,
+                  '&:hover': { background: alpha(c.primary, 0.06), borderColor: alpha(c.primary, 0.3) },
                   '&.Mui-selected': {
-                    background: c.gradientPrimary,
-                    color: 'primary.contrastText',
+                    bgcolor: c.primary,
+                    color: c.primaryContrast,
                     border: 'none',
-                    boxShadow: `0 4px 16px ${c.primaryA30}`
+                    '&:hover': { bgcolor: c.primaryDark }
                   }
                 }
               }}
             />
           </Box>
         )}
+
       </Container>
     </Box>
   )

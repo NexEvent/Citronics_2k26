@@ -227,28 +227,28 @@ function RotatingWord({ words: HERO_WORDS = [] }) {
   return (
     <Box
       sx={{
-        display: 'inline-block',
+        display: 'block',
         position: 'relative',
-        minWidth: { xs: 200, sm: 320, md: 460, lg: 540 },
-        height: { xs: '4rem', sm: '6rem', md: '8rem', lg: '9.5rem' },
-        overflow: 'hidden',
-        verticalAlign: 'bottom'
+        width: '100%',
+        height: { xs: '6rem', sm: '9rem', md: '12rem', lg: '14rem' },
+        overflow: 'hidden'
       }}
     >
       <AnimatePresence mode='wait'>
         <MotionTypography
           key={HERO_WORDS[index]}
-          initial={{ y: 60, opacity: 0 }}
+          initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -60, opacity: 0 }}
+          exit={{ y: '-100%', opacity: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           component='span'
           sx={{
-            position: 'absolute',
-            left: 0,
+            display: 'block',
             fontWeight: 900,
             fontSize: 'inherit',
-            lineHeight: 'inherit',
+            lineHeight: 1.15,
+            letterSpacing: 'inherit',
+            textTransform: 'inherit',
             background: c.gradientTriple,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -502,19 +502,18 @@ export default function HeroSection({ heroWords: HERO_WORDS = [], eventStartDate
 
           {/* ── Row 3: Rotating word (massive) ───────────────────────── */}
           <MotionBox variants={fadeUp} sx={{ mb: { xs: 4, md: 5 } }}>
-            <Typography
-              variant='h1'
+            <Box
               sx={{
                 fontWeight: 900,
                 fontSize: { xs: '3.8rem', sm: '5.8rem', md: '8rem', lg: '9.5rem' },
-                lineHeight: 1,
+                lineHeight: 1.15,
                 letterSpacing: '-4px',
                 textTransform: 'uppercase',
                 color: heroText
               }}
             >
               <RotatingWord words={HERO_WORDS} />
-            </Typography>
+            </Box>
           </MotionBox>
 
           {/* ── Hero image with starburst badges ─────────────────────── */}
@@ -549,7 +548,7 @@ export default function HeroSection({ heroWords: HERO_WORDS = [], eventStartDate
               {/* Placeholder gradient (replace src with actual event image) */}
               <Box
                 component='img'
-                src='/image.jpg'
+                src='/imagesB.jpg'
                 alt='Citronics Technical Fest'
                 sx={{
                   width: '100%',

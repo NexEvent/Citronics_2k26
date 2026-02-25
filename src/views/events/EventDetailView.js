@@ -283,11 +283,11 @@ export default function EventDetailView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {/* Category chip */}
-          {event.categoryName && (
+          {/* Department chip */}
+          {event.departmentName && (
             <Chip
-              icon={<Icon icon={event.categoryIcon || 'tabler:tag'} fontSize={14} />}
-              label={event.categoryName}
+              icon={<Icon icon='tabler:building' fontSize={14} />}
+              label={event.departmentName}
               size='small'
               sx={{
                 mb: 2,

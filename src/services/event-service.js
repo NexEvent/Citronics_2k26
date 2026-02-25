@@ -180,7 +180,6 @@ const eventService = {
         e.registered,
         e.prize,
         e.tags,
-        e.palette_key   AS "paletteKey",
         e.featured,
         e.status,
         e.images,
@@ -188,9 +187,7 @@ const eventService = {
         e.created_at,
         c.id            AS "categoryId",
         c.slug          AS dept,
-        c.name          AS "categoryName",
-        c.icon          AS "categoryIcon",
-        c.palette_key   AS "categoryPaletteKey"
+        c.name          AS "categoryName"
       FROM events e
       LEFT JOIN categories c ON c.id = e.category_id
       WHERE e.id = $1

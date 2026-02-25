@@ -177,11 +177,11 @@ function HeroCarousel() {
 function EventRow({ event, index }) {
   const c = useAppPalette()
   const router = useRouter()
-  const color = c.theme.palette[event.paletteKey]?.main || c.primary
+  const color = c.primary
   const fillPct = event.seats > 0 ? Math.round(((event.registered || 0) / event.seats) * 100) : 0
   const almostFull = fillPct >= 80
   const imageUrl = getEventImage(event)
-  const fallbackIcon = event.categoryIcon || 'tabler:calendar-event'
+  const fallbackIcon = 'tabler:calendar-event'
 
   return (
     <MotionBox

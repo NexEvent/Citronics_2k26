@@ -15,8 +15,6 @@ CREATE TABLE IF NOT EXISTS categories (
     slug        VARCHAR(50)  NOT NULL UNIQUE,
     name        VARCHAR(255) NOT NULL,
     description TEXT,
-    icon        VARCHAR(100),
-    palette_key VARCHAR(30)  NOT NULL DEFAULT 'primary',
     images      JSONB        DEFAULT '[]'::jsonb,
     sort_order  INTEGER      NOT NULL DEFAULT 0,
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -32,7 +30,7 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS prize        VARCHAR(100);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS tags         TEXT[]       DEFAULT '{}';
 ALTER TABLE events ADD COLUMN IF NOT EXISTS featured     BOOLEAN      DEFAULT FALSE;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS registered   INTEGER      DEFAULT 0;
-ALTER TABLE events ADD COLUMN IF NOT EXISTS palette_key  VARCHAR(30)  DEFAULT 'primary';
+
 ALTER TABLE events ADD COLUMN IF NOT EXISTS images       JSONB        DEFAULT '[]'::jsonb;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS category_id  BIGINT;
 
@@ -47,3 +45,4 @@ CREATE INDEX idx_events_featured    ON events(featured) WHERE featured = TRUE;
 -- ── Record this migration ──────────────────────────────────────────────────
 INSERT INTO _migrations (name) VALUES ('003_add_categories_and_enhance_events')
   ON CONFLICT (name) DO NOTHING;
+

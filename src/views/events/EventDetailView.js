@@ -164,12 +164,12 @@ export default function EventDetailView() {
     return <DetailSkeleton />
   }
 
-  const color = c.theme.palette[event.paletteKey]?.main || c.primary
+  const color = c.primary
   const fillPct = event.seats > 0 ? Math.round((event.registered / event.seats) * 100) : 0
   const almostFull = fillPct >= 80
   const spotsLeft = event.seats - (event.registered || 0)
   const imageUrl = getEventImage(event)
-  const fallbackIcon = event.categoryIcon || 'tabler:calendar-event'
+  const fallbackIcon = 'tabler:calendar-event'
 
   return (
     <Box component='main' aria-label={`Event: ${event.title}`}>

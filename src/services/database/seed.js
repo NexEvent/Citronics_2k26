@@ -47,8 +47,6 @@ const CATEGORIES = [
     slug: 'all',
     name: 'All Events',
     description: 'View all events across departments',
-    icon: 'tabler:layout-grid',
-    palette_key: 'primary',
     images: [],
     sort_order: 0
   },
@@ -56,8 +54,6 @@ const CATEGORIES = [
     slug: 'cse',
     name: 'Computer Science',
     description: 'Coding, hackathons, AI/ML challenges, cybersecurity CTFs and more',
-    icon: 'tabler:cpu',
-    palette_key: 'primary',
     images: [],
     sort_order: 1
   },
@@ -65,8 +61,6 @@ const CATEGORIES = [
     slug: 'ece',
     name: 'Electronics & Comm.',
     description: 'Circuit design, robotics, IoT projects, signal processing',
-    icon: 'tabler:circuit-board',
-    palette_key: 'info',
     images: [],
     sort_order: 2
   },
@@ -74,8 +68,6 @@ const CATEGORIES = [
     slug: 'mech',
     name: 'Mechanical Engg.',
     description: 'CAD modelling, thermodynamics, bridge design, workshop challenges',
-    icon: 'tabler:settings-2',
-    palette_key: 'warning',
     images: [],
     sort_order: 3
   },
@@ -83,8 +75,6 @@ const CATEGORIES = [
     slug: 'civil',
     name: 'Civil Engineering',
     description: 'Concrete design, surveying, structural analysis competitions',
-    icon: 'tabler:building-bridge',
-    palette_key: 'success',
     images: [],
     sort_order: 4
   },
@@ -92,8 +82,6 @@ const CATEGORIES = [
     slug: 'mgmt',
     name: 'Management',
     description: 'Business pitches, marketing contests, startup showcases',
-    icon: 'tabler:chart-bar',
-    palette_key: 'error',
     images: [],
     sort_order: 5
   }

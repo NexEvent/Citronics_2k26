@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
@@ -12,370 +12,507 @@ import Tooltip from '@mui/material/Tooltip'
 import Avatar from '@mui/material/Avatar'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
+import Collapse from '@mui/material/Collapse'
 import useMediaQuery from '@mui/material/useMediaQuery'
-import { alpha, useTheme } from '@mui/material/styles'
 import { Classic } from '@theme-toggles/react'
 import '@theme-toggles/react/css/Classic.css'
 import { IconMenu2, IconX, IconBell } from '@tabler/icons-react'
+import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import Icon from 'src/components/Icon'
 import { useSettings } from 'src/hooks/useSettings'
 import themeConfig from 'src/configs/themeConfig'
+import { useAppPalette, glass } from 'src/components/palette'
+
+/* ── Animated nav link with vertical slide on hover ─────────────────────── */
+const AnimatedNavLink = ({ href, children, active, onClick }) => {
+  const c = useAppPalette()
+  return (
+  <Box
+    component='a'
+    href={href}
+    onClick={onClick}
+    sx={{
+      position: 'relative',
+      display: 'inline-flex',
+      alignItems: 'flex-start',
+      height: '28px',
+      overflow: 'hidden',
+      textDecoration: 'none',
+      '&:hover .nav-link-inner': { transform: 'translateY(-28px)' }
+    }}
+  >
+    <Box
+      className='nav-link-inner'
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+        transform: 'translateY(0px)'
+      }}
+    >
+      {/* Default state */}
+      <Typography
+        component='span'
+        sx={{
+          display: 'block',
+          height: '28px',
+          lineHeight: '28px',
+          fontSize: '0.95rem',
+          fontWeight: active ? 600 : 400,
+          color: c.white,
+          whiteSpace: 'nowrap'
+        }}
+      >
+        {children}
+      </Typography>
+      {/* Hover state */}
+      <Typography
+        component='span'
+        sx={{
+          display: 'block',
+          height: '28px',
+          lineHeight: '28px',
+          fontSize: '0.95rem',
+          fontWeight: 600,
+          color: c.white,
+          whiteSpace: 'nowrap'
+        }}
+      >
+        {children}
+      </Typography>
+    </Box>
+  </Box>
+  )
+}
+
+/* ── Four-dot logo mark ──────────────────────────────────────────────────── */
+const LogoDots = () => (
+  <Box component={Link} href='/' aria-label='Home' sx={{ position: 'relative', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}>
+    {[
+      { top: 0, left: '50%', transform: 'translateX(-50%)' },
+      { bottom: 0, left: '50%', transform: 'translateX(-50%)' },
+      { left: 0, top: '50%', transform: 'translateY(-50%)' },
+      { right: 0, top: '50%', transform: 'translateY(-50%)' }
+    ].map((pos, i) => (
+      <Box key={i} sx={{ position: 'absolute', width: 7, height: 7, borderRadius: '50%', bgcolor: glass.dot, ...pos }} />
+    ))}
+  </Box>
+)
 
 /**
- * Global Navbar — floating pill-style bar
+ * Global Navbar — centered pill-style glass bar (21st.dev-inspired)
  *
- * @param {Object} props
- * @param {Array}  props.navLinks  — optional array of { label, href } for section anchors
- * @param {string} props.activeSection — currently active anchor id (for highlight)
- * @param {Function} props.onNavClick — optional handler for anchor clicks
+ * @param {Object}   props
+ * @param {Array}    props.navLinks      — optional array of { label, href }
+ * @param {string}   props.activeSection — currently active anchor id
+ * @param {Function} props.onNavClick    — optional handler for anchor clicks
  */
 const Navbar = ({ navLinks, activeSection, onNavClick }) => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const c = useAppPalette()
+  const router = useRouter()
+  const isMobile = useMediaQuery(c.theme.breakpoints.down('md'))
   const { settings, saveSettings } = useSettings()
   const { data: session } = useSession()
 
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileAnchor, setProfileAnchor] = useState(null)
+  const shapeTimerRef = useRef(null)
+  const [isRounded, setIsRounded] = useState(true)
 
   const isDark = settings.mode === 'dark'
 
-  const handleThemeToggle = () => {
-    saveSettings({ ...settings, mode: isDark ? 'light' : 'dark' })
-  }
+  /* Delay pill → rounded-xl until mobile menu closes */
+  useEffect(() => {
+    if (shapeTimerRef.current) clearTimeout(shapeTimerRef.current)
+    if (mobileMenuOpen) {
+      setIsRounded(false)
+    } else {
+      shapeTimerRef.current = setTimeout(() => setIsRounded(true), 300)
+    }
+    return () => clearTimeout(shapeTimerRef.current)
+  }, [mobileMenuOpen])
 
+  const handleThemeToggle = () => saveSettings({ ...settings, mode: isDark ? 'light' : 'dark' })
   const handleProfileOpen = e => setProfileAnchor(e.currentTarget)
   const handleProfileClose = () => setProfileAnchor(null)
-
-  const handleLogout = () => {
-    setProfileAnchor(null)
-    signOut({ callbackUrl: '/login' })
-  }
+  const handleLogout = () => { setProfileAnchor(null); signOut({ callbackUrl: '/login' }) }
 
   const handleAnchorClick = (e, href) => {
+    // If it's a page route (not an anchor), use Next.js router for reliable SPA navigation
+    if (!href.startsWith('#')) {
+      e.preventDefault()
+      setDrawerOpen(false)
+      setMobileMenuOpen(false)
+      router.push(href)
+      return
+    }
     if (onNavClick) {
       onNavClick(e, href)
     } else {
       e.preventDefault()
-      const id = href.replace('#', '')
-      const el = document.getElementById(id)
+      const el = document.getElementById(href.replace('#', ''))
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
     setDrawerOpen(false)
+    setMobileMenuOpen(false)
   }
+
+  /* ── Glass pill colours ──────────────────────────────────────────────── */
+  const glassBg = glass.bg
+  const glassBorder = `1px solid ${c.whiteA20}`
+  const backdropBlur = glass.backdrop
 
   return (
     <>
-      {/* ── Floating Navbar ──────────────────────────────────────────────────── */}
+      {/* ── Floating Navbar ──────────────────────────────────────────────── */}
       {settings.appBar !== 'hidden' && (
         <Box
+          component='nav'
+          aria-label='Main navigation'
           sx={{
             position: 'fixed',
-            top: 16,
-            left: 16,
-            right: 16,
-            zIndex: theme.zIndex.drawer + 2,
+            top: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: c.theme.zIndex.drawer + 2,
+            width: { xs: 'calc(100% - 32px)', md: 'auto' },
+            minWidth: { md: 640 },
+            maxWidth: { xs: '100%', md: 1080 },
             display: 'flex',
-            alignItems: 'center',
-            height: 56,
-            px: 2,
-            gap: 0.5,
-            borderRadius: '16px',
-            bgcolor: settings.appBarBlur
-              ? alpha(theme.palette.background.paper, isDark ? 0.6 : 0.75)
-              : theme.palette.background.paper,
-            backdropFilter: settings.appBarBlur ? 'blur(20px) saturate(200%)' : 'none',
-            border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-            boxShadow: `0 4px 30px ${alpha(theme.palette.common.black, 0.06)}, 0 1px 4px ${alpha(theme.palette.common.black, 0.04)}`,
-            transition: theme.transitions.create(['opacity'], { duration: 200 })
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            px: { xs: 4, md: 5.5 },
+            py: { xs: 1.5, md: 1.75 },
+            borderRadius: isRounded ? '9999px' : '16px',
+            bgcolor: glassBg,
+            backdropFilter: backdropBlur,
+            WebkitBackdropFilter: backdropBlur,
+            border: glassBorder,
+            boxShadow: `0 8px 32px ${glass.shadow}, 0 0 0 0.5px ${c.whiteA6} inset`,
+            transition: 'border-radius 0.15s ease, box-shadow 0.3s ease'
           }}
         >
-          {/* Logo */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: { xs: 1, md: 0 }, mr: { md: 3 } }}>
-            <Box
-              component={Link}
-              href='/'
-              sx={{
-                width: 34,
-                height: 34,
-                borderRadius: '10px',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.info.main})`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: `0 0 16px ${alpha(theme.palette.primary.main, 0.35)}`,
-                flexShrink: 0,
-                textDecoration: 'none'
-              }}
-            >
-              <Icon icon='tabler:bolt' fontSize={18} style={{ color: '#fff' }} />
-            </Box>
-            <Box sx={{ lineHeight: 1 }}>
-              <Typography
-                variant='subtitle2'
-                sx={{
-                  fontWeight: 800,
-                  lineHeight: 1,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.info.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '0.5px',
-                  fontSize: '0.875rem'
-                }}
-              >
-                {themeConfig.templateName?.toUpperCase() || 'CITRONICS'}
-              </Typography>
-              <Typography
-                variant='caption'
-                sx={{ color: 'text.disabled', lineHeight: 1, fontSize: '0.5rem', letterSpacing: '1.5px', display: 'block', mt: 0.25 }}
-              >
-                TECHNICAL FEST 2026
-              </Typography>
-            </Box>
-          </Box>
+          {/* ── Main row ─────────────────────────────────────────────────── */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 3, md: 5 } }}>
 
-          {/* Desktop nav links (optional — only if navLinks provided) */}
-          {!isMobile && navLinks?.length > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexGrow: 1 }}>
-              {navLinks.map(link => {
-                const active = activeSection === link.href?.replace('#', '')
+            {/* Logo dots */}
+            <LogoDots />
 
-                return (
-                  <Button
+            {/* Desktop nav links */}
+            {!isMobile && navLinks?.length > 0 && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { md: 4.5 }, flexGrow: 1 }}>
+                {navLinks.map(link => (
+                  <AnimatedNavLink
                     key={link.href}
-                    component='a'
                     href={link.href}
+                    active={activeSection === link.href?.replace('#', '')}
                     onClick={e => handleAnchorClick(e, link.href)}
-                    size='small'
-                    sx={{
-                      px: 1.75,
-                      py: 0.625,
-                      borderRadius: '10px',
-                      fontSize: '0.8125rem',
-                      fontWeight: active ? 600 : 400,
-                      textTransform: 'none',
-                      color: active ? 'primary.main' : 'text.secondary',
-                      bgcolor: active ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                      '&:hover': {
-                        bgcolor: alpha(theme.palette.primary.main, 0.08),
-                        color: 'primary.main'
-                      }
-                    }}
                   >
                     {link.label}
-                  </Button>
-                )
-              })}
-            </Box>
-          )}
-
-          {/* Spacer when no navLinks */}
-          {(!navLinks || navLinks.length === 0) && <Box sx={{ flexGrow: 1 }} />}
-
-          {/* ── Right actions ─────────────────────────────────────────────────── */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, ml: 'auto' }}>
-            {/* Theme toggle — Classic animated sun/moon */}
-            <Tooltip title={isDark ? 'Switch to light' : 'Switch to dark'}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  '& .navbar-theme-toggle': {
-                    fontSize: '1.3rem',
-                    color: theme.palette.text.secondary,
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '6px',
-                    borderRadius: '50%',
-                    transition: 'color 0.2s, background-color 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    '&:hover': {
-                      color: theme.palette.primary.main,
-                      backgroundColor: alpha(theme.palette.primary.main, 0.08)
-                    }
-                  }
-                }}
-              >
-                <Classic
-                  toggled={isDark}
-                  onToggle={handleThemeToggle}
-                  duration={500}
-                  className='navbar-theme-toggle'
-                />
+                  </AnimatedNavLink>
+                ))}
               </Box>
-            </Tooltip>
+            )}
 
-            {/* Notifications */}
-            <Tooltip title='Notifications'>
-              <IconButton
-                size='small'
-                sx={{
-                  color: 'text.secondary',
-                  '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.08) }
-                }}
-              >
-                <IconBell size={19} />
-              </IconButton>
-            </Tooltip>
+            {/* Spacer */}
+            <Box sx={{ flexGrow: 1 }} />
 
-            {/* ── User Auth ── */}
-            {session?.user ? (
-              <>
-                <Tooltip title='Account'>
-                  <IconButton onClick={handleProfileOpen} size='small' sx={{ ml: 0.25 }}>
-                    <Avatar
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        bgcolor: 'primary.main',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'box-shadow 0.2s',
-                        '&:hover': { boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}` }
-                      }}
-                    >
-                      {(session.user.name || session.user.email || 'U')[0].toUpperCase()}
-                    </Avatar>
-                  </IconButton>
-                </Tooltip>
+            {/* ── Right controls ─────────────────────────────────────────── */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
 
-                <Menu
-                  anchorEl={profileAnchor}
-                  open={Boolean(profileAnchor)}
-                  onClose={handleProfileClose}
-                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                  slotProps={{
-                    paper: {
-                      elevation: 3,
-                      sx: {
-                        mt: 1.5,
-                        minWidth: 200,
-                        borderRadius: 2,
-                        border: `1px solid ${theme.palette.divider}`,
-                        overflow: 'visible',
-                        '&::before': {
-                          content: '""',
-                          display: 'block',
-                          position: 'absolute',
-                          top: 0,
-                          right: 14,
-                          width: 10,
-                          height: 10,
-                          bgcolor: 'background.paper',
-                          transform: 'translateY(-50%) rotate(45deg)',
-                          borderLeft: `1px solid ${theme.palette.divider}`,
-                          borderTop: `1px solid ${theme.palette.divider}`,
-                          zIndex: 0
-                        }
-                      }
+              {/* Theme toggle */}
+              <Tooltip title={isDark ? 'Switch to light' : 'Switch to dark'}>
+                <Box
+                  sx={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    '& .navbar-theme-toggle': {
+                      fontSize: '1.5rem',
+                      color: glass.textBright,
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '8px', borderRadius: '50%',
+                      transition: 'color 0.2s, background-color 0.2s',
+                      display: 'flex', alignItems: 'center',
+                      '&:hover': { color: c.white, backgroundColor: c.whiteA10 }
                     }
                   }}
                 >
-                  <Box sx={{ px: 2, py: 1.5 }}>
-                    <Typography variant='subtitle2' fontWeight={600} noWrap>
-                      {session.user.name || session.user.email}
-                    </Typography>
-                    <Typography variant='caption' color='text.secondary' noWrap>
-                      {session.user.role || 'Organizer'}
-                    </Typography>
-                  </Box>
-                  <Divider sx={{ my: 0.5 }} />
-                  <MenuItem
-                    onClick={handleLogout}
-                    sx={{
-                      gap: 1.5,
-                      py: 1,
-                      color: 'error.main',
-                      '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.08) }
+                  <Classic toggled={isDark} onToggle={handleThemeToggle} duration={500} className='navbar-theme-toggle' />
+                </Box>
+              </Tooltip>
+
+              {/* Notifications */}
+              <Tooltip title='Notifications'>
+                <IconButton
+                  size='medium'
+                  aria-label='Notifications'
+                  sx={{
+                    color: glass.textNav,
+                    transition: 'color 0.2s, background-color 0.2s',
+                    '&:hover': { color: c.white, bgcolor: c.whiteA10 }
+                  }}
+                >
+                  <IconBell size={24} />
+                </IconButton>
+              </Tooltip>
+
+              {/* Divider */}
+              <Box sx={{ width: 1, height: 24, bgcolor: c.whiteA15, mx: 0.75 }} />
+
+              {/* ── Auth area ──────────────────────────────────────────────── */}
+              {session?.user ? (
+                <>
+                  <Tooltip title='Account'>
+                    <IconButton onClick={handleProfileOpen} size='medium' sx={{ p: 0 }}>
+                      <Avatar
+                        sx={{
+                          width: 44, height: 44,
+                          bgcolor: c.primaryA85,
+                          fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                          border: `1px solid ${c.whiteA20}`,
+                          transition: 'box-shadow 0.25s',
+                          '&:hover': { boxShadow: `0 0 0 3px ${c.primaryA35}, 0 0 18px ${c.primaryA50}` }
+                        }}
+                      >
+                        {(session.user.name || session.user.email || 'U')[0].toUpperCase()}
+                      </Avatar>
+                    </IconButton>
+                  </Tooltip>
+
+                  <Menu
+                    anchorEl={profileAnchor}
+                    open={Boolean(profileAnchor)}
+                    onClose={handleProfileClose}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    slotProps={{
+                      paper: {
+                        elevation: 6,
+                        sx: {
+                          mt: 1.5, minWidth: 200, borderRadius: 2,
+                          bgcolor: glass.bgSolid,
+                          backdropFilter: 'blur(20px)',
+                          border: `1px solid ${c.whiteA10}`,
+                          overflow: 'visible',
+                          '&::before': {
+                            content: '""', display: 'block', position: 'absolute',
+                            top: 0, right: 14, width: 10, height: 10,
+                            bgcolor: glass.bgSolid,
+                            transform: 'translateY(-50%) rotate(45deg)',
+                            borderLeft: `1px solid ${c.whiteA10}`,
+                            borderTop: `1px solid ${c.whiteA10}`,
+                            zIndex: 0
+                          }
+                        }
+                      }
                     }}
                   >
-                    <Icon icon='tabler:logout' fontSize={18} />
-                    Sign Out
-                  </MenuItem>
-                </Menu>
-              </>
-            ) : (
-              <>
-                {!isMobile && (
-                  <>
-                    <Divider orientation='vertical' flexItem sx={{ mx: 0.75, height: 20, alignSelf: 'center', opacity: 0.4 }} />
+                    <Box sx={{ px: 2, py: 1.5 }}>
+                      <Typography variant='subtitle2' fontWeight={600} noWrap sx={{ color: c.white }}>
+                        {session.user.name || session.user.email}
+                      </Typography>
+                      <Typography variant='caption' sx={{ color: glass.textSubtle }} noWrap>
+                        {session.user.role || 'Organizer'}
+                      </Typography>
+                    </Box>
+                    <Divider sx={{ borderColor: c.whiteA10, my: 0.5 }} />
+                    <MenuItem
+                      onClick={handleLogout}
+                      sx={{
+                      gap: 1.5, py: 1, color: 'error.main',
+                      '&:hover': { bgcolor: c.errorA10 }
+                      }}
+                    >
+                      <Icon icon='tabler:logout' fontSize={18} />
+                      Sign Out
+                    </MenuItem>
+                  </Menu>
+                </>
+              ) : (
+                <>
+                  {!isMobile && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      {/* Login — ghost button */}
+                      <Button
+                        component={Link}
+                        href='/login'
+                        size='medium'
+                        sx={{
+                          px: 3, py: 1,
+                          borderRadius: '9999px',
+                          textTransform: 'none',
+                          fontWeight: 500,
+                          fontSize: '0.95rem',
+                          color: glass.textDefault,
+                          border: `1px solid ${c.white}`,
+                          bgcolor: 'transparent',
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            color: c.white,
+                            borderColor: c.whiteA40,
+                            bgcolor: c.whiteA6
+                          }
+                        }}
+                      >
+                        Login
+                      </Button>
+
+                      {/* Signup — white gradient with glow */}
+                      <Box sx={{ position: 'relative', '&:hover .signup-glow': { opacity: 0.7, filter: 'blur(14px)' } }}>
+                        <Box
+                          className='signup-glow'
+                          sx={{
+                            position: 'absolute', inset: -6,
+                            borderRadius: '9999px',
+                            bgcolor: glass.badgeBg,
+                            filter: 'blur(10px)',
+                            opacity: 0.4,
+                            pointerEvents: 'none',
+                            transition: 'opacity 0.3s, filter 0.3s'
+                          }}
+                        />
+                        <Button
+                          component={Link}
+                          href='/register'
+                          size='medium'
+                          sx={{
+                            position: 'relative', zIndex: 1,
+                            px: 4.5, py: 1,
+                            borderRadius: '9999px',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            fontSize: '0.95rem',
+                            color: glass.btnText,
+                            background: glass.btnGradient,
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.2s',
+                            '&:hover': { background: glass.btnGradientHover }
+                          }}
+                        >
+                          Sign Up
+                        </Button>
+                      </Box>
+                    </Box>
+                  )}
+                </>
+              )}
+
+              {/* Mobile hamburger */}
+              {isMobile && (
+                <IconButton
+                  size='small'
+                  onClick={() => setMobileMenuOpen(v => !v)}
+                  sx={{
+                    color: glass.textMuted,
+                    '&:hover': { color: c.white, bgcolor: c.whiteA10 }
+                  }}
+                  aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                >
+                  {mobileMenuOpen ? <IconX size={20} /> : <IconMenu2 size={20} />}
+                </IconButton>
+              )}
+            </Box>
+          </Box>
+
+          {/* ── Mobile inline menu ───────────────────────────────────────── */}
+          {isMobile && (
+            <Collapse in={mobileMenuOpen} timeout={300}>
+              <Box sx={{ pt: 2, pb: 0.5 }}>
+                <Divider sx={{ borderColor: c.whiteA10, mb: 1.5 }} />
+
+                {/* Nav links */}
+                {navLinks?.length > 0 && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, mb: 1.5 }}>
+                    {navLinks.map(link => (
+                      <Box
+                        key={link.href}
+                        component='a'
+                        href={link.href}
+                        onClick={e => handleAnchorClick(e, link.href)}
+                        sx={{
+                          px: 1.5, py: 1,
+                          borderRadius: '10px',
+                          textDecoration: 'none',
+                          fontSize: '0.875rem',
+                          fontWeight: activeSection === link.href?.replace('#', '') ? 600 : 400,
+                          color: activeSection === link.href?.replace('#', '') ? c.white : glass.textMuted,
+                          bgcolor: activeSection === link.href?.replace('#', '') ? c.whiteA8 : 'transparent',
+                          transition: 'all 0.2s',
+                          '&:hover': { color: c.white, bgcolor: c.whiteA8 }
+                        }}
+                      >
+                        {link.label}
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+
+                {/* Auth buttons on mobile */}
+                {!session?.user && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pb: 0.5 }}>
                     <Button
-                      variant='contained'
+                      fullWidth
                       component={Link}
                       href='/login'
-                      size='small'
                       sx={{
-                        borderRadius: '10px',
-                        px: 2.25,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        fontSize: '0.8125rem',
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                        boxShadow: `0 0 16px ${alpha(theme.palette.primary.main, 0.3)}`,
-                        '&:hover': { boxShadow: `0 0 24px ${alpha(theme.palette.primary.main, 0.45)}` }
+                        borderRadius: '9999px', textTransform: 'none', fontWeight: 500,
+                        fontSize: '0.875rem', color: glass.textMutedAlt,
+                        border: `1px solid ${c.whiteA15}`,
+                        bgcolor: glass.bgMobileLogin,
+                        '&:hover': { color: c.white, borderColor: c.whiteA40, bgcolor: c.whiteA6 }
                       }}
                     >
                       Login
                     </Button>
-                  </>
+                    <Button
+                      fullWidth
+                      component={Link}
+                      href='/register'
+                      sx={{
+                        borderRadius: '9999px', textTransform: 'none', fontWeight: 700,
+                        fontSize: '0.875rem', color: glass.btnText,
+                        background: glass.btnGradient,
+                        whiteSpace: 'nowrap',
+                        boxShadow: `0 0 18px ${glass.btnGlow}`,
+                        '&:hover': { background: glass.btnGradientHover, boxShadow: `0 0 26px ${glass.btnGlowHover}` }
+                      }}
+                    >
+                      Sign Up
+                    </Button>
+                  </Box>
                 )}
-              </>
-            )}
-
-            {/* Mobile hamburger — only when navLinks exist */}
-            {isMobile && navLinks?.length > 0 && (
-              <IconButton
-                size='small'
-                onClick={() => setDrawerOpen(true)}
-                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.08) } }}
-              >
-                <IconMenu2 size={20} />
-              </IconButton>
-            )}
-          </Box>
+              </Box>
+            </Collapse>
+          )}
         </Box>
       )}
 
-      {/* ── Mobile Drawer (only with navLinks) ────────────────────────────────── */}
-      {navLinks?.length > 0 && (
+      {/* ── Side Drawer kept for legacy navLinks usage (desktop) ─────────── */}
+      {!isMobile && navLinks?.length > 0 && (
         <Drawer
           anchor='right'
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           PaperProps={{
             sx: {
-              width: 260,
-              pt: 2,
-              bgcolor: 'background.paper',
+              width: 260, pt: 2,
+              bgcolor: glass.bgMobile,
               backdropFilter: 'blur(20px)',
-              borderLeft: `1px solid ${theme.palette.divider}`
+              borderLeft: `1px solid ${c.whiteA10}`
             }
           }}
         >
           <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography
-              variant='subtitle2'
-              fontWeight={700}
-              sx={{
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.info.main})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}
-            >
+            <Typography variant='subtitle2' fontWeight={700} sx={{ color: c.white }}>
               {themeConfig.templateName?.toUpperCase() || 'CITRONICS'}
             </Typography>
-            <IconButton size='small' onClick={() => setDrawerOpen(false)} sx={{ color: 'text.secondary' }}>
+            <IconButton size='small' onClick={() => setDrawerOpen(false)} aria-label='Close drawer' sx={{ color: glass.textDimmer }}>
               <IconX size={18} />
             </IconButton>
           </Box>
-          <Divider sx={{ mb: 1 }} />
+          <Divider sx={{ borderColor: c.whiteA10, mb: 1 }} />
           <List>
             {navLinks.map(link => (
               <ListItemButton
@@ -384,39 +521,15 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
                 href={link.href}
                 onClick={e => handleAnchorClick(e, link.href)}
                 sx={{
-                  borderRadius: '10px',
-                  mx: 1,
-                  mb: 0.5,
-                  color: activeSection === link.href?.replace('#', '') ? 'primary.main' : 'text.primary',
-                  bgcolor: activeSection === link.href?.replace('#', '') ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
-                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08), color: 'primary.main' }
+                  borderRadius: '10px', mx: 1, mb: 0.5,
+                  color: activeSection === link.href?.replace('#', '') ? c.white : glass.textDimmer,
+                  bgcolor: activeSection === link.href?.replace('#', '') ? c.whiteA10 : 'transparent',
+                  '&:hover': { bgcolor: c.whiteA8, color: c.white }
                 }}
               >
-                <ListItemText
-                  primary={link.label}
-                  primaryTypographyProps={{ fontWeight: 500, fontSize: '0.875rem' }}
-                />
+                <ListItemText primary={link.label} primaryTypographyProps={{ fontWeight: 500, fontSize: '0.875rem' }} />
               </ListItemButton>
             ))}
-            {!session?.user && (
-              <Box sx={{ px: 2, pt: 2 }}>
-                <Button
-                  fullWidth
-                  variant='contained'
-                  component={Link}
-                  href='/login'
-                  sx={{
-                    borderRadius: '10px',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                    boxShadow: `0 0 16px ${alpha(theme.palette.primary.main, 0.3)}`
-                  }}
-                >
-                  Login
-                </Button>
-              </Box>
-            )}
           </List>
         </Drawer>
       )}

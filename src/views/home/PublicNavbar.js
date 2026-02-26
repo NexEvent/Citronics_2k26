@@ -4,10 +4,14 @@ import Navbar from 'src/components/Navbar'
 const NAV_LINKS = [
   { label: 'Home', href: '#hero' },
   { label: 'About', href: '#about' },
-  { label: 'Events', href: '#events' },
+  { label: 'Events', href: '/events' },
   { label: 'Schedule', href: '#schedule' }
 ]
 
+/**
+ * Fixed navigation bar for the public home page.
+ * Highlights the active section based on window scroll event listeners.
+ */
 export default function PublicNavbar() {
   const [activeSection, setActiveSection] = useState('hero')
 

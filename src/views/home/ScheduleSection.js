@@ -4,16 +4,23 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
-import { alpha, useTheme } from '@mui/material/styles'
+import { alpha } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import Icon from 'src/components/Icon'
-import { SCHEDULE_DAYS } from './mockData'
+import { useAppPalette } from 'src/components/palette'
 
 const MotionBox = motion(Box)
 
+/**
+ * Renders a single timeline entry for a scheduled session.
+ * @param {object} props
+ * @param {object} props.item - Schedule item data (time, event, dept, paletteKey)
+ * @param {boolean} props.isLast - Whether this is the last item (hides the connector line)
+ * @param {number} props.delay - Framer-motion animation delay in seconds
+ */
 function TimelineEntry({ item, isLast, delay }) {
-  const theme = useTheme()
-  const color = theme.palette[item.paletteKey]?.main || theme.palette.primary.main
+  const c = useAppPalette()
+  const color = c.theme.palette[item.paletteKey]?.main || c.primary
 
   return (
     <MotionBox
@@ -42,7 +49,7 @@ function TimelineEntry({ item, isLast, delay }) {
             sx={{
               width: 1.5,
               flexGrow: 1,
-              background: `linear-gradient(${alpha(color, 0.25)}, ${alpha(theme.palette.divider, 0.1)})`,
+              background: `linear-gradient(${alpha(color, 0.25)}, ${c.dividerA10})`,
               mt: 0.5
             }}
           />
@@ -58,7 +65,7 @@ function TimelineEntry({ item, isLast, delay }) {
           >
             {item.time}
           </Typography>
-          <Typography variant='body2' sx={{ fontWeight: item.dept === 'all' ? 600 : 400, color: theme.palette.text.primary }}>
+          <Typography variant='body2' sx={{ fontWeight: item.dept === 'all' ? 600 : 400, color: c.textPrimary }}>
             {item.event}
           </Typography>
           {item.dept !== 'all' && (
@@ -82,9 +89,17 @@ function TimelineEntry({ item, isLast, delay }) {
   )
 }
 
+/**
+ * Renders a clickable day selector tab for the schedule.
+ * @param {object} props
+ * @param {object} props.day - Day data (label, date)
+ * @param {number} props.index - Tab index (used for color selection)
+ * @param {boolean} props.isActive - Whether this day is currently selected
+ * @param {Function} props.onClick - Callback when the tab is clicked
+ */
 function DayCard({ day, index, isActive, onClick }) {
-  const theme = useTheme()
-  const colors = [theme.palette.primary.main, theme.palette.info.main, theme.palette.success.main]
+  const c = useAppPalette()
+  const colors = [c.primary, c.info, c.success]
   const color = colors[index % colors.length]
 
   return (
@@ -98,8 +113,8 @@ function DayCard({ day, index, isActive, onClick }) {
         p: 2.5,
         borderRadius: '16px',
         cursor: 'pointer',
-        border: isActive ? `2px solid ${color}` : `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-        background: isActive ? alpha(color, 0.06) : alpha(theme.palette.background.paper, 0.4),
+        border: isActive ? `2px solid ${color}` : `1px solid ${c.dividerA50}`,
+        background: isActive ? alpha(color, 0.06) : c.bgPaperA40,
         backdropFilter: 'blur(8px)',
         textAlign: 'center',
         transition: 'all 0.3s ease',
@@ -109,33 +124,41 @@ function DayCard({ day, index, isActive, onClick }) {
         }
       }}
     >
-      <Typography variant='overline' sx={{ color: isActive ? color : theme.palette.text.disabled, fontWeight: 700, letterSpacing: 2 }}>
+      <Typography variant='overline' sx={{ color: isActive ? color : c.textDisabled, fontWeight: 700, letterSpacing: 2 }}>
         {day.day}
       </Typography>
-      <Typography variant='h6' sx={{ fontWeight: 700, color: isActive ? color : theme.palette.text.primary, lineHeight: 1.2 }}>
+      <Typography variant='h6' sx={{ fontWeight: 700, color: isActive ? color : c.textPrimary, lineHeight: 1.2 }}>
         {day.date}
       </Typography>
-      <Typography variant='caption' sx={{ color: isActive ? color : theme.palette.text.secondary, fontStyle: 'italic' }}>
+      <Typography variant='caption' sx={{ color: isActive ? color : c.textSecondary, fontStyle: 'italic' }}>
         {day.theme}
       </Typography>
     </MotionBox>
   )
 }
 
-export default function ScheduleSection() {
-  const theme = useTheme()
+/**
+ * Multi-day schedule section on the home page.
+ * Renders day selector tabs and a timeline of sessions for the active day.
+ * @param {object} props
+ * @param {Array} [props.scheduleDays=[]] - Array of day objects from the home API
+ */
+export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
+  const c = useAppPalette()
   const [activeDay, setActiveDay] = useState(0)
   const day = SCHEDULE_DAYS[activeDay]
+
+  // Guard: nothing to render when data hasn't loaded yet
+  if (!SCHEDULE_DAYS.length || !day) return null
 
   return (
     <Box
       id='schedule'
       sx={{
-        py: { xs: 10, md: 16 },
-        background: `linear-gradient(180deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.info.main, 0.015)} 50%, ${theme.palette.background.default} 100%)`
+        py: { xs: 10, md: 16 }
       }}
     >
-      <Container maxWidth='lg'>
+      <Container maxWidth='xl'>
         {/* Section header */}
         <MotionBox
           initial={{ opacity: 0, y: 24 }}
@@ -152,20 +175,20 @@ export default function ScheduleSection() {
               px: 2,
               py: 0.5,
               borderRadius: '100px',
-              background: alpha(theme.palette.info.main, 0.08),
-              border: `1px solid ${alpha(theme.palette.info.main, 0.15)}`,
+              background: c.infoA8,
+              border: `1px solid ${c.infoA15}`,
               mb: 2.5
             }}
           >
-            <Icon icon='tabler:clock' fontSize={14} style={{ color: theme.palette.info.main }} />
-            <Typography variant='caption' sx={{ color: theme.palette.info.main, fontWeight: 600, letterSpacing: 1.5 }}>
+            <Icon icon='tabler:clock' fontSize={14} style={{ color: c.info }} />
+            <Typography variant='caption' sx={{ color: c.info, fontWeight: 600, letterSpacing: 1.5 }}>
               3-DAY AGENDA
             </Typography>
           </Box>
           <Typography variant='h3' sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.5px' }}>
             Event Schedule
           </Typography>
-          <Typography variant='body1' sx={{ color: theme.palette.text.secondary, maxWidth: 520, mx: 'auto', lineHeight: 1.7 }}>
+          <Typography variant='body1' sx={{ color: c.textSecondary, maxWidth: 520, mx: 'auto', lineHeight: 1.7 }}>
             Three action-packed days of competitions, workshops, and unforgettable cultural nights.
           </Typography>
         </MotionBox>
@@ -185,8 +208,8 @@ export default function ScheduleSection() {
             sx={{
               p: { xs: 3, md: 5 },
               borderRadius: '24px',
-              background: alpha(theme.palette.background.paper, 0.5),
-              border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              background: c.bgPaperA50,
+              border: `1px solid ${c.dividerA50}`,
               backdropFilter: 'blur(16px)',
               maxWidth: 700,
               mx: 'auto'
@@ -199,20 +222,20 @@ export default function ScheduleSection() {
                   width: 48,
                   height: 48,
                   borderRadius: '14px',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.info.main})`,
+                  background: c.gradientPrimary,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+                  boxShadow: `0 4px 16px ${c.primaryA30}`
                 }}
               >
-                <Icon icon='tabler:calendar-event' fontSize={24} style={{ color: '#fff' }} />
+                <Icon icon='tabler:calendar-event' fontSize={24} style={{ color: c.primaryContrast }} />
               </Box>
               <Box>
                 <Typography variant='h5' sx={{ fontWeight: 700, lineHeight: 1 }}>
                   {day.day} — {day.date}
                 </Typography>
-                <Typography variant='caption' sx={{ color: theme.palette.text.secondary, letterSpacing: 2 }}>
+                <Typography variant='caption' sx={{ color: c.textSecondary, letterSpacing: 2 }}>
                   THEME: {day.theme.toUpperCase()}
                 </Typography>
               </Box>

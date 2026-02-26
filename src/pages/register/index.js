@@ -21,7 +21,7 @@ import StepLabel from '@mui/material/StepLabel'
 import Divider from '@mui/material/Divider'
 import Fade from '@mui/material/Fade'
 import Collapse from '@mui/material/Collapse'
-import { useTheme, alpha } from '@mui/material/styles'
+import { useAppPalette } from 'src/components/palette'
 
 // Icons
 import {
@@ -68,7 +68,7 @@ const validateStep2 = (values) => {
 // ── Component ───────────────────────────────────────────────────────────────────
 
 const RegisterPage = () => {
-  const theme = useTheme()
+  const c = useAppPalette()
   const router = useRouter()
 
   const [activeStep, setActiveStep] = useState(0)
@@ -168,14 +168,15 @@ const RegisterPage = () => {
 
   return (
     <Box
+      component='main'
       sx={{
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         p: 3,
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)} 0%, ${alpha(theme.palette.primary.main, 0.08)} 100%)`,
-        backgroundColor: theme.palette.background.default
+        background: `linear-gradient(135deg, ${c.primaryA3} 0%, ${c.primaryA8} 100%)`,
+        backgroundColor: c.bgDefault
       }}
     >
       <Card
@@ -183,8 +184,8 @@ const RegisterPage = () => {
           maxWidth: 520,
           width: '100%',
           borderRadius: '20px',
-          boxShadow: `0 8px 40px ${alpha(theme.palette.common.black, 0.08)}`,
-          border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+          boxShadow: `0 8px 40px ${c.blackA8}`,
+          border: `1px solid ${c.dividerA40}`,
           overflow: 'visible'
         }}
       >
@@ -197,18 +198,18 @@ const RegisterPage = () => {
                 width: 52,
                 height: 52,
                 borderRadius: '14px',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                background: `linear-gradient(135deg, ${c.primary}, ${c.primaryDark})`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 mx: 'auto',
                 mb: 2,
-                boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                boxShadow: `0 4px 14px ${c.primaryA30}`
               }}
             >
-              <IconUserPlus size={26} color='#fff' />
+              <IconUserPlus size={26} color={c.primaryContrast} />
             </Box>
-            <Typography variant='h5' fontWeight={700}>
+            <Typography variant='h1' sx={{ fontWeight: 700, fontSize: '1.5rem' }}>
               Join {themeConfig.templateName}
             </Typography>
             <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
@@ -237,8 +238,8 @@ const RegisterPage = () => {
                           ? 'primary.main'
                           : active
                             ? 'primary.main'
-                            : alpha(theme.palette.text.disabled, 0.12),
-                        color: completed || active ? '#fff' : 'text.disabled'
+                            : c.textDisabledA12,
+                        color: completed || active ? 'primary.contrastText' : 'text.disabled'
                       }}
                     >
                       {completed ? <IconCheck size={16} /> : i + 1}
@@ -271,7 +272,7 @@ const RegisterPage = () => {
           </Collapse>
 
           {/* Form */}
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} aria-label='Registration form'>
             {/* Step 1 — Personal Details */}
             {activeStep === 0 && (
               <Fade in>
@@ -289,7 +290,7 @@ const RegisterPage = () => {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position='start'>
-                          <IconUser size={18} color={theme.palette.text.disabled} />
+                          <IconUser size={18} color={c.textDisabled} />
                         </InputAdornment>
                       )
                     }}
@@ -334,7 +335,7 @@ const RegisterPage = () => {
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position='end'>
-                          <IconButton size='small' onClick={() => setShowPassword(!showPassword)} edge='end'>
+                          <IconButton size='small' onClick={() => setShowPassword(!showPassword)} edge='end' aria-label={showPassword ? 'Hide password' : 'Show password'}>
                             {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
                           </IconButton>
                         </InputAdornment>
@@ -356,7 +357,7 @@ const RegisterPage = () => {
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position='end'>
-                          <IconButton size='small' onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge='end'>
+                          <IconButton size='small' onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge='end' aria-label={showConfirmPassword ? 'Hide password confirmation' : 'Show password confirmation'}>
                             {showConfirmPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
                           </IconButton>
                         </InputAdornment>
@@ -401,7 +402,7 @@ const RegisterPage = () => {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position='start'>
-                          <IconSchool size={18} color={theme.palette.text.disabled} />
+                          <IconSchool size={18} color={c.textDisabled} />
                         </InputAdornment>
                       )
                     }}
@@ -502,11 +503,11 @@ const RegisterPage = () => {
               fontWeight: 600,
               textTransform: 'none',
               fontSize: '0.9rem',
-              borderColor: alpha(theme.palette.divider, 0.6),
+              borderColor: c.dividerA60,
               color: 'text.primary',
               '&:hover': {
-                borderColor: theme.palette.primary.main,
-                backgroundColor: alpha(theme.palette.primary.main, 0.04)
+                borderColor: c.primary,
+                backgroundColor: c.primaryA4
               }
             }}
           >

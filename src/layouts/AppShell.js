@@ -23,7 +23,6 @@ const Layout = ({ children }) => {
         component='main'
         sx={{
           pt: settings.appBar !== 'hidden' ? '88px' : 0,
-          px: { xs: 2, md: 3 },
           pb: { xs: 2, md: 3 },
           maxWidth: settings.contentWidth === 'boxed' ? 1440 : '100%',
           mx: 'auto',

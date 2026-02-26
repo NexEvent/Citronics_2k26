@@ -1,19 +1,17 @@
 ﻿import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { alpha, useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-import { SPONSORS } from './mockData'
+import { useAppPalette } from 'src/components/palette'
 
 const MotionBox = motion(Box)
 
-export default function SponsorsSection() {
-  const theme = useTheme()
+export default function SponsorsSection({ sponsors: SPONSORS = [] }) {
+  const c = useAppPalette()
 
   return (
     <Box
       sx={{
         py: { xs: 8, md: 12 },
-        background: theme.palette.background.default,
         overflow: 'hidden'
       }}
     >
@@ -25,7 +23,7 @@ export default function SponsorsSection() {
         transition={{ duration: 0.6 }}
         sx={{ textAlign: 'center', mb: 6 }}
       >
-        <Typography variant='overline' sx={{ color: theme.palette.text.secondary, letterSpacing: 3, fontWeight: 600 }}>
+        <Typography variant='overline' sx={{ color: c.textSecondary, letterSpacing: 3, fontWeight: 600 }}>
           PROUDLY SUPPORTED BY
         </Typography>
       </MotionBox>
@@ -40,7 +38,7 @@ export default function SponsorsSection() {
             top: 0,
             bottom: 0,
             width: 120,
-            background: `linear-gradient(90deg, ${theme.palette.background.default}, transparent)`,
+            background: `linear-gradient(90deg, ${c.bgDefaultA90}, transparent)`,
             zIndex: 1,
             pointerEvents: 'none'
           }}
@@ -53,7 +51,7 @@ export default function SponsorsSection() {
             top: 0,
             bottom: 0,
             width: 120,
-            background: `linear-gradient(270deg, ${theme.palette.background.default}, transparent)`,
+            background: `linear-gradient(270deg, ${c.bgDefaultA90}, transparent)`,
             zIndex: 1,
             pointerEvents: 'none'
           }}
@@ -82,22 +80,22 @@ export default function SponsorsSection() {
                 px: 3,
                 py: 1.5,
                 borderRadius: '14px',
-                background: alpha(theme.palette.background.paper, 0.4),
-                border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
+                background: c.bgPaperA40,
+                border: `1px solid ${c.dividerA30}`,
                 backdropFilter: 'blur(8px)',
                 cursor: 'default',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                  background: alpha(theme.palette.background.paper, 0.6)
+                  border: `1px solid ${c.primaryA20}`,
+                  background: c.bgPaperA60
                 }
               }}
             >
-              <Typography variant='h6' sx={{ fontWeight: 700, color: theme.palette.text.primary, whiteSpace: 'nowrap' }}>
+              <Typography variant='h6' sx={{ fontWeight: 700, color: c.textPrimary, whiteSpace: 'nowrap' }}>
                 {sponsor.name}
               </Typography>
               {sponsor.tier && (
-                <Typography variant='caption' sx={{ color: theme.palette.text.disabled, fontWeight: 500, whiteSpace: 'nowrap' }}>
+                <Typography variant='caption' sx={{ color: c.textDisabled, fontWeight: 500, whiteSpace: 'nowrap' }}>
                   {sponsor.tier}
                 </Typography>
               )}

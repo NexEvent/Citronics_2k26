@@ -90,7 +90,7 @@ const App = props => {
             <meta name='apple-mobile-web-app-title' content={themeConfig.templateName} />
             <meta name='format-detection' content='telephone=no' />
             <meta name='mobile-web-app-capable' content='yes' />
-            <meta name='theme-color' content='#7C3AED' />
+            <meta name='theme-color' content='#7367F0' />
             <link rel='manifest' href='/manifest.json' />
             <link rel='apple-touch-icon' href='/images/icons/pwa/apple-touch-icon.png' />
             <link rel='icon' type='image/png' sizes='32x32' href='/images/icons/pwa/icon-32x32.png' />

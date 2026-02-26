@@ -2,15 +2,20 @@
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import Avatar from '@mui/material/Avatar'
-import { alpha, useTheme } from '@mui/material/styles'
+import { useAppPalette } from 'src/components/palette'
 import { motion } from 'framer-motion'
 import Icon from 'src/components/Icon'
-import { TESTIMONIALS } from './mockData'
 
 const MotionBox = motion(Box)
 
+/**
+ * Renders a single testimonial card with avatar, quote, and attribution.
+ * @param {object} props
+ * @param {object} props.item - Testimonial data (name, role, avatar, quote)
+ * @param {number} props.index - Card index for staggered entrance animation
+ */
 function TestimonialCard({ item, index }) {
-  const theme = useTheme()
+  const c = useAppPalette()
 
   return (
     <MotionBox
@@ -23,8 +28,8 @@ function TestimonialCard({ item, index }) {
         width: { xs: 300, sm: 360 },
         p: 4,
         borderRadius: '24px',
-        background: alpha(theme.palette.background.paper, 0.5),
-        border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+        background: c.bgPaperA50,
+        border: `1px solid ${c.dividerA50}`,
         backdropFilter: 'blur(16px)',
         position: 'relative',
         overflow: 'hidden'
@@ -35,7 +40,7 @@ function TestimonialCard({ item, index }) {
         icon='tabler:quote'
         fontSize={40}
         style={{
-          color: alpha(theme.palette.primary.main, 0.1),
+          color: c.primaryA10,
           position: 'absolute',
           top: 16,
           right: 20
@@ -45,11 +50,11 @@ function TestimonialCard({ item, index }) {
       {/* Stars */}
       <Box sx={{ display: 'flex', gap: 0.3, mb: 2.5 }}>
         {Array.from({ length: 5 }).map((_, i) => (
-          <Icon key={i} icon='tabler:star-filled' fontSize={14} style={{ color: theme.palette.warning.main }} />
+          <Icon key={i} icon='tabler:star-filled' fontSize={14} style={{ color: c.warning }} />
         ))}
       </Box>
 
-      <Typography variant='body2' sx={{ color: theme.palette.text.secondary, lineHeight: 1.8, mb: 3, fontStyle: 'italic' }}>
+      <Typography variant='body2' sx={{ color: c.textSecondary, lineHeight: 1.8, mb: 3, fontStyle: 'italic' }}>
         &ldquo;{item.quote}&rdquo;
       </Typography>
 
@@ -58,8 +63,8 @@ function TestimonialCard({ item, index }) {
           sx={{
             width: 40,
             height: 40,
-            bgcolor: alpha(theme.palette.primary.main, 0.15),
-            color: theme.palette.primary.main,
+            bgcolor: c.primaryA15,
+            color: c.primary,
             fontWeight: 700,
             fontSize: '0.85rem'
           }}
@@ -70,7 +75,7 @@ function TestimonialCard({ item, index }) {
           <Typography variant='subtitle2' sx={{ fontWeight: 600, lineHeight: 1.2 }}>
             {item.name}
           </Typography>
-          <Typography variant='caption' sx={{ color: theme.palette.text.secondary }}>
+          <Typography variant='caption' sx={{ color: c.textSecondary }}>
             {item.role}
           </Typography>
         </Box>
@@ -79,19 +84,24 @@ function TestimonialCard({ item, index }) {
   )
 }
 
-export default function TestimonialsSection() {
-  const theme = useTheme()
+/**
+ * Horizontally scrolling testimonials section on the home page.
+ * Auto-scrolls through attendee/participant quotes.
+ * @param {object} props
+ * @param {Array} [props.testimonials=[]] - Array of testimonial objects from the home API
+ */
+export default function TestimonialsSection({ testimonials: TESTIMONIALS = [] }) {
+  const c = useAppPalette()
 
   return (
     <Box
       id='testimonials'
       sx={{
         py: { xs: 10, md: 16 },
-        background: theme.palette.background.default,
         overflow: 'hidden'
       }}
     >
-      <Container maxWidth='lg'>
+      <Container maxWidth='xl'>
         <MotionBox
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -107,20 +117,20 @@ export default function TestimonialsSection() {
               px: 2,
               py: 0.5,
               borderRadius: '100px',
-              background: alpha(theme.palette.warning.main, 0.08),
-              border: `1px solid ${alpha(theme.palette.warning.main, 0.15)}`,
+              background: c.warningA8,
+              border: `1px solid ${c.warningA15}`,
               mb: 2.5
             }}
           >
-            <Icon icon='tabler:message-circle' fontSize={14} style={{ color: theme.palette.warning.main }} />
-            <Typography variant='caption' sx={{ color: theme.palette.warning.main, fontWeight: 600, letterSpacing: 1.5 }}>
+            <Icon icon='tabler:message-circle' fontSize={14} style={{ color: c.warning }} />
+            <Typography variant='caption' sx={{ color: c.warning, fontWeight: 600, letterSpacing: 1.5 }}>
               TESTIMONIALS
             </Typography>
           </Box>
           <Typography variant='h3' sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.5px' }}>
             What Past Participants Say
           </Typography>
-          <Typography variant='body1' sx={{ color: theme.palette.text.secondary, maxWidth: 520, mx: 'auto', lineHeight: 1.7 }}>
+          <Typography variant='body1' sx={{ color: c.textSecondary, maxWidth: 520, mx: 'auto', lineHeight: 1.7 }}>
             Hear from the students and professionals who experienced Citronics firsthand.
           </Typography>
         </MotionBox>
@@ -128,6 +138,9 @@ export default function TestimonialsSection() {
 
       {/* Scrollable testimonial row */}
       <Box
+        role='region'
+        aria-label='Testimonials carousel'
+        tabIndex={0}
         sx={{
           display: 'flex',
           gap: 3,
@@ -136,7 +149,7 @@ export default function TestimonialsSection() {
           overflowX: 'auto',
           scrollSnapType: 'x mandatory',
           '&::-webkit-scrollbar': { height: 6 },
-          '&::-webkit-scrollbar-thumb': { bgcolor: alpha(theme.palette.primary.main, 0.2), borderRadius: 3 },
+          '&::-webkit-scrollbar-thumb': { bgcolor: c.primaryA20, borderRadius: 3 },
           '& > *': { scrollSnapAlign: 'start' }
         }}
       >

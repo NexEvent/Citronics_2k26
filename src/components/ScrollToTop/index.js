@@ -10,10 +10,10 @@ const StyledFab = styled(Fab)(({ theme }) => ({
   bottom: theme.spacing(3),
   right: theme.spacing(3),
   zIndex: theme.zIndex.tooltip,
-  boxShadow: '0 4px 20px rgba(124, 58, 237, 0.35)',
+  boxShadow: `0 4px 20px ${theme.palette.primary.main}59`,
   '&:hover': {
     transform: 'translateY(-2px)',
-    boxShadow: '0 8px 28px rgba(124, 58, 237, 0.45)'
+    boxShadow: `0 8px 28px ${theme.palette.primary.main}73`
   },
   transition: 'transform 0.2s ease, box-shadow 0.2s ease'
 }))

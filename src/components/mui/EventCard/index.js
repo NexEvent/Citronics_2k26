@@ -5,9 +5,9 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import LinearProgress from '@mui/material/LinearProgress'
 import Tooltip from '@mui/material/Tooltip'
-import { alpha, useTheme } from '@mui/material/styles'
 import Icon from 'src/components/Icon'
 import StatusChip from 'src/components/mui/StatusChip'
+import { useAppPalette } from 'src/components/palette'
 
 /**
  * EventCard
@@ -31,7 +31,7 @@ import StatusChip from 'src/components/mui/StatusChip'
  * <EventCard event={event} onClick={() => router.push(`/events/${event.id}`)} />
  */
 const EventCard = ({ event = {}, onClick, sx }) => {
-  const theme = useTheme()
+  const c = useAppPalette()
 
   const {
     title = 'Untitled Event',
@@ -65,10 +65,10 @@ const EventCard = ({ event = {}, onClick, sx }) => {
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 3,
-        border: `1px solid ${theme.palette.divider}`,
+        border: `1px solid ${c.divider}`,
         transition: 'box-shadow 0.2s ease, transform 0.2s ease',
         '&:hover': {
-          boxShadow: theme.shadows[8],
+          boxShadow: c.theme.shadows[8],
           transform: 'translateY(-2px)'
         },
         ...sx
@@ -85,7 +85,7 @@ const EventCard = ({ event = {}, onClick, sx }) => {
             backgroundImage: banner ? `url(${banner})` : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            backgroundColor: banner ? 'transparent' : alpha(theme.palette.primary.main, 0.12),
+            backgroundColor: banner ? 'transparent' : c.primaryA12,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -96,7 +96,7 @@ const EventCard = ({ event = {}, onClick, sx }) => {
           {!banner && (
             <Icon
               icon='tabler:calendar-event'
-              style={{ fontSize: 56, color: theme.palette.primary.main, opacity: 0.5 }}
+              style={{ fontSize: 56, color: c.primary, opacity: 0.5 }}
             />
           )}
 
@@ -111,7 +111,7 @@ const EventCard = ({ event = {}, onClick, sx }) => {
               <StatusChip
                 type='event'
                 status='published'
-                sx={{ bgcolor: alpha(theme.palette.common.black, 0.5), color: '#fff' }}
+                sx={{ bgcolor: c.blackA50, color: c.white }}
                 label={category}
               />
             </Box>

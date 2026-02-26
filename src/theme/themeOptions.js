@@ -1,5 +1,5 @@
 import { deepmerge } from '@mui/utils'
-import palette from './palette'
+import palette from 'src/components/palette'
 import typography from './typography'
 import breakpoints from './breakpoints'
 import Overrides from './overrides'
@@ -76,9 +76,6 @@ const themeOptions = (settings, overrideMode) => {
       primary: {
         ...(mergedConfig.palette[themeColor] || mergedConfig.palette.primary)
       },
-      background: {
-        default: themedBg
-      }
     }
   })
 }

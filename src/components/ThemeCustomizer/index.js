@@ -9,7 +9,7 @@ import Divider from '@mui/material/Divider'
 import Tooltip from '@mui/material/Tooltip'
 import Fade from '@mui/material/Fade'
 import Slider from '@mui/material/Slider'
-import { styled, alpha, useTheme } from '@mui/material/styles'
+import { styled, alpha } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 
 // Icons
@@ -34,6 +34,7 @@ import {
 
 // Hooks
 import { useSettings } from 'src/hooks/useSettings'
+import { useAppPalette } from 'src/components/palette'
 import themeConfig from 'src/configs/themeConfig'
 
 // ── Color Presets ──────────────────────────────────────────────────────────────
@@ -65,7 +66,7 @@ const TriggerButton = styled(IconButton)(({ theme }) => ({
   height: 44,
   borderRadius: '8px 0 0 8px',
   backgroundColor: theme.palette.primary.main,
-  color: '#fff',
+  color: theme.palette.primary.contrastText,
   boxShadow: `-4px 0 16px ${alpha(theme.palette.primary.main, 0.4)}`,
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
@@ -84,7 +85,7 @@ const DrawerHeader = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   padding: theme.spacing(2.5, 3),
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.dark, 0.9)} 100%)`,
-  color: '#fff'
+  color: theme.palette.primary.contrastText
 }))
 
 const SectionTitle = styled(Typography)(({ theme }) => ({
@@ -118,7 +119,7 @@ const ColorSwatch = styled(Box, {
     boxShadow: `0 6px 20px ${alpha(swatchColor, 0.4)}`
   },
   '&::after': active
-    ? { content: '"✓"', color: '#fff', fontSize: '1rem', fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,0.3)' }
+    ? { content: '"✓"', color: theme.palette.primary.contrastText, fontSize: '1rem', fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,0.3)' }
     : {}
 }))
 
@@ -132,6 +133,10 @@ const OptionRow = styled(Box)(({ theme }) => ({
   transition: 'background-color 0.15s',
   '&:hover': {
     backgroundColor: alpha(theme.palette.primary.main, 0.04)
+  },
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.primary.main}`,
+    outlineOffset: 2
   }
 }))
 
@@ -161,19 +166,23 @@ const FontSizeChip = styled(Box, {
   fontWeight: 600,
   transition: 'all 0.2s',
   backgroundColor: active ? theme.palette.primary.main : alpha(theme.palette.text.primary, 0.04),
-  color: active ? '#fff' : theme.palette.text.secondary,
+  color: active ? theme.palette.primary.contrastText : theme.palette.text.secondary,
   border: `1px solid ${active ? theme.palette.primary.main : alpha(theme.palette.divider, 0.5)}`,
   '&:hover': {
     backgroundColor: active ? theme.palette.primary.dark : alpha(theme.palette.primary.main, 0.08),
     borderColor: theme.palette.primary.main
+  },
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.primary.main}`,
+    outlineOffset: 2
   }
 }))
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
 const ThemeCustomizer = () => {
-  const theme = useTheme()
-  const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'))
+  const c = useAppPalette()
+  const isLargeScreen = useMediaQuery(c.theme.breakpoints.up('lg'))
   const { settings, saveSettings } = useSettings()
   const [open, setOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -237,7 +246,7 @@ const ThemeCustomizer = () => {
 
   if (!isLargeScreen) return null
 
-  const isDark = settings.mode === 'dark'
+  const isDark = c.isDark
   const activePreset = COLOR_PRESETS.find(p => p.name === (settings.themeColor || 'primary')) || COLOR_PRESETS[0]
   const currentFontSize = settings.fontSize || 14
 
@@ -260,11 +269,12 @@ const ThemeCustomizer = () => {
         open={open}
         onClose={handleClose}
         variant='temporary'
+        aria-label='Theme customizer'
         PaperProps={{
           sx: {
             width: 300,
-            borderLeft: `1px solid ${theme.palette.divider}`,
-            boxShadow: `-8px 0 32px ${alpha(theme.palette.common.black, 0.08)}`,
+            borderLeft: `1px solid ${c.divider}`,
+            boxShadow: `-8px 0 32px ${c.blackA8}`,
             backgroundImage: 'none'
           }
         }}
@@ -276,11 +286,11 @@ const ThemeCustomizer = () => {
             <Typography variant='subtitle1' sx={{ fontWeight: 700, color: 'inherit' }}>
               Customizer
             </Typography>
-            <Typography variant='caption' sx={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.65rem' }}>
+            <Typography variant='caption' sx={{ color: c.whiteA65, fontSize: '0.65rem' }}>
               Personalize your experience
             </Typography>
           </Box>
-          <IconButton onClick={handleClose} size='small' sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { color: '#fff' } }}>
+          <IconButton onClick={handleClose} size='small' aria-label='Close customizer' sx={{ color: c.whiteA80, '&:hover': { color: c.white } }}>
             <IconX size={18} />
           </IconButton>
         </DrawerHeader>
@@ -290,14 +300,14 @@ const ThemeCustomizer = () => {
 
           {/* ── Mode ── */}
           <SectionTitle>Mode</SectionTitle>
-          <OptionRow onClick={handleModeToggle} sx={{ mb: 1.5 }}>
+          <OptionRow role='button' tabIndex={0} onKeyDown={e => e.key === 'Enter' && handleModeToggle()} onClick={handleModeToggle} sx={{ mb: 1.5 }}>
             <OptionLabel>
               {isDark ? <IconMoon /> : <IconSun />}
               <Typography variant='body2'>{isDark ? 'Dark Mode' : 'Light Mode'}</Typography>
             </OptionLabel>
             {isDark
-              ? <IconToggleRight size={28} color={theme.palette.primary.main} />
-              : <IconToggleLeft size={28} color={theme.palette.text.disabled} />
+              ? <IconToggleRight size={28} color={c.primary} />
+              : <IconToggleLeft size={28} color={c.textDisabled} />
             }
           </OptionRow>
 
@@ -312,6 +322,10 @@ const ThemeCustomizer = () => {
                   swatchColor={preset.color}
                   active={activePreset.name === preset.name}
                   onClick={() => handleColorChange(preset)}
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={e => e.key === 'Enter' && handleColorChange(preset)}
+                  aria-label={`Select ${preset.label} color`}
                 />
               </Tooltip>
             ))}
@@ -330,6 +344,10 @@ const ThemeCustomizer = () => {
                 <FontSizeChip
                   active={currentFontSize === fs.value}
                   onClick={() => handleFontSize(fs.value)}
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={e => e.key === 'Enter' && handleFontSize(fs.value)}
+                  aria-label={`Set font size to ${fs.value}px`}
                 >
                   {fs.label}
                 </FontSizeChip>
@@ -342,25 +360,25 @@ const ThemeCustomizer = () => {
           {/* ── Layout Options ── */}
           <SectionTitle>Layout</SectionTitle>
 
-          <OptionRow onClick={handleContentWidth}>
+          <OptionRow role='button' tabIndex={0} onKeyDown={e => e.key === 'Enter' && handleContentWidth()} onClick={handleContentWidth}>
             <OptionLabel>
               {settings.contentWidth === 'boxed' ? <IconLayoutAlignCenter /> : <IconLayoutAlignLeft />}
               <Typography variant='body2'>Boxed Layout</Typography>
             </OptionLabel>
             {settings.contentWidth === 'boxed'
-              ? <IconToggleRight size={28} color={theme.palette.primary.main} />
-              : <IconToggleLeft size={28} color={theme.palette.text.disabled} />
+              ? <IconToggleRight size={28} color={c.primary} />
+              : <IconToggleLeft size={28} color={c.textDisabled} />
             }
           </OptionRow>
 
-          <OptionRow onClick={handleFullscreen}>
+          <OptionRow role='button' tabIndex={0} onKeyDown={e => e.key === 'Enter' && handleFullscreen()} onClick={handleFullscreen}>
             <OptionLabel>
               {isFullscreen ? <IconArrowsMinimize /> : <IconArrowsMaximize />}
               <Typography variant='body2'>Fullscreen</Typography>
             </OptionLabel>
             {isFullscreen
-              ? <IconToggleRight size={28} color={theme.palette.primary.main} />
-              : <IconToggleLeft size={28} color={theme.palette.text.disabled} />
+              ? <IconToggleRight size={28} color={c.primary} />
+              : <IconToggleLeft size={28} color={c.textDisabled} />
             }
           </OptionRow>
 
@@ -369,33 +387,36 @@ const ThemeCustomizer = () => {
           {/* ── Navbar Options ── */}
           <SectionTitle>Navbar</SectionTitle>
 
-          <OptionRow onClick={handleAppBar}>
+          <OptionRow role='button' tabIndex={0} onKeyDown={e => e.key === 'Enter' && handleAppBar()} onClick={handleAppBar}>
             <OptionLabel>
               {settings.appBar !== 'hidden' ? <IconEye /> : <IconEyeOff />}
               <Typography variant='body2'>Show Navbar</Typography>
             </OptionLabel>
             {settings.appBar !== 'hidden'
-              ? <IconToggleRight size={28} color={theme.palette.primary.main} />
-              : <IconToggleLeft size={28} color={theme.palette.text.disabled} />
+              ? <IconToggleRight size={28} color={c.primary} />
+              : <IconToggleLeft size={28} color={c.textDisabled} />
             }
           </OptionRow>
 
-          <OptionRow onClick={handleAppBarBlur}>
+          <OptionRow role='button' tabIndex={0} onKeyDown={e => e.key === 'Enter' && handleAppBarBlur()} onClick={handleAppBarBlur}>
             <OptionLabel>
               {settings.appBarBlur !== false ? <IconDroplet /> : <IconDropletOff />}
               <Typography variant='body2'>Glassmorphism</Typography>
             </OptionLabel>
             {settings.appBarBlur !== false
-              ? <IconToggleRight size={28} color={theme.palette.primary.main} />
-              : <IconToggleLeft size={28} color={theme.palette.text.disabled} />
+              ? <IconToggleRight size={28} color={c.primary} />
+              : <IconToggleLeft size={28} color={c.textDisabled} />
             }
           </OptionRow>
         </Box>
 
         {/* Footer */}
-        <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+        <Box sx={{ p: 2, borderTop: `1px solid ${c.divider}` }}>
           <Box
             onClick={handleResetAll}
+            role='button'
+            tabIndex={0}
+            onKeyDown={e => e.key === 'Enter' && handleResetAll()}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -405,12 +426,12 @@ const ThemeCustomizer = () => {
               borderRadius: '10px',
               cursor: 'pointer',
               color: 'text.secondary',
-              border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              border: `1px solid ${c.dividerA50}`,
               transition: 'all 0.2s',
               '&:hover': {
                 color: 'error.main',
-                borderColor: alpha(theme.palette.error.main, 0.3),
-                bgcolor: alpha(theme.palette.error.main, 0.04)
+                borderColor: c.errorA30,
+                bgcolor: c.errorA4
               }
             }}
           >

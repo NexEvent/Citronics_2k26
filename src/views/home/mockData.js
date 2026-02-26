@@ -72,7 +72,9 @@ export const STATS = [
   { label: 'Events', value: 24, suffix: '+', icon: 'tabler:calendar-event', paletteKey: 'primary' },
   { label: 'Participants', value: 2000, suffix: '+', icon: 'tabler:users', paletteKey: 'info' },
   { label: 'Departments', value: 5, suffix: '', icon: 'tabler:building-community', paletteKey: 'success' },
-  { label: 'Prize Pool', value: 2, suffix: 'L+', icon: 'tabler:trophy', paletteKey: 'warning' }
+  { label: 'Prize Pool', value: 2, suffix: 'L+', icon: 'tabler:trophy', paletteKey: 'warning' },
+  { label: 'Workshops', value: 12, suffix: '+', icon: 'tabler:hammer', paletteKey: 'secondary' },
+  { label: 'Sponsors', value: 15, suffix: '+', icon: 'tabler:heart-handshake', paletteKey: 'error' }
 ]
 
 // == Schedule =================================================================

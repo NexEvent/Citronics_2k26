@@ -18,11 +18,11 @@ const GlobalStyling = theme => ({
   '.ps__rail-y, .ps__rail-x': {
     zIndex: 1,
     '&:hover, &:focus, &.ps--clicking': {
-      backgroundColor: theme.palette.mode === 'light' ? '#E4E6E8' : '#423D5D'
+      backgroundColor: theme.palette.mode === 'light' ? theme.palette.grey[300] : theme.palette.grey[800]
     }
   },
   '.ps__thumb-y, .ps__thumb-x': {
-    backgroundColor: theme.palette.mode === 'light' ? '#AAAAAF' : '#504B6D'
+    backgroundColor: theme.palette.mode === 'light' ? theme.palette.grey[400] : theme.palette.grey[700]
   },
   '#nprogress': {
     pointerEvents: 'none',

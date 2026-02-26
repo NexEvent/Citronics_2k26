@@ -16,7 +16,6 @@ import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import Collapse from '@mui/material/Collapse'
-import { useTheme, alpha } from '@mui/material/styles'
 
 // Icons
 import { IconEye, IconEyeOff, IconLogin, IconBrandGoogle } from '@tabler/icons-react'
@@ -24,6 +23,7 @@ import { IconEye, IconEyeOff, IconLogin, IconBrandGoogle } from '@tabler/icons-r
 // Config
 import MinimalLayout from 'src/layouts/MinimalLayout'
 import themeConfig from 'src/configs/themeConfig'
+import { useAppPalette } from 'src/components/palette'
 
 /**
  * Login Page
@@ -36,7 +36,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false)
 
   const router = useRouter()
-  const theme = useTheme()
+  const c = useAppPalette()
 
   const handleSubmit = async e => {
     e.preventDefault()
@@ -74,8 +74,8 @@ const LoginPage = () => {
         alignItems: 'center',
         justifyContent: 'center',
         p: 3,
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)} 0%, ${alpha(theme.palette.primary.main, 0.08)} 100%)`,
-        backgroundColor: theme.palette.background.default
+        background: `linear-gradient(135deg, ${c.primaryA3} 0%, ${c.primaryA8} 100%)`,
+        backgroundColor: c.bgDefault
       }}
     >
       <Card
@@ -83,8 +83,8 @@ const LoginPage = () => {
           maxWidth: 440,
           width: '100%',
           borderRadius: '20px',
-          boxShadow: `0 8px 40px ${alpha(theme.palette.common.black, 0.08)}`,
-          border: `1px solid ${alpha(theme.palette.divider, 0.4)}`
+          boxShadow: `0 8px 40px ${c.blackA8}`,
+          border: `1px solid ${c.dividerA40}`
         }}
       >
         <CardContent sx={{ p: { xs: 3, sm: 4.5 } }}>
@@ -96,16 +96,16 @@ const LoginPage = () => {
                 width: 52,
                 height: 52,
                 borderRadius: '14px',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                background: `linear-gradient(135deg, ${c.primary}, ${c.primaryDark})`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 mx: 'auto',
                 mb: 2,
-                boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                boxShadow: `0 4px 14px ${c.primaryA30}`
               }}
             >
-              <IconLogin size={26} color='#fff' />
+              <IconLogin size={26} color={c.primaryContrast} />
             </Box>
             <Typography variant='h5' fontWeight={700}>
               Welcome Back
@@ -193,11 +193,11 @@ const LoginPage = () => {
               fontWeight: 600,
               textTransform: 'none',
               fontSize: '0.9rem',
-              borderColor: alpha(theme.palette.divider, 0.6),
+              borderColor: c.dividerA60,
               color: 'text.primary',
               '&:hover': {
-                borderColor: theme.palette.primary.main,
-                backgroundColor: alpha(theme.palette.primary.main, 0.04)
+                borderColor: c.primary,
+                backgroundColor: c.primaryA4
               }
             }}
           >

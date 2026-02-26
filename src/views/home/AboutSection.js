@@ -2,16 +2,22 @@
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
-import { alpha, useTheme } from '@mui/material/styles'
+import { alpha } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import Icon from 'src/components/Icon'
-import { HIGHLIGHTS } from './mockData'
+import { useAppPalette } from 'src/components/palette'
 
 const MotionBox = motion(Box)
 
+/**
+ * Renders a single highlight feature card for the About section.
+ * @param {object} props
+ * @param {object} props.item - Highlight data (title, description, icon, paletteKey)
+ * @param {number} props.index - Card index for staggered entrance animation
+ */
 function HighlightCard({ item, index }) {
-  const theme = useTheme()
-  const color = theme.palette[item.paletteKey]?.main || theme.palette.primary.main
+  const c = useAppPalette()
+  const color = c.theme.palette[item.paletteKey]?.main || c.primary
 
   return (
     <MotionBox
@@ -24,8 +30,8 @@ function HighlightCard({ item, index }) {
         p: 4,
         height: '100%',
         borderRadius: '24px',
-        background: alpha(theme.palette.background.paper, 0.5),
-        border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+        background: c.bgPaperA50,
+        border: `1px solid ${c.dividerA60}`,
         backdropFilter: 'blur(16px)',
         position: 'relative',
         overflow: 'hidden',
@@ -66,30 +72,35 @@ function HighlightCard({ item, index }) {
         <Icon icon={item.icon} fontSize={28} style={{ color }} />
       </Box>
 
-      <Typography variant='h6' sx={{ fontWeight: 700, mb: 1, color: theme.palette.text.primary }}>
+      <Typography variant='h6' sx={{ fontWeight: 700, mb: 1, color: c.textPrimary }}>
         {item.title}
       </Typography>
 
-      <Typography variant='body2' sx={{ color: theme.palette.text.secondary, lineHeight: 1.7 }}>
+      <Typography variant='body2' sx={{ color: c.textSecondary, lineHeight: 1.7 }}>
         {item.description}
       </Typography>
     </MotionBox>
   )
 }
 
-export default function AboutSection() {
-  const theme = useTheme()
+/**
+ * About / highlights section on the home page.
+ * Renders a grid of feature cards describing what makes Citronics unique.
+ * @param {object} props
+ * @param {Array} [props.highlights=[]] - Array of highlight objects from the home API
+ */
+export default function AboutSection({ highlights: HIGHLIGHTS = [] }) {
+  const c = useAppPalette()
 
   return (
     <Box
       id='about'
       sx={{
         py: { xs: 10, md: 16 },
-        position: 'relative',
-        background: theme.palette.background.default
+        position: 'relative'
       }}
     >
-      <Container maxWidth='lg'>
+      <Container maxWidth='xl'>
         {/* Section header */}
         <MotionBox
           initial={{ opacity: 0, y: 24 }}
@@ -106,13 +117,13 @@ export default function AboutSection() {
               px: 2,
               py: 0.5,
               borderRadius: '100px',
-              background: alpha(theme.palette.primary.main, 0.08),
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+              background: c.primaryA8,
+              border: `1px solid ${c.primaryA15}`,
               mb: 2.5
             }}
           >
-            <Icon icon='tabler:sparkles' fontSize={14} style={{ color: theme.palette.primary.main }} />
-            <Typography variant='caption' sx={{ color: theme.palette.primary.main, fontWeight: 600, letterSpacing: 1.5 }}>
+            <Icon icon='tabler:sparkles' fontSize={14} style={{ color: c.primary }} />
+            <Typography variant='caption' sx={{ color: c.primary, fontWeight: 600, letterSpacing: 1.5 }}>
               WHY CITRONICS
             </Typography>
           </Box>
@@ -121,7 +132,7 @@ export default function AboutSection() {
           </Typography>
           <Typography
             variant='body1'
-            sx={{ color: theme.palette.text.secondary, maxWidth: 560, mx: 'auto', lineHeight: 1.7 }}
+            sx={{ color: c.textSecondary, maxWidth: 560, mx: 'auto', lineHeight: 1.7 }}
           >
             Citronics is where ambition meets opportunity. Three days of world-class competitions, hands-on workshops, and connections that last a lifetime.
           </Typography>

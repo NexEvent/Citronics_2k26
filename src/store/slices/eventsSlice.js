@@ -83,6 +83,7 @@ const initialState = {
   // Departments
   departments: [],
   departmentsLoading: false,
+  departmentsLoaded: false,
 
   // Single event detail
   currentEvent: null,
@@ -120,9 +121,10 @@ const eventsSlice = createSlice({
       .addCase(fetchHomeData.fulfilled, (state, action) => {
         state.homeLoading = false
         state.homeData = action.payload
-        // Also populate departments from home data
+        // Also populate departments from home data so EventsPageView won't re-fetch
         if (action.payload.departments) {
           state.departments = action.payload.departments
+          state.departmentsLoaded = true
         }
       })
       .addCase(fetchHomeData.rejected, (state, action) => {
@@ -171,10 +173,12 @@ const eventsSlice = createSlice({
       })
       .addCase(fetchDepartments.fulfilled, (state, action) => {
         state.departmentsLoading = false
+        state.departmentsLoaded = true
         state.departments = action.payload || []
       })
       .addCase(fetchDepartments.rejected, (state, action) => {
         state.departmentsLoading = false
+        state.departmentsLoaded = true   // don't retry on error either
         state.departmentsError = action.payload
       })
   }

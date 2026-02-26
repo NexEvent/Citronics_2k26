@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import dashboardReducer from './slices/dashboardSlice'
 import eventsReducer from './slices/eventsSlice'
+import voiceReducer from './slices/voiceSlice'
 
 /**
  * Redux Store Configuration — Citronics
@@ -9,7 +10,8 @@ import eventsReducer from './slices/eventsSlice'
 export const store = configureStore({
   reducer: {
     dashboard: dashboardReducer,
-    events: eventsReducer
+    events: eventsReducer,
+    voice: voiceReducer
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

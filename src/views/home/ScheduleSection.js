@@ -2,11 +2,9 @@
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
-import { motion, useScroll, useTransform } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import { useAppPalette } from 'src/components/palette'
 
-const MotionBox = motion(Box)
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Placeholder event images per day (replace with real images when available)
@@ -50,7 +48,6 @@ const DAY_IMAGES = [
  */
 export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
   const c = useAppPalette()
-  const containerRef = useRef(null)
   const timelineRef = useRef(null)
   const [height, setHeight] = useState(0)
 
@@ -68,14 +65,6 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
     return () => ro.disconnect()
   }, [SCHEDULE_DAYS])
 
-  // Scroll-linked gradient line
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start 10%', 'end 50%']
-  })
-  const heightTransform = useTransform(scrollYProgress, [0, 1], [0, height])
-  const opacityTransform = useTransform(scrollYProgress, [0, 0.1], [0, 1])
-
   if (!SCHEDULE_DAYS.length) return null
 
   // Soft multi-layer shadow matching Aceternity image cards
@@ -91,7 +80,6 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
   return (
     <Box
       id='schedule'
-      ref={containerRef}
       sx={{
         width: '100%',
         bgcolor: c.bgDefault,
@@ -101,12 +89,7 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
     >
       {/* ── Section header ─────────────────────────────────────────── */}
       <Box sx={{ maxWidth: 1200, mx: 'auto', py: { xs: 8, md: 10 }, px: { xs: 2, md: 4, lg: 5 } }}>
-        <MotionBox
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
+        <Box>
           <Box
             sx={{
               display: 'inline-flex',
@@ -144,7 +127,7 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
           >
             Three action-packed days of competitions, workshops, and unforgettable cultural nights.
           </Typography>
-        </MotionBox>
+        </Box>
       </Box>
 
       {/* ── Timeline body ──────────────────────────────────────────── */}
@@ -230,12 +213,7 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
               </Typography>
 
               {/* Day description */}
-              <MotionBox
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
+              <Box>
                 <Typography
                   sx={{
                     color: c.textPrimary,
@@ -247,7 +225,7 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
                 >
                   {day.date} &mdash; Theme: <strong>{day.theme}</strong>
                 </Typography>
-              </MotionBox>
+              </Box>
 
               {/* ── Event list (clean text, no boxes) ─────────── */}
               <Box sx={{ mb: 4 }}>
@@ -255,12 +233,8 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
                   const color = c.theme.palette[item.paletteKey]?.main || c.primary
 
                   return (
-                    <MotionBox
+                    <Box
                       key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true, amount: 0.5 }}
-                      transition={{ duration: 0.35, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -325,7 +299,7 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
                           {item.dept}
                         </Typography>
                       )}
-                    </MotionBox>
+                    </Box>
                   )
                 })}
               </Box>
@@ -340,13 +314,7 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
                 }}
               >
                 {(DAY_IMAGES[dayIndex] || DAY_IMAGES[0]).map((src, imgIdx) => (
-                  <MotionBox
-                    key={imgIdx}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.5, delay: imgIdx * 0.08 }}
-                  >
+                  <Box key={imgIdx}>
                     <Box
                       component='img'
                       src={src}
@@ -361,7 +329,7 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
                         display: 'block'
                       }}
                     />
-                  </MotionBox>
+                  </Box>
                 ))}
               </Box>
             </Box>
@@ -383,10 +351,9 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
             zIndex: 0
           }}
         >
-          <motion.div
-            style={{
-              height: heightTransform,
-              opacity: opacityTransform,
+          <Box
+            sx={{
+              height: '100%',
               position: 'absolute',
               top: 0,
               left: 0,

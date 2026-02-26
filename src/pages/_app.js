@@ -24,7 +24,7 @@ import AuthGuard from 'src/components/guards/AuthGuard'
 import GuestGuard from 'src/components/guards/GuestGuard'
 import AclGuard from 'src/components/guards/AclGuard'
 import Spinner from 'src/components/Spinner'
-import ScrollToTop from 'src/components/ScrollToTop'
+// import ScrollToTop from 'src/components/ScrollToTop'
 import PWAPrompts from 'src/components/PWAPrompts'
 import ThemeCustomizer from 'src/components/ThemeCustomizer'
 import dynamic from 'next/dynamic'
@@ -117,7 +117,7 @@ const App = props => {
 
                   {/* Global utilities */}
                   <ThemeCustomizer />
-                  <ScrollToTop />
+                  {/* <ScrollToTop /> */}
                   <PWAPrompts />
                   <VoiceAssistant />
                   <Toaster position={settings.toastPosition || themeConfig.toastPosition} />

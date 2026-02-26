@@ -347,7 +347,7 @@ function EventCardSkeleton() {
 export default function EventsPageView() {
   const c = useAppPalette()
   const dispatch = useDispatch()
-  const { events, pagination, eventsLoading, departments, error: eventsError } = useSelector(state => state.events)
+  const { events, pagination, eventsLoading, departments, departmentsLoaded, error: eventsError } = useSelector(state => state.events)
 
   const [activeDept, setActiveDept] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -378,12 +378,13 @@ export default function EventsPageView() {
     return () => promise.abort()
   }, [dispatch, activeDept, debouncedSearch, sortOrder, page])
 
-  // Fetch departments on mount
+  // Fetch departments once — guarded by departmentsLoaded so an empty result
+  // from the DB doesn't trigger an infinite re-fetch loop
   useEffect(() => {
-    if (!departments || departments.length === 0) {
+    if (!departmentsLoaded) {
       dispatch(fetchDepartments())
     }
-  }, [dispatch, departments])
+  }, [dispatch, departmentsLoaded])
 
   const handleDeptChange = useCallback(e => {
     setActiveDept(e.target.value)

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect } from 'react'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -322,6 +322,7 @@ export default function HeroSection({ heroWords: HERO_WORDS = [], eventStartDate
   const c = useAppPalette()
   const isDark = c.isDark
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [particles, setParticles] = useState([])
 
   /* ── Theme-aware color helpers ──────────────────────────────── */
   const heroText = c.heroText
@@ -348,8 +349,9 @@ export default function HeroSection({ heroWords: HERO_WORDS = [], eventStartDate
     return () => clearInterval(id)
   }, [])
 
-  const particles = useMemo(
-    () =>
+  // Particles are generated client-side only to avoid SSR/client Math.random() mismatch
+  useEffect(() => {
+    setParticles(
       Array.from({ length: 20 }, (_, i) => ({
         size: Math.random() * 4 + 2,
         x: `${Math.random() * 100}%`,
@@ -360,9 +362,9 @@ export default function HeroSection({ heroWords: HERO_WORDS = [], eventStartDate
           i % 3 === 0 ? c.primary : i % 3 === 1 ? c.info : c.warning,
           0.4
         )
-      })),
-    [c.primary, c.info, c.warning]
-  )
+      }))
+    )
+  }, [c.primary, c.info, c.warning])
 
   const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.15 } } }
   const fadeUp = {

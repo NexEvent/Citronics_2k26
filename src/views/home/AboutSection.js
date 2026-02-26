@@ -9,6 +9,12 @@ import { useAppPalette } from 'src/components/palette'
 
 const MotionBox = motion(Box)
 
+/**
+ * Renders a single highlight feature card for the About section.
+ * @param {object} props
+ * @param {object} props.item - Highlight data (title, description, icon, paletteKey)
+ * @param {number} props.index - Card index for staggered entrance animation
+ */
 function HighlightCard({ item, index }) {
   const c = useAppPalette()
   const color = c.theme.palette[item.paletteKey]?.main || c.primary
@@ -77,6 +83,12 @@ function HighlightCard({ item, index }) {
   )
 }
 
+/**
+ * About / highlights section on the home page.
+ * Renders a grid of feature cards describing what makes Citronics unique.
+ * @param {object} props
+ * @param {Array} [props.highlights=[]] - Array of highlight objects from the home API
+ */
 export default function AboutSection({ highlights: HIGHLIGHTS = [] }) {
   const c = useAppPalette()
 

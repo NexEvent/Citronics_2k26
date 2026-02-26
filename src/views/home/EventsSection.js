@@ -13,6 +13,13 @@ import { useAppPalette } from 'src/components/palette'
 
 const MotionBox = motion(Box)
 
+/**
+ * Renders a single event card in the home page events grid.
+ * Shows fill percentage, department tag, and links to the event detail page.
+ * @param {object} props
+ * @param {object} props.event - Event data object from the home API
+ * @param {number} props.index - Card index for staggered entrance animation
+ */
 function EventCard({ event, index }) {
   const c = useAppPalette()
   const color = c.theme.palette[event.paletteKey]?.main || c.primary
@@ -181,6 +188,13 @@ function EventCard({ event, index }) {
   )
 }
 
+/**
+ * Events grid section on the home page.
+ * Supports department filtering with animated card transitions.
+ * @param {object} props
+ * @param {Array} [props.events=[]] - Array of event objects from the home API
+ * @param {Array} [props.departments=[]] - Array of department objects for filter tabs
+ */
 export default function EventsSection({ events: EVENTS = [], departments: DEPARTMENTS = [] }) {
   const c = useAppPalette()
   const [activeDept, setActiveDept] = useState('all')

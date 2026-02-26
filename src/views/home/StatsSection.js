@@ -180,8 +180,12 @@ function StatCard({ stat, index, started, layout }) {
   )
 }
 
-/* ── Stats Section ──────────────────────────────────────────────────────── */
-export default function StatsSection({ stats: STATS = [] }) {
+/* ── Stats Section ──────────────────────────────────────────────────────── *//**
+ * Bento-grid stats section showing animated KPI tiles.
+ * Starts counter animations when the section scrolls into view.
+ * @param {object} props
+ * @param {Array} [props.stats=[]] - Array of stat objects from the home API
+ */export default function StatsSection({ stats: STATS = [] }) {
   const c = useAppPalette()
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, amount: 0.2 })

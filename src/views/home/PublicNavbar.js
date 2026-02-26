@@ -8,6 +8,10 @@ const NAV_LINKS = [
   { label: 'Schedule', href: '#schedule' }
 ]
 
+/**
+ * Fixed navigation bar for the public home page.
+ * Highlights the active section based on IntersectionObserver scroll position.
+ */
 export default function PublicNavbar() {
   const [activeSection, setActiveSection] = useState('hero')
 

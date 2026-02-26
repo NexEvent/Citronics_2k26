@@ -29,6 +29,11 @@ function parseDate(raw) {
   return { dayOfWeek, full, time }
 }
 
+/**
+ * Extracts the first image from an event's images array.
+ * @param {object} event - Event data object
+ * @returns {string|null} Image URL or null
+ */
 function getImage(event) {
   if (event.images && Array.isArray(event.images) && event.images.length > 0) {
     return event.images[0]
@@ -36,8 +41,13 @@ function getImage(event) {
   return null
 }
 
-/* ── Single Event Card (SILO Dallas style) ──────────────────────────────── */
-function SiloCard({ event, index, accent }) {
+/* ── Single Event Card (SILO Dallas style) ──────────────────────────────── *//**
+ * Renders a single event card in the "This Week" section.
+ * @param {object} props
+ * @param {object} props.event - Event data object
+ * @param {number} props.index - Card index for staggered animation
+ * @param {string} props.accent - Accent color from the theme
+ */function SiloCard({ event, index, accent }) {
   const c = useAppPalette()
   const router = useRouter()
   const [hovered, setHovered] = useState(false)

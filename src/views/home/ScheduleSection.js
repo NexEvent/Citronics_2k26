@@ -11,6 +11,13 @@ import { useAppPalette } from 'src/components/palette'
 
 const MotionBox = motion(Box)
 
+/**
+ * Renders a single timeline entry for a scheduled session.
+ * @param {object} props
+ * @param {object} props.item - Schedule item data (time, title, speaker, paletteKey)
+ * @param {boolean} props.isLast - Whether this is the last item (hides the connector line)
+ * @param {number} props.delay - Framer-motion animation delay in seconds
+ */
 function TimelineEntry({ item, isLast, delay }) {
   const c = useAppPalette()
   const color = c.theme.palette[item.paletteKey]?.main || c.primary
@@ -82,6 +89,14 @@ function TimelineEntry({ item, isLast, delay }) {
   )
 }
 
+/**
+ * Renders a clickable day selector tab for the schedule.
+ * @param {object} props
+ * @param {object} props.day - Day data (label, date)
+ * @param {number} props.index - Tab index (used for color selection)
+ * @param {boolean} props.isActive - Whether this day is currently selected
+ * @param {Function} props.onClick - Callback when the tab is clicked
+ */
 function DayCard({ day, index, isActive, onClick }) {
   const c = useAppPalette()
   const colors = [c.primary, c.info, c.success]
@@ -122,6 +137,12 @@ function DayCard({ day, index, isActive, onClick }) {
   )
 }
 
+/**
+ * Multi-day schedule section on the home page.
+ * Renders day selector tabs and a timeline of sessions for the active day.
+ * @param {object} props
+ * @param {Array} [props.scheduleDays=[]] - Array of day objects from the home API
+ */
 export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
   const c = useAppPalette()
   const [activeDay, setActiveDay] = useState(0)

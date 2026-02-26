@@ -9,6 +9,10 @@ import Link from 'next/link'
 
 const MotionBox = motion(Box)
 
+/**
+ * Call-to-action banner section on the home page.
+ * Encourages visitors to register or view events at Citronics.
+ */
 export default function CTABanner() {
   const c = useAppPalette()
 

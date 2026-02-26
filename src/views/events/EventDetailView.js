@@ -23,6 +23,11 @@ const MotionBox = motion(Box)
  *  Helpers
  * ═════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Formats an ISO date string to a long locale date (e.g. "Monday, 3 March 2025").
+ * @param {string|null} iso - ISO 8601 date string
+ * @returns {string} Formatted date, or empty string
+ */
 function formatDate(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleDateString('en-IN', {
@@ -33,6 +38,11 @@ function formatDate(iso) {
   })
 }
 
+/**
+ * Formats an ISO date string to a 12-hour time string (e.g. "02:30 PM").
+ * @param {string|null} iso - ISO 8601 date string
+ * @returns {string} Formatted time, or empty string
+ */
 function formatTime(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('en-IN', {
@@ -42,6 +52,12 @@ function formatTime(iso) {
   })
 }
 
+/**
+ * Extracts the first image URL from an event object.
+ * Handles both plain string URLs and `{ url }` image objects.
+ * @param {object} event - Event data object
+ * @returns {string|null} Image URL, or null if none
+ */
 function getEventImage(event) {
   if (event?.images && Array.isArray(event.images) && event.images.length > 0) {
     const img = event.images[0]
@@ -54,6 +70,10 @@ function getEventImage(event) {
  *  Loading Skeleton
  * ═════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Full-page loading skeleton shown while event detail data is being fetched.
+ * Mirrors the layout of the detail view to prevent layout shift.
+ */
 function DetailSkeleton() {
   const c = useAppPalette()
 
@@ -78,6 +98,14 @@ function DetailSkeleton() {
  *  Info Row — reusable icon + label + value row
  * ═════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Reusable icon + label + value row used in the event detail sidebar.
+ * @param {object} props
+ * @param {string} props.icon - Iconify icon identifier
+ * @param {string} props.label - Row label text
+ * @param {string} props.value - Row value text
+ * @param {string} [props.color] - Optional accent color override
+ */
 function InfoRow({ icon, label, value, color }) {
   const c = useAppPalette()
 
@@ -114,6 +142,12 @@ function InfoRow({ icon, label, value, color }) {
  *  Event Detail View
  * ═════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Full-page event detail view.
+ * Reads the event `id` from the router query, dispatches `fetchEventById`,
+ * and renders the hero banner, metadata sidebar, and description.
+ * Rendered at /events/[id].
+ */
 export default function EventDetailView() {
   const c = useAppPalette()
   const router = useRouter()

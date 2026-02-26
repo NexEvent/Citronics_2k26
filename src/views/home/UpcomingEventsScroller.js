@@ -12,8 +12,11 @@ import { useAppPalette } from 'src/components/palette'
 const MotionBox = motion(Box)
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
-
-function parseDate(iso) {
+/**
+ * Parses an ISO date string into day number, weekday name, and month name.
+ * @param {string|null} iso - ISO 8601 date string
+ * @returns {{ dayNum: number|string, weekday: string, month: string }}
+ */function parseDate(iso) {
   if (!iso) return { dayNum: '', weekday: '', month: '' }
   const d = new Date(iso)
   return {
@@ -23,6 +26,11 @@ function parseDate(iso) {
   }
 }
 
+/**
+ * Extracts the first image from an event's images array.
+ * @param {object} event - Event data object
+ * @returns {string|null} Image URL or null
+ */
 function getImage(event) {
   if (event?.images && Array.isArray(event.images) && event.images.length > 0) {
     const img = event.images[0]
@@ -32,7 +40,12 @@ function getImage(event) {
 }
 
 /* ── Single Event Card (image overlay style like SILO) ────────────────── */
-
+/**
+ * Single compact card for the auto-scrolling upcoming events ticker.
+ * Shows event image, date badge, title, and a quick-link button.
+ * @param {object} props
+ * @param {object} props.event - Event data object
+ */
 function ScrollerCard({ event }) {
   const c = useAppPalette()
   const router = useRouter()
@@ -174,8 +187,14 @@ function ScrollerCard({ event }) {
 }
 
 /* ── Infinite auto-scrolling row ──────────────────────────────────────── */
-
-function ScrollRow({ events, direction = 'right', speed = 35 }) {
+/**
+ * Horizontally auto-scrolling row of event cards.
+ * Triplicates the items array to achieve a seamless infinite loop.
+ * @param {object} props
+ * @param {Array} props.events - Event objects to display
+ * @param {'left'|'right'} [props.direction='right'] - Scroll direction
+ * @param {number} [props.speed=35] - Scroll speed in pixels per second
+ */function ScrollRow({ events, direction = 'right', speed = 35 }) {
   const scrollRef = useRef(null)
   const animRef = useRef(null)
 
@@ -248,8 +267,12 @@ function ScrollRow({ events, direction = 'right', speed = 35 }) {
 }
 
 /* ── Main Section ─────────────────────────────────────────────────────── */
-
-export default function UpcomingEventsScroller({ events = [] }) {
+/**
+ * Dual-row infinite auto-scrolling ticker of upcoming event cards.
+ * Splits events into two rows scrolling in opposite directions.
+ * @param {object} props
+ * @param {Array} [props.events=[]] - Array of event objects from the home API
+ */export default function UpcomingEventsScroller({ events = [] }) {
   const c = useAppPalette()
   const router = useRouter()
 

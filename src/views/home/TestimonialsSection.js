@@ -8,6 +8,12 @@ import Icon from 'src/components/Icon'
 
 const MotionBox = motion(Box)
 
+/**
+ * Renders a single testimonial card with avatar, quote, and attribution.
+ * @param {object} props
+ * @param {object} props.item - Testimonial data (name, role, avatar, quote)
+ * @param {number} props.index - Card index for staggered entrance animation
+ */
 function TestimonialCard({ item, index }) {
   const c = useAppPalette()
 
@@ -78,6 +84,12 @@ function TestimonialCard({ item, index }) {
   )
 }
 
+/**
+ * Horizontally scrolling testimonials section on the home page.
+ * Auto-scrolls through attendee/participant quotes.
+ * @param {object} props
+ * @param {Array} [props.testimonials=[]] - Array of testimonial objects from the home API
+ */
 export default function TestimonialsSection({ testimonials: TESTIMONIALS = [] }) {
   const c = useAppPalette()
 

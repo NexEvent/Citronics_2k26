@@ -25,6 +25,11 @@ const EVENTS_PER_PAGE = 6
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 
+/**
+ * Parses an ISO date string into a human-readable full date string.
+ * @param {string|null} iso - ISO 8601 date string
+ * @returns {{ full: string }} Object with a formatted `full` date string
+ */
 function parseEventDate(iso) {
   if (!iso) return { full: '' }
   const d = new Date(iso)
@@ -33,11 +38,22 @@ function parseEventDate(iso) {
   return { full: `${weekday}, ${month} ${d.getDate()}, ${d.getFullYear()}` }
 }
 
+/**
+ * Formats an ISO date string as a 12-hour time string (e.g. "2:30 PM").
+ * @param {string|null} iso - ISO 8601 date string
+ * @returns {string} Formatted time string, or empty string if input is falsy
+ */
 function formatEventTime(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
+/**
+ * Extracts the first image URL from an event object.
+ * Handles both plain string URLs and `{ url }` image objects.
+ * @param {object} event - Event data object
+ * @returns {string|null} Image URL, or null if none available
+ */
 function getEventImage(event) {
   if (event?.images && Array.isArray(event.images) && event.images.length > 0) {
     const img = event.images[0]
@@ -48,6 +64,13 @@ function getEventImage(event) {
 
 /* ── EventCard ────────────────────────────────────────────────────────────── */
 
+/**
+ * Renders a single event card with image, metadata table, and action buttons.
+ * Uses framer-motion for staggered entry animation.
+ * @param {object} props
+ * @param {object} props.event - Event data object from the API
+ * @param {number} props.index - Card index used to stagger animation delay
+ */
 function EventCard({ event, index }) {
   const c = useAppPalette()
   const router = useRouter()
@@ -271,6 +294,10 @@ function EventCard({ event, index }) {
  *  Loading Skeleton
  * ═════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Placeholder skeleton card shown while events are loading.
+ * Mirrors the layout of EventCard to prevent layout shift.
+ */
 function EventCardSkeleton() {
   const c = useAppPalette()
   return (
@@ -309,6 +336,12 @@ function EventCardSkeleton() {
  *  Main View — EventsPageView
  * ═════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Full-page events listing view.
+ * Fetches published events from the Redux store with department filter,
+ * search, sort, and pagination controls.
+ * Rendered at /events.
+ */
 export default function EventsPageView() {
   const c = useAppPalette()
   const dispatch = useDispatch()

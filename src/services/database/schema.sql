@@ -77,12 +77,18 @@ CREATE TABLE departments (
 CREATE TABLE events (
     id            BIGSERIAL PRIMARY KEY,
     name          VARCHAR(255) NOT NULL,
+    tagline       VARCHAR(255),
     description   TEXT,
     start_time    TIMESTAMP WITH TIME ZONE NOT NULL,
     end_time      TIMESTAMP WITH TIME ZONE NOT NULL CHECK (end_time > start_time),
     venue         VARCHAR(255),
     max_tickets   INTEGER NOT NULL CHECK (max_tickets > 0),
     ticket_price  DECIMAL(10, 2) NOT NULL DEFAULT 0.00 CHECK (ticket_price >= 0),
+    registered    INTEGER NOT NULL DEFAULT 0 CHECK (registered >= 0),
+    prize         VARCHAR(100),
+    tags          TEXT[] NOT NULL DEFAULT '{}',
+    featured      BOOLEAN NOT NULL DEFAULT FALSE,
+    images        JSONB NOT NULL DEFAULT '[]'::jsonb,
     department_id BIGINT,
     created_by    BIGINT,
     status        event_status NOT NULL DEFAULT 'draft',
@@ -98,6 +104,8 @@ CREATE INDEX idx_events_start_time       ON events(start_time);
 CREATE INDEX idx_events_status           ON events(status);
 CREATE INDEX idx_events_created_by       ON events(created_by);
 CREATE INDEX idx_events_active_published ON events(status, start_time) WHERE status IN ('published', 'active');
+CREATE INDEX idx_events_featured         ON events(featured) WHERE featured = TRUE;
+CREATE INDEX idx_events_registered       ON events(registered DESC);
 
 -- ── Bookings ───────────────────────────────────────────────────────────────────
 CREATE TABLE bookings (

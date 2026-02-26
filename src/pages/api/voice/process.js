@@ -2,10 +2,12 @@
  * /api/voice/process
  * POST — Bridge between Citro UI and voice service layer.
  *
- * Flow: Auth check → validate transcript → call voiceService → return response
- * Follows the same pattern as /api/dashboard/stats.js
+ * Flow: Validate transcript → call voiceService → return response
+ * Auth is OPTIONAL — voice assistant works for all visitors (students
+ * register at checkout, not on entry). If a session exists, role/email
+ * are forwarded for personalised responses.
  *
- * Request body:  { transcript: string }
+ * Request body:  { transcript: string, currentPage?: string }
  * Response:      { success, data: { reply, action, data, intent, confidence } }
  */
 import { getServerSession } from 'next-auth'
@@ -20,14 +22,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Auth check — voice commands require authenticated session
-    const session = await getServerSession(req, res, nextAuthConfig)
-    if (!session) {
-      return res.status(401).json({ success: false, message: 'Not authenticated' })
-    }
-
     // Validate transcript
-    const { transcript } = req.body
+    const { transcript, currentPage } = req.body
     if (!transcript || typeof transcript !== 'string' || transcript.trim().length === 0) {
       return res.status(400).json({ success: false, message: 'Transcript is required' })
     }
@@ -35,11 +31,19 @@ export default async function handler(req, res) {
     // Sanitize — limit length to prevent abuse
     const sanitized = transcript.trim().substring(0, 500)
 
-    // Build context from session (passed to service layer)
-    const context = {
-      userId: session.user?.id,
-      role: session.user?.role || 'Student',
-      email: session.user?.email
+    // Build context — auth is optional, enrich if session exists
+    let context = { currentPage: currentPage || '/' }
+
+    try {
+      const session = await getServerSession(req, res, nextAuthConfig)
+      if (session) {
+        context.userId = session.user?.id
+        context.role = session.user?.role || 'Student'
+        context.email = session.user?.email
+        context.isAuthenticated = true
+      }
+    } catch (_) {
+      // Session lookup failed — continue without auth context
     }
 
     // Process through voice service pipeline

@@ -207,38 +207,6 @@ const eventService = {
     `, [limit])
   },
 
-  // ── Site Config (schedule, stats, sponsors, etc.) ──────────────────────────
-
-  /**
-   * Get a site_config value by key.
-   * Returns the JSONB value directly, or null.
-   */
-  async getSiteConfig(key) {
-    const row = await dbOneOrNone(
-      `SELECT value FROM site_config WHERE key = $1`,
-      [key]
-    )
-
-    return row?.value || null
-  },
-
-  /**
-   * Get multiple site_config values by keys.
-   * Returns { key1: value1, key2: value2, ... }
-   */
-  async getSiteConfigs(keys) {
-    const rows = await dbAny(
-      `SELECT key, value FROM site_config WHERE key = ANY($1)`,
-      [keys]
-    )
-
-    const result = {}
-    for (const row of rows) {
-      result[row.key] = row.value
-    }
-
-    return result
-  }
 }
 
 export default eventService

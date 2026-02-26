@@ -2,26 +2,25 @@
  * VoiceAssistant (Citro) — Orchestrator Component
  *
  * Wires together:
- *   - CitroPuppy (animated mascot in bottom-right corner)
- *   - CitroPopup (voice interface panel)
+ *   - CitroBot (sleek robot mascot in bottom-right corner)
+ *   - CitroBotPanel (voice interface panel)
  *   - useSpeechRecognition (browser STT)
  *   - useTextToSpeech (browser TTS)
  *   - voiceSlice (Redux state)
  *   - Router (for navigation actions)
  *
  * Flow:
- *   Puppy click → popup opens → mic tap → STT listens → transcript
+ *   Bot click → panel opens → mic tap → STT listens → transcript
  *   → Redux thunk (POST /api/voice/process)
- *   → Citro reply appears in popup + spoken via TTS
+ *   → Citro reply appears in panel + spoken via TTS
  *   → Navigation/action executed if needed
  *
+ * Auth is NOT required — voice assistant works for all visitors.
  * Mounted globally in _app.js alongside PWAPrompts, ScrollToTop, etc.
- * Only renders for authenticated users (sits inside Auth/ACL guard scope).
  */
 import { useEffect, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
 
 // Redux actions
 import {
@@ -54,7 +53,6 @@ const MASCOT_MODE = 'bot' // 'bot' | 'puppy'
 const VoiceAssistant = () => {
   const dispatch = useDispatch()
   const router = useRouter()
-  const { data: session } = useSession()
 
   // Redux state
   const {
@@ -75,10 +73,10 @@ const VoiceAssistant = () => {
       dispatch(setListening(false))
       dispatch(openPanel())
 
-      // Send to API via Redux thunk
-      dispatch(processVoiceCommand(text))
+      // Send to API via Redux thunk — include current page for context
+      dispatch(processVoiceCommand({ transcript: text, currentPage: router.pathname }))
     },
-    [dispatch]
+    [dispatch, router.pathname]
   )
 
   const handleSpeechError = useCallback(
@@ -124,9 +122,16 @@ const VoiceAssistant = () => {
     const executeAction = async () => {
       switch (pendingAction.type) {
         case 'navigate':
-          if (pendingAction.path && router.pathname !== pendingAction.path) {
+          if (pendingAction.path === 'back') {
+            router.back()
+          } else if (pendingAction.path && router.pathname !== pendingAction.path) {
             await router.push(pendingAction.path)
           }
+          break
+
+        case 'close':
+          // Close the panel (e.g., "goodbye" intent)
+          dispatch(closePanel())
           break
 
         case 'display':
@@ -149,18 +154,13 @@ const VoiceAssistant = () => {
     return () => clearTimeout(timer)
   }, [pendingAction, router, dispatch])
 
-  // ── Puppy click — toggle popup ──────────────────────────────────────────
+  // ── Bot click — toggle popup ────────────────────────────────────────────
   const handlePuppyClick = useCallback(() => {
     dispatch(togglePanel())
   }, [dispatch])
 
-  // ── Mic toggle — redirect to /login if not authenticated ───────────────
+  // ── Mic toggle — no login required, works for everyone ─────────────────
   const handleMicClick = useCallback(() => {
-    if (!session) {
-      dispatch(closePanel())
-      router.push('/login')
-      return
-    }
     if (isListening) {
       stopListening()
       dispatch(setListening(false))
@@ -169,7 +169,14 @@ const VoiceAssistant = () => {
       dispatch(setListening(true))
       dispatch(openPanel())
     }
-  }, [isListening, session, router, startListening, stopListening, dispatch])
+  }, [isListening, startListening, stopListening, dispatch])
+
+  // ── Chip click handler — sends text as a voice command directly ─────────
+  const handleChipClick = useCallback((label) => {
+    dispatch(addUserMessage(label))
+    dispatch(openPanel())
+    dispatch(processVoiceCommand({ transcript: label, currentPage: router.pathname }))
+  }, [dispatch, router.pathname])
 
   return (
     <>
@@ -183,6 +190,7 @@ const VoiceAssistant = () => {
             messages={messages}
             onClose={() => dispatch(closePanel())}
             onMicClick={handleMicClick}
+            onChipClick={handleChipClick}
           />
           <CitroBot
             isListening={isListening}

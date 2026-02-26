@@ -37,6 +37,9 @@ const TOKEN_MAP = {
   'dhoondo': 'search',
   'dhundho': 'search',
   'sunao': 'tell',
+  'peeche jao': 'go back',
+  'wapas jao': 'go back',
+  'wapas': 'back',
 
   // Nouns / pages
   'events': 'events',
@@ -48,6 +51,15 @@ const TOKEN_MAP = {
   'tickets': 'tickets',
   'registration': 'registration',
   'registrations': 'registrations',
+  'jagah': 'location',
+  'sthan': 'location',
+  'tarikh': 'date',
+  'samay': 'time',
+  'keemat': 'price',
+  'fees': 'fee',
+  'paisa': 'price',
+  'madad': 'help',
+  'sahayata': 'help',
 
   // Pronouns / connectors
   'mujhe': 'me',
@@ -81,12 +93,16 @@ const TOKEN_MAP = {
   'upcoming': 'upcoming',
   'aane wale': 'upcoming',
   'aane wala': 'upcoming',
+  'kaise': 'how',
+  'kaisa': 'how',
 
   // Greetings
   'namaste': 'hello',
   'namaskar': 'hello',
   'shukriya': 'thank you',
   'dhanyavaad': 'thank you',
+  'alvida': 'goodbye',
+  'bye bye': 'goodbye',
 
   // Assistant
   'citro': 'citro',

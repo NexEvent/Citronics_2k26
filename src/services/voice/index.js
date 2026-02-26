@@ -17,7 +17,7 @@ import { buildResponse } from './response-templates'
  * processCommand — main pipeline entry
  *
  * @param {string} transcript  Raw speech text from browser STT
- * @param {object} context     { userId, role, session } from API layer
+ * @param {object} context     { currentPage, userId?, role?, isAuthenticated? } from API layer
  * @returns {object}           { reply, action, data, intent, confidence }
  */
 export async function processCommand(transcript, context = {}) {
@@ -29,14 +29,19 @@ export async function processCommand(transcript, context = {}) {
 
   // Step 3: Confidence gate — reject low-confidence matches
   if (confidence < 0.4) {
-    return buildResponse('LOW_CONFIDENCE', { transcript: normalized })
+    return buildResponse('LOW_CONFIDENCE', { transcript: normalized, currentPage: context.currentPage })
   }
 
   // Step 4: Resolve command → execute business logic via existing services
   const result = await resolveCommand(intent, entities, context)
 
-  // Step 5: Build deterministic response
-  return buildResponse(intent, { ...result, entities, confidence })
+  // Step 5: Build deterministic response — include currentPage for context-aware replies
+  return buildResponse(intent, {
+    ...result,
+    entities,
+    confidence,
+    currentPage: context.currentPage
+  })
 }
 
 export default { processCommand }

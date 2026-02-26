@@ -17,13 +17,13 @@ import axios from 'axios'
 
 /**
  * Send voice transcript to the API for processing.
- * POST /api/voice/process { transcript }
+ * POST /api/voice/process { transcript, currentPage }
  */
 export const processVoiceCommand = createAsyncThunk(
   'voice/processCommand',
-  async (transcript, { rejectWithValue }) => {
+  async ({ transcript, currentPage }, { rejectWithValue }) => {
     try {
-      const { data } = await axios.post('/api/voice/process', { transcript })
+      const { data } = await axios.post('/api/voice/process', { transcript, currentPage })
       return data.data // { reply, action, data, intent, confidence }
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Voice command failed')

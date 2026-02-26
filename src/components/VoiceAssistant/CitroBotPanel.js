@@ -44,18 +44,23 @@ import { IconMicrophone, IconMicrophoneOff, IconX } from '@tabler/icons-react'
 const CHIP_SETS = [
   [
     { label: 'Show events', icon: '🗓' },
-    { label: 'Open dashboard', icon: '📊' },
-    { label: 'Search', icon: '🔎' },
+    { label: 'What is Citro?', icon: '🤖' },
+    { label: 'Help', icon: '💡' },
   ],
   [
-    { label: 'Register', icon: '✋' },
-    { label: "What's new?", icon: '✨' },
+    { label: 'How to register?', icon: '✋' },
+    { label: 'Upcoming events', icon: '📅' },
+    { label: 'Open dashboard', icon: '📊' },
+  ],
+  [
+    { label: 'Where is the event?', icon: '📍' },
+    { label: 'Show schedule', icon: '🕐' },
     { label: 'Go home', icon: '🏠' },
   ],
   [
-    { label: 'Upcoming', icon: '📅' },
+    { label: 'Who are you?', icon: '🤔' },
     { label: 'Show stats', icon: '📈' },
-    { label: 'Help', icon: '💡' },
+    { label: 'When is the event?', icon: '📆' },
   ]
 ]
 
@@ -172,7 +177,7 @@ const MessageBubble = ({ message, theme, index }) => {
 /**
  * CitroBotPanel
  */
-const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClose, onMicClick }) => {
+const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClose, onMicClick, onChipClick }) => {
   const theme = useTheme()
   const scrollRef = useRef(null)
   const [chipSetIdx, setChipSetIdx] = useState(0)
@@ -193,13 +198,10 @@ const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClo
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [messages, isProcessing])
 
-  // Chip click → simulate voice text
+  // Chip click → send text as a voice command via parent handler
   const handleChipClick = useCallback((label) => {
-    // Trigger the mic click first (which usually starts listening)
-    // Then we can let the user know via hint; but more practically,
-    // chips are a visual nudge — the user still taps mic.
-    // For now, chips serve as psychological affordance only.
-  }, [])
+    if (onChipClick) onChipClick(label)
+  }, [onChipClick])
 
   const statusLabel = isProcessing
     ? 'Processing'

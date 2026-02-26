@@ -6,7 +6,32 @@
  *
  * Returns { reply, action, data } objects consumed by the UI layer.
  * Supports a friendly Citro personality without being chatbot-y.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CONTEXT SYSTEM
+ * ═══════════════════════════════════════════════════════════════════════════
+ * Context-aware templates receive `ctx.currentPage` from the API layer
+ * and use it to generate page-relative responses.
  */
+
+// ── Page labels for context-aware responses ──────────────────────────────────
+const PAGE_LABELS = {
+  '/': 'the home page',
+  '/dashboard': 'the dashboard',
+  '/events': 'the events page',
+  '/schedule': 'the schedule page',
+  '/login': 'the login page',
+  '/register': 'the registration page'
+}
+
+const PAGE_HINTS = {
+  '/': "From here you can browse events, check the schedule, or ask me anything about Citronics.",
+  '/dashboard': "Here you can see your stats, registrations, and manage your events.",
+  '/events': "You can browse all events, search for specific ones, or register for any event you like.",
+  '/schedule': "Check event timings, plan your day, or ask me about upcoming sessions.",
+  '/login': "Enter your credentials to sign in, or say 'register' to create an account.",
+  '/register': "Fill in your details to create an account and start registering for events."
+}
 
 const TEMPLATES = {
   // ── Navigation ────────────────────────────────────────────────────────────
@@ -34,6 +59,10 @@ const TEMPLATES = {
     reply: 'Opening the registration page.',
     action: { type: 'navigate', path: '/register' }
   },
+  NAV_BACK: {
+    reply: 'Going back!',
+    action: { type: 'navigate', path: 'back' }
+  },
 
   // ── Queries ───────────────────────────────────────────────────────────────
   QUERY_STATS: {
@@ -53,43 +82,120 @@ const TEMPLATES = {
     action: { type: 'display', widget: 'upcoming-events' }
   },
   SEARCH_EVENT: {
-    reply: (ctx) => `Searching for "${ctx.entities?.name || 'events'}"...`,
+    reply: (ctx) => `Searching for "${ctx.entities?.name || 'events'}"... Let me take you to the events page.`,
     action: { type: 'navigate', path: '/events', query: true }
   },
   REGISTER_EVENT: {
-    reply: (ctx) => `Starting registration for "${ctx.entities?.name || 'the event'}".`,
-    action: { type: 'execute', handler: 'register' }
+    reply: (ctx) => `Starting registration for "${ctx.entities?.name || 'the event'}". Taking you to the events page!`,
+    action: { type: 'navigate', path: '/events' }
   },
   QUERY_MY_REGISTRATIONS: {
     reply: 'Fetching your registrations.',
     action: { type: 'display', widget: 'my-registrations' }
   },
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // ── Citro Knowledge Base ─────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  INFO_WHAT_IS_CITRO: {
+    reply: "Citronics is a tech event management platform! It's built for organizing and attending college tech fests, hackathons, workshops, and conferences. You can browse events, register, check schedules — and I'm Citro, your voice-powered guide to navigate it all!",
+    action: null
+  },
+  INFO_WHO_MADE_CITRO: {
+    reply: "Citro was built by a passionate development team as a modern event management platform. It's powered by Next.js, uses real-time data, and features me — a voice assistant to make your experience seamless!",
+    action: null
+  },
+  INFO_EVENT_LOCATION: {
+    reply: "Event locations vary depending on the specific event. Head to the events page to see venue details for each event. Want me to take you there?",
+    action: { type: 'navigate', path: '/events' }
+  },
+  INFO_EVENT_DATE: {
+    reply: "Each event has its own dates and timings. Check the schedule page for a timeline view, or browse events to see specific dates. Want me to open the schedule?",
+    action: { type: 'navigate', path: '/schedule' }
+  },
+  INFO_HOW_TO_REGISTER: {
+    reply: "Easy! Just browse the events page, pick an event you're interested in, and hit the register button. No account needed upfront — you can register at checkout. Want me to show you the events?",
+    action: null
+  },
+  INFO_TICKET_PRICE: {
+    reply: "Pricing depends on the event — some are free, others may have a fee. Check the specific event's details page for pricing info. Want me to take you to the events page?",
+    action: null
+  },
+  INFO_CONTACT: {
+    reply: "For support or queries, check the contact section on the website or reach out through the organizer details on specific event pages. I'm always here to help with navigation!",
+    action: null
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ── Context-Aware Responses ──────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  CONTEXT_WHERE_AM_I: {
+    reply: (ctx) => {
+      const page = ctx.currentPage || '/'
+      const label = PAGE_LABELS[page] || `the ${page.replace('/', '')} page`
+      return `You're currently on ${label}.`
+    },
+    action: null
+  },
+  CONTEXT_WHAT_CAN_I_DO: {
+    reply: (ctx) => {
+      const page = ctx.currentPage || '/'
+      const hint = PAGE_HINTS[page] || "You can navigate to events, check the schedule, or ask me anything about Citronics."
+      return hint
+    },
+    action: null
+  },
+
   // ── Greeting / Meta ───────────────────────────────────────────────────────
   GREETING: {
-    reply: "Hey! I'm Citro, your event assistant. Try saying 'show events' or 'open dashboard'.",
+    reply: (ctx) => {
+      const greetings = [
+        "Hey there! I'm Citro, your event assistant. What can I help you with?",
+        "Hello! Ready to explore Citronics? Try 'show events' or ask me anything!",
+        "Hi! I'm Citro — ask me about events, navigate the site, or just say 'help'."
+      ]
+      return greetings[Math.floor(Math.random() * greetings.length)]
+    },
     action: null
   },
   HELP: {
-    reply: "I can help you navigate, search events, register, and check stats. Try: 'show events', 'open dashboard', 'upcoming events', or 'register for hackathon'.",
+    reply: "Here's what I can do:\n• Navigate — 'show events', 'open dashboard', 'go home'\n• Info — 'what is Citro?', 'when is the event?', 'how to register'\n• Search — 'find hackathon', 'upcoming events'\n• Stats — 'show stats', 'my registrations'\nJust speak naturally!",
     action: null
   },
   THANK_YOU: {
-    reply: 'Happy to help! Let me know if you need anything else.',
+    reply: (ctx) => {
+      const replies = [
+        'Happy to help! Let me know if you need anything else.',
+        "You're welcome! I'm here whenever you need me.",
+        'Anytime! Just tap the mic if you need something.'
+      ]
+      return replies[Math.floor(Math.random() * replies.length)]
+    },
     action: null
   },
   WHO_ARE_YOU: {
-    reply: "I'm Citro — the voice assistant for Citronics. I help you navigate and interact with the event platform using voice commands!",
+    reply: "I'm Citro — the voice assistant for Citronics! I help you navigate the platform, find events, get info, and more — all with your voice. Think of me as your personal event concierge!",
     action: null
+  },
+  GOODBYE: {
+    reply: (ctx) => {
+      const byes = [
+        'See you around! Tap the mic whenever you need me.',
+        'Bye for now! I\'ll be right here if you need anything.',
+        'Take care! Come back anytime.'
+      ]
+      return byes[Math.floor(Math.random() * byes.length)]
+    },
+    action: { type: 'close' }
   },
 
   // ── Fallbacks ─────────────────────────────────────────────────────────────
   LOW_CONFIDENCE: {
-    reply: (ctx) => `Sorry, I didn't quite get "${ctx.transcript || 'that'}". Try saying 'show events' or 'help'.`,
+    reply: (ctx) => `Hmm, I didn't quite catch that. Try saying things like 'show events', 'what is Citro?', or 'help' to see what I can do.`,
     action: null
   },
   UNKNOWN: {
-    reply: "I'm not sure what you mean. Try 'help' to see what I can do.",
+    reply: "I'm not sure about that one. Say 'help' to see what I can do, or try asking about events, navigation, or Citronics!",
     action: null
   }
 }
@@ -98,7 +204,7 @@ const TEMPLATES = {
  * buildResponse — main export
  *
  * @param {string} intent  Intent key
- * @param {object} ctx     Context data (entities, data from resolver, confidence)
+ * @param {object} ctx     Context data (entities, data from resolver, confidence, currentPage)
  * @returns {object}       { reply: string, action: object|null, data: any, intent, confidence }
  */
 export function buildResponse(intent, ctx = {}) {

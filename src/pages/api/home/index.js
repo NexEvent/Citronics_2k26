@@ -16,36 +16,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [
-      departments,
-      events,
-      siteConfigs
-    ] = await Promise.all([
+    const [departments, events] = await Promise.all([
       eventService.getAllDepartments(),
-      eventService.getPublishedEvents({ limit: 50 }),
-      eventService.getSiteConfigs([
-        'schedule_days',
-        'home_stats',
-        'sponsors',
-        'testimonials',
-        'hero_words',
-        'highlights',
-        'event_start_date'
-      ])
+      eventService.getPublishedEvents({ limit: 50 })
     ])
 
     return res.status(200).json({
       success: true,
       data: {
         departments,
-        events,
-        scheduleDays: siteConfigs.schedule_days || [],
-        stats: siteConfigs.home_stats || [],
-        sponsors: siteConfigs.sponsors || [],
-        testimonials: siteConfigs.testimonials || [],
-        heroWords: siteConfigs.hero_words || [],
-        highlights: siteConfigs.highlights || [],
-        eventStartDate: siteConfigs.event_start_date || null
+        events
       }
     })
   } catch (error) {

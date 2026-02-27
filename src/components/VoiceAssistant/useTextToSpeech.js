@@ -4,6 +4,10 @@
  * Wraps the Web Speech API (SpeechSynthesis) for Citro.
  * Zero backend load — all TTS happens in the browser.
  *
+ * Features:
+ *   - Uniform voice selection (locks one voice per session for consistency)
+ *   - Configurable rate / pitch / lang
+ *
  * Returns:
  *   - speak(text)     Speak the given text
  *   - stop()          Stop speaking
@@ -12,13 +16,55 @@
  */
 import { useState, useCallback, useEffect, useRef } from 'react'
 
-const useTextToSpeech = ({ rate = 1.0, pitch = 1.0, lang = 'en-IN' } = {}) => {
+/**
+ * Voice selection priority — first match wins.
+ * This ensures a consistent, natural-sounding voice across the entire session.
+ * Order: Google US English → Google UK English → any Google English → any
+ * "Natural" English → first available English voice → browser default.
+ */
+function pickBestVoice(voices) {
+  if (!voices || voices.length === 0) return null
+
+  const priorities = [
+    v => v.lang === 'en-US' && v.name.includes('Google'),
+    v => v.lang === 'en-GB' && v.name.includes('Google'),
+    v => v.lang.startsWith('en') && v.name.includes('Google'),
+    v => v.lang.startsWith('en') && v.name.includes('Natural'),
+    v => v.lang.startsWith('en') && !v.localService,   // remote/high-quality
+    v => v.lang.startsWith('en')
+  ]
+
+  for (const test of priorities) {
+    const match = voices.find(test)
+    if (match) return match
+  }
+
+  return null // fall back to browser default
+}
+
+const useTextToSpeech = ({ rate = 1.0, pitch = 1.0, lang = 'en-US' } = {}) => {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
   const utteranceRef = useRef(null)
+  const lockedVoiceRef = useRef(null)   // uniform voice locked for session
 
+  // Resolve voices (may load async on some browsers)
   useEffect(() => {
-    setIsSupported(typeof window !== 'undefined' && 'speechSynthesis' in window)
+    const supported = typeof window !== 'undefined' && 'speechSynthesis' in window
+    setIsSupported(supported)
+    if (!supported) return
+
+    const resolveVoice = () => {
+      if (!lockedVoiceRef.current) {
+        const best = pickBestVoice(window.speechSynthesis.getVoices())
+        if (best) lockedVoiceRef.current = best
+      }
+    }
+
+    resolveVoice()
+    // Chrome fires voiceschanged asynchronously
+    window.speechSynthesis.addEventListener('voiceschanged', resolveVoice)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', resolveVoice)
   }, [])
 
   const speak = useCallback(
@@ -34,13 +80,10 @@ const useTextToSpeech = ({ rate = 1.0, pitch = 1.0, lang = 'en-IN' } = {}) => {
       utterance.pitch = pitch
       utterance.volume = 1.0
 
-      // Try to pick a good voice (prefer Google / natural voices)
-      const voices = window.speechSynthesis.getVoices()
-      const preferred = voices.find(
-        v => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural'))
-      )
-
-      if (preferred) utterance.voice = preferred
+      // Use the session-locked voice for uniform sound
+      if (lockedVoiceRef.current) {
+        utterance.voice = lockedVoiceRef.current
+      }
 
       utterance.onstart = () => setIsSpeaking(true)
       utterance.onend = () => setIsSpeaking(false)

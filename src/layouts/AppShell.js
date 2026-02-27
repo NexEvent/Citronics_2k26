@@ -22,8 +22,9 @@ const Layout = ({ children }) => {
       <Box
         component='main'
         sx={{
-          pt: settings.appBar !== 'hidden' ? '88px' : 0,
-          pb: { xs: 2, md: 3 },
+          pt: settings.appBar !== 'hidden' ? { xs: '16px', md: '88px' } : 0,
+          /* Extra bottom padding on mobile for MobileBottomNav */
+          pb: { xs: 'calc(72px + env(safe-area-inset-bottom, 0px))', md: 3 },
           maxWidth: settings.contentWidth === 'boxed' ? 1440 : '100%',
           mx: 'auto',
           transition: theme.transitions.create(['padding-top'], { duration: 200 })

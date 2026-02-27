@@ -388,7 +388,8 @@ export default function HeroSection({ heroWords: HERO_WORDS = [], eventStartDate
         flexDirection: 'column',
         justifyContent: 'center',
         overflow: 'hidden',
-        pt: { xs: 24, md: 28 },
+        /* xs: reduced from 24 — no top navbar on mobile any more */
+        pt: { xs: 10, md: 28 },
         pb: { xs: 6, md: 10 }
       }}
     >

@@ -9,6 +9,7 @@ import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
 import LinearProgress from '@mui/material/LinearProgress'
 import Skeleton from '@mui/material/Skeleton'
+import useMediaQuery from '@mui/material/useMediaQuery'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import { motion } from 'framer-motion'
@@ -184,6 +185,7 @@ export default function EventDetailView() {
   const { id } = router.query
   const { currentEvent: event, currentEventLoading: loading, currentEventError } = useSelector(state => state.events)
   const timeLeft = useCountdown(event?.start_time)
+  const isMobile = useMediaQuery(c.theme.breakpoints.down('md'))
 
   useEffect(() => {
     if (id) dispatch(fetchEventById(id))
@@ -224,7 +226,7 @@ export default function EventDetailView() {
     <Box
       component='main'
       aria-label={`Event: ${event.title}`}
-      sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', pb: { xs: '96px', md: '80px' } }}
+      sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', pb: { xs: 'calc(80px + env(safe-area-inset-bottom, 0px))', md: '80px' } }}
     >
       {/* ── Main content ─────────────────────────────────────────── */}
       <Box
@@ -281,7 +283,8 @@ export default function EventDetailView() {
               overflow: 'hidden',
               border: '1px solid',
               borderColor: c.dividerA30,
-              aspectRatio: '4 / 5',
+              /* ~30% shorter on mobile while keeping desktop as-is */
+              aspectRatio: { xs: '8 / 7', md: '4 / 5' },
               maxHeight: { md: '60vh' },
               bgcolor: alpha(color, 0.04)
             }}
@@ -564,11 +567,84 @@ export default function EventDetailView() {
                 </Box>
               </Box>
             )}
+
+            {/* ── Mobile inline action buttons ── */}
+            {isMobile && (
+              <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Button
+                  variant='contained'
+                  disableElevation
+                  fullWidth
+                  disabled={spotsLeft <= 0}
+                  sx={{
+                    bgcolor: color,
+                    color: c.white,
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '0.95rem',
+                    textTransform: 'none',
+                    py: 1.5,
+                    '&:hover': { bgcolor: alpha(color, 0.88) },
+                    '&.Mui-disabled': { bgcolor: c.dividerA30, color: c.textDisabled }
+                  }}
+                >
+                  {spotsLeft <= 0 ? 'Sold Out' : 'Register Now'}
+                </Button>
+                <Button
+                  variant='outlined'
+                  fullWidth
+                  disabled={spotsLeft <= 0}
+                  onClick={() => dispatch(addToCart({
+                    eventId: event.id,
+                    title: event.title,
+                    ticketPrice: event.ticket_price || 0,
+                    quantity: 1,
+                    image: getEventImage(event),
+                    startTime: event.start_time,
+                    venue: event.venue,
+                    maxAvailable: spotsLeft > 0 ? spotsLeft : 0
+                  }))}
+                  startIcon={<Icon icon='tabler:shopping-cart-plus' fontSize={18} />}
+                  sx={{
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    textTransform: 'none',
+                    py: 1.35,
+                    borderColor: alpha(color, 0.4),
+                    color,
+                    '&:hover': { borderColor: color, bgcolor: alpha(color, 0.06) },
+                    '&.Mui-disabled': { borderColor: c.dividerA30, color: c.textDisabled }
+                  }}
+                >
+                  Add to Cart
+                </Button>
+                <Button
+                  variant='outlined'
+                  fullWidth
+                  onClick={() => router.push('/events')}
+                  startIcon={<Icon icon='tabler:arrow-left' fontSize={15} />}
+                  sx={{
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    textTransform: 'none',
+                    py: 1.35,
+                    borderColor: c.dividerA30,
+                    color: c.textSecondary,
+                    '&:hover': { borderColor: color, color, bgcolor: alpha(color, 0.04) }
+                  }}
+                >
+                  See All Events
+                </Button>
+              </Box>
+            )}
           </MotionBox>
         </Box>
       </Box>
 
-      {/* ── Bottom Sticky CTA Bar ─────────────────────────────────── */}
+      {/* ── Bottom Sticky CTA Bar — Desktop only ─────────────────────── */}
+      {!isMobile && (
       <Box
         sx={{
           position: 'fixed',
@@ -708,6 +784,7 @@ export default function EventDetailView() {
           </Button>
         </Box>
       </Box>
+      )}
     </Box>
   )
 }

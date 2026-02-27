@@ -248,11 +248,7 @@ const ThemeCustomizer = () => {
       {/* Floating Trigger */}
       <Fade in={!open}>
         <TriggerButton onClick={handleToggle} aria-label='Open theme customizer'>
-          <IconSettings
-            size={22}
-            style={{ animation: 'customizerSpin 4s linear infinite' }}
-          />
-          <style>{`@keyframes customizerSpin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
+          <IconSettings size={22} />
         </TriggerButton>
       </Fade>
 

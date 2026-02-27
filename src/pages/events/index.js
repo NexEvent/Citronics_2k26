@@ -10,9 +10,9 @@ import EventsPageView from 'src/views/events/EventsPageView'
  */
 const EventsPage = () => {
   return (
-    <Box component='main' sx={{ overflowX: 'hidden', bgcolor: 'background.default', minHeight: '100vh' }}>
+    <Box component='main' sx={{ overflowX: 'hidden', bgcolor: 'background.default', minHeight: '100vh', pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 } }}>
       <PublicNavbar />
-      <Box sx={{ pt: { xs: 10, md: 12 }, pb: { xs: 4, md: 6 } }}>
+      <Box sx={{ pt: { xs: 2, md: 12 }, pb: { xs: 4, md: 6 } }}>
         <EventsPageView />
       </Box>
       <PublicFooter />

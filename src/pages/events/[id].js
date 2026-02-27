@@ -10,9 +10,9 @@ import EventDetailView from 'src/views/events/EventDetailView'
  */
 const EventDetailPage = () => {
   return (
-    <Box component='main' sx={{ overflowX: 'hidden', bgcolor: 'background.default', minHeight: '100vh' }}>
+    <Box component='main' sx={{ overflowX: 'hidden', bgcolor: 'background.default', minHeight: '100vh', pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 } }}>
       <PublicNavbar />
-      <Box sx={{ pt: { xs: 20, md: 14 } }}>
+      <Box sx={{ pt: { xs: 4, md: 14 } }}>
         <EventDetailView />
       </Box>
       <PublicFooter />

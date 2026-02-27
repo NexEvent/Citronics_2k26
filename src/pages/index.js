@@ -10,7 +10,7 @@ import AboutSection from 'src/views/home/AboutSection'
 import UpcomingEventsScroller from 'src/views/home/UpcomingEventsScroller'
 import StatsSection from 'src/views/home/StatsSection'
 import FeaturedEvents from 'src/views/home/FeaturedEvents'
-import EventsSection from 'src/views/home/EventsSection'
+//import EventsSection from 'src/views/home/EventsSection'
 import ScheduleSection from 'src/views/home/ScheduleSection'
 import TestimonialsSection from 'src/views/home/TestimonialsSection'
 import SponsorsSection from 'src/views/home/SponsorsSection'
@@ -70,14 +70,14 @@ const Home = () => {
   } = homeData || {}
 
   return (
-    <Box sx={{ overflowX: 'hidden' }}>
+    <Box sx={{ overflowX: 'hidden', pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 } }}>
         <PublicNavbar />
         <HeroSection heroWords={heroWords} eventStartDate={eventStartDate} />
         <UpcomingEventsScroller events={events} />
         <AboutSection highlights={highlights} />
         <StatsSection stats={stats} />
         <FeaturedEvents events={events} />
-        <EventsSection events={events} departments={departments} />
+        {/*<EventsSection events={events} departments={departments} />*/}
         <ScheduleSection scheduleDays={scheduleDays} />
         <TestimonialsSection testimonials={testimonials} />
         <SponsorsSection sponsors={sponsors} />

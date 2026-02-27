@@ -4,11 +4,12 @@ import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import { alpha } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useAppPalette } from 'src/components/palette'
-import { addToCart } from 'src/store/slices/cartSlice'
+import { addToCart, selectCartItems } from 'src/store/slices/cartSlice'
 
 const MotionBox = motion(Box)
 
@@ -53,7 +54,11 @@ function getImage(event) {
   const c = useAppPalette()
   const router = useRouter()
   const dispatch = useDispatch()
+  const cartItems = useSelector(selectCartItems)
   const [hovered, setHovered] = useState(false)
+  const isMobile = useMediaQuery(c.theme.breakpoints.down('md'))
+
+  const isInCart = cartItems.some(item => item.eventId === event.id)
 
   const { full: dateStr, time: timeStr } = parseDate(event.start_time)
   const image = getImage(event)
@@ -113,8 +118,8 @@ function getImage(event) {
               objectFit: 'cover',
               display: 'block',
               transition: 'opacity 0.4s ease, transform 0.4s ease',
-              opacity: hovered ? 0 : 1,
-              transform: hovered ? 'scale(1.05)' : 'scale(1)'
+              opacity: !isMobile && hovered ? 0 : 1,
+              transform: !isMobile && hovered ? 'scale(1.05)' : 'scale(1)'
             }}
           />
         ) : (
@@ -128,7 +133,7 @@ function getImage(event) {
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'opacity 0.4s ease',
-              opacity: hovered ? 0 : 1
+              opacity: !isMobile && hovered ? 0 : 1
             }}
           >
             <Typography
@@ -146,7 +151,8 @@ function getImage(event) {
           </Box>
         )}
 
-        {/* Hover overlay with buttons */}
+        {/* Hover overlay with buttons — desktop only */}
+        {!isMobile && (
         <Box
           sx={{
             position: 'absolute',
@@ -168,7 +174,7 @@ function getImage(event) {
             variant='contained'
             onClick={e => {
               e.stopPropagation()
-              router.push(`/events`)
+              router.push(`/events/${event.id}`)
             }}
             sx={{
               bgcolor: accent,
@@ -213,6 +219,7 @@ function getImage(event) {
           </Button>
           <Button
             variant='outlined'
+            disabled={isInCart}
             onClick={e => {
               e.stopPropagation()
               dispatch(addToCart({
@@ -242,10 +249,78 @@ function getImage(event) {
               }
             }}
           >
-            Add to Cart
+            {isInCart ? 'In Cart' : 'Add to Cart'}
           </Button>
         </Box>
+        )}
       </Box>
+
+      {/* ── Mobile action buttons below image ───────────────────────── */}
+      {isMobile && (
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            px: 2.5,
+            pt: 1.5
+          }}
+        >
+          <Button
+            variant='contained'
+            size='small'
+            onClick={e => {
+              e.stopPropagation()
+              router.push(`/events/${event.id}`)
+            }}
+            sx={{
+              flex: 1,
+              bgcolor: accent,
+              color: c.isDark ? c.black : c.white,
+              fontWeight: 700,
+              fontSize: '0.72rem',
+              letterSpacing: 0.5,
+              textTransform: 'uppercase',
+              py: 0.85,
+              borderRadius: '8px',
+              '&:hover': { bgcolor: alpha(accent, 0.85) }
+            }}
+          >
+            View Details
+          </Button>
+          <Button
+            variant='outlined'
+            size='small'
+            disabled={isInCart}
+            onClick={e => {
+              e.stopPropagation()
+              dispatch(addToCart({
+                eventId: event.id,
+                title: event.title,
+                ticketPrice: event.ticket_price || 0,
+                quantity: 1,
+                image: getImage(event),
+                startTime: event.start_time,
+                venue: event.venue,
+                maxAvailable: event.seats > 0 ? Math.max(0, event.seats - (event.registered || 0)) : null
+              }))
+            }}
+            sx={{
+              flex: 1,
+              borderColor: alpha(accent, 0.5),
+              color: accent,
+              fontWeight: 700,
+              fontSize: '0.72rem',
+              letterSpacing: 0.5,
+              textTransform: 'uppercase',
+              py: 0.85,
+              borderRadius: '8px',
+              '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.08) }
+            }}
+          >
+            {isInCart ? 'In Cart' : 'Add to Cart'}
+          </Button>
+        </Box>
+      )}
 
       {/* ── Event info below image ────────────────────────────────────── */}
       <Box sx={{ px: 2.5, pt: 2, pb: 2.5 }}>

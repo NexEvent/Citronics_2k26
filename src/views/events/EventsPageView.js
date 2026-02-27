@@ -18,7 +18,7 @@ import { useAppPalette } from 'src/components/palette'
 import { motion, AnimatePresence } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import { fetchEvents, fetchDepartments } from 'src/store/slices/eventsSlice'
-import { addToCart } from 'src/store/slices/cartSlice'
+import { addToCart, selectCartItems } from 'src/store/slices/cartSlice'
 
 const MotionBox = motion(Box)
 
@@ -76,7 +76,9 @@ function EventCard({ event, index }) {
   const c = useAppPalette()
   const router = useRouter()
   const dispatch = useDispatch()
+  const cartItems = useSelector(selectCartItems)
   const accent = c.primary
+  const isInCart = cartItems.some(item => item.eventId === event.id)
   const imageUrl = getEventImage(event)
   const spotsLeft = event.seats > 0 ? event.seats - (event.registered || 0) : null
   const almostFull = spotsLeft !== null && spotsLeft <= Math.ceil(event.seats * 0.2)
@@ -247,6 +249,7 @@ function EventCard({ event, index }) {
             variant='contained'
             size='small'
             disableElevation
+            disabled={isInCart}
             onClick={() => dispatch(addToCart({
               eventId: event.id,
               title: event.title,
@@ -271,7 +274,7 @@ function EventCard({ event, index }) {
               transition: 'all 0.2s ease'
             }}
           >
-            Add to Cart
+            {isInCart ? 'In Cart' : 'Add to Cart'}
           </Button>
           <Button
             variant='contained'

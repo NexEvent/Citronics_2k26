@@ -28,6 +28,7 @@ import Spinner from 'src/components/Spinner'
 // import ScrollToTop from 'src/components/ScrollToTop'
 import PWAPrompts from 'src/components/PWAPrompts'
 import ThemeCustomizer from 'src/components/ThemeCustomizer'
+import MobileBottomNav from 'src/components/MobileBottomNav'
 import dynamic from 'next/dynamic'
 const VoiceAssistant = dynamic(() => import('src/components/VoiceAssistant'), { ssr: false })
 
@@ -129,6 +130,7 @@ const App = props => {
 
                   {/* Global utilities */}
                   <ThemeCustomizer />
+                  <MobileBottomNav />
                   {/* <ScrollToTop /> */}
                   <PWAPrompts />
                   <VoiceAssistant />

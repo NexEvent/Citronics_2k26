@@ -197,7 +197,8 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
             width: { xs: 'calc(100% - 32px)', md: 'auto' },
             minWidth: { md: 640 },
             maxWidth: { xs: '100%', md: 1080 },
-            display: 'flex',
+            /* Hide top navbar on mobile — replaced by MobileBottomNav */
+            display: { xs: 'none', md: 'flex' },
             flexDirection: 'column',
             alignItems: 'stretch',
             px: { xs: 4, md: 5.5 },

@@ -369,8 +369,9 @@ const CitroBot = memo(({ isListening = false, isProcessing = false, isOpen = fal
       onKeyDown={handleKeyDown}
       sx={{
         position: 'fixed',
-        bottom: { xs: 18, md: 24 },
-        right: { xs: 18, md: 24 },
+        /* On mobile sit above the 64px bottom nav + safe-area */
+        bottom: { xs: 'calc(72px + env(safe-area-inset-bottom, 0px))', md: 24 },
+        right: { xs: 16, md: 24 },
         zIndex: theme.zIndex.speedDial,
         cursor: 'pointer',
         userSelect: 'none',

@@ -255,6 +255,88 @@ const INTENTS = [
       'take care', 'close', 'nevermind', 'never mind'
     ],
     action: { type: 'reply' }
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ── FAQ — Common questions users ask about the platform & events ─────────
+  // ══════════════════════════════════════════════════════════════════════════
+  {
+    id: 'FAQ_CERTIFICATE',
+    patterns: [
+      'will i get a certificate', 'certificate', 'do i get certificate',
+      'is there a certificate', 'participation certificate', 'certificates',
+      'do we get certificates', 'certificate of participation'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'FAQ_CANCEL_REGISTRATION',
+    patterns: [
+      'cancel registration', 'cancel my registration', 'how to cancel',
+      'unregister', 'remove registration', 'cancel enrollment',
+      'can i cancel', 'withdraw registration', 'cancel my ticket'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'FAQ_REFUND',
+    patterns: [
+      'refund', 'refund policy', 'can i get a refund', 'money back',
+      'return my money', 'refund request', 'how to get refund'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'FAQ_TEAM_SIZE',
+    patterns: [
+      'team size', 'how many members', 'team limit', 'group size',
+      'max team size', 'minimum team size', 'solo or team',
+      'can i participate alone', 'individual participation'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'FAQ_WIFI',
+    patterns: [
+      'is there wifi', 'wifi available', 'internet access', 'wifi',
+      'internet', 'is wifi available', 'wifi password'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'FAQ_FOOD',
+    patterns: [
+      'is there food', 'food', 'meals', 'lunch', 'snacks',
+      'will food be provided', 'refreshments', 'is food included',
+      'breakfast', 'dinner', 'catering'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'FAQ_WHAT_TO_BRING',
+    patterns: [
+      'what to bring', 'what should i bring', 'do i need a laptop',
+      'bring laptop', 'requirements', 'things to carry',
+      'what do i need', 'prerequisites'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'FAQ_PARKING',
+    patterns: [
+      'parking', 'is there parking', 'parking available', 'where to park',
+      'parking facility', 'car parking', 'vehicle parking'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'FAQ_ACCOMMODATION',
+    patterns: [
+      'accommodation', 'stay', 'hotel', 'where to stay', 'hostel',
+      'accommodation available', 'lodging', 'can i stay overnight',
+      'overnight stay', 'rooms'
+    ],
+    action: { type: 'reply' }
   }
 ]
 

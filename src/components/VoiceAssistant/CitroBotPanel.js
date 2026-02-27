@@ -409,7 +409,7 @@ const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClo
                     {!isListening && (
                       <Typography variant='caption' color='text.disabled'
                         sx={{ fontSize: '0.56rem', mb: 1.8, letterSpacing: 0.3 }}>
-                        English &middot; Hindi &middot; Hinglish
+                        English
                       </Typography>
                     )}
 
@@ -522,7 +522,7 @@ const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClo
                       {!isListening && !isProcessing && (
                         <Typography variant='caption' color='text.disabled'
                           sx={{ fontSize: '0.54rem' }}>
-                          English &middot; Hindi &middot; Hinglish
+                          English
                         </Typography>
                       )}
                     </Box>

@@ -97,21 +97,22 @@ const VoiceAssistant = () => {
     stop: stopListening,
     isSupported: sttSupported
   } = useSpeechRecognition({
-    lang: 'en-IN', // Supports English + Hindi/Hinglish accents
+    lang: 'en-US', // English only
     onResult: handleSpeechResult,
     onError: handleSpeechError
   })
 
   // ── Text-to-Speech (TTS) ─────────────────────────────────────────────────
-  const { speak } = useTextToSpeech({ rate: 1.0, pitch: 1.0, lang: 'en-IN' })
+  const { speak } = useTextToSpeech({ rate: 1.0, pitch: 1.0, lang: 'en-US' })
 
-  // ── Speak Citro's replies ────────────────────────────────────────────────
+  // ── Speak Citro's replies (selective — only when speakText is provided) ──
   useEffect(() => {
     if (messages.length === 0) return
     const lastMsg = messages[messages.length - 1]
 
-    if (lastMsg.sender === 'citro') {
-      speak(lastMsg.text)
+    // Only speak Citro messages that have a speakText field
+    if (lastMsg.sender === 'citro' && lastMsg.speakText) {
+      speak(lastMsg.speakText)
     }
   }, [messages, speak])
 
@@ -165,11 +166,17 @@ const VoiceAssistant = () => {
       stopListening()
       dispatch(setListening(false))
     } else {
+      // Guard: only start if browser supports Web Speech API
+      if (!sttSupported) {
+        dispatch(openPanel())
+        dispatch(addUserMessage('[Voice input unavailable in this browser]'))
+        return
+      }
       startListening()
       dispatch(setListening(true))
       dispatch(openPanel())
     }
-  }, [isListening, startListening, stopListening, dispatch])
+  }, [isListening, sttSupported, startListening, stopListening, dispatch])
 
   // ── Chip click handler — sends text as a voice command directly ─────────
   const handleChipClick = useCallback((label) => {

@@ -318,6 +318,14 @@ const CitroBot = memo(({ isListening = false, isProcessing = false, isOpen = fal
     onClick?.()
   }, [onClick])
 
+  // ── Keyboard activation (a11y) ────────────────────────────────────────
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleClick()
+    }
+  }, [handleClick])
+
   // ── Idle behavior state machine ───────────────────────────────────────
   useEffect(() => {
     if (isListening || isProcessing) {
@@ -354,7 +362,11 @@ const CitroBot = memo(({ isListening = false, isProcessing = false, isOpen = fal
     <Box
       ref={wrapRef}
       className={wrapClass}
+      role='button'
+      tabIndex={0}
+      aria-label='Open Citro voice assistant'
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       sx={{
         position: 'fixed',
         bottom: { xs: 18, md: 24 },
@@ -362,7 +374,12 @@ const CitroBot = memo(({ isListening = false, isProcessing = false, isOpen = fal
         zIndex: theme.zIndex.speedDial,
         cursor: 'pointer',
         userSelect: 'none',
-        WebkitTapHighlightColor: 'transparent'
+        WebkitTapHighlightColor: 'transparent',
+        outline: 'none',
+        '&:focus-visible': {
+          boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.5)}`,
+          borderRadius: 3
+        }
       }}
     >
       <style>{STYLES}</style>

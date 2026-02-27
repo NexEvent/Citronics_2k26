@@ -19,14 +19,39 @@ import axios from 'axios'
  * Send voice transcript to the API for processing.
  * POST /api/voice/process { transcript, currentPage }
  */
+/** Hard timeout for voice API requests (ms) */
+const VOICE_REQUEST_TIMEOUT = 10_000
+
 export const processVoiceCommand = createAsyncThunk(
   'voice/processCommand',
-  async ({ transcript, currentPage }, { rejectWithValue }) => {
+  async ({ transcript, currentPage }, { signal, rejectWithValue }) => {
+    const controller = new AbortController()
+
+    // Link Redux thunk signal → our controller so external aborts cancel the request
+    const onAbort = () => controller.abort()
+    signal.addEventListener('abort', onAbort)
+
+    // Enforce a hard timeout — abort if API takes too long
+    const timeout = setTimeout(() => controller.abort(), VOICE_REQUEST_TIMEOUT)
+
     try {
-      const { data } = await axios.post('/api/voice/process', { transcript, currentPage })
+      const { data } = await axios.post(
+        '/api/voice/process',
+        { transcript, currentPage },
+        { signal: controller.signal }
+      )
+      clearTimeout(timeout)
       return data.data // { reply, action, data, intent, confidence }
     } catch (err) {
+      clearTimeout(timeout)
+
+      if (axios.isCancel(err) || err.name === 'AbortError' || controller.signal.aborted) {
+        return rejectWithValue('Voice request timed out. Please try again.')
+      }
+
       return rejectWithValue(err.response?.data?.message || 'Voice command failed')
+    } finally {
+      signal.removeEventListener('abort', onAbort)
     }
   }
 )
@@ -125,12 +150,13 @@ const voiceSlice = createSlice({
       })
       .addCase(processVoiceCommand.fulfilled, (state, action) => {
         state.isProcessing = false
-        const { reply, action: responseAction, intent, confidence } = action.payload
+        const { reply, speakText, action: responseAction, intent, confidence } = action.payload
 
-        // Add Citro's reply to conversation
+        // Add Citro's reply to conversation (speakText for selective TTS)
         state.messages.push({
           sender: 'citro',
           text: reply,
+          speakText: speakText || null,
           timestamp: Date.now()
         })
 

@@ -24,6 +24,9 @@ export function detectIntent(normalizedText) {
     return { intent: 'UNKNOWN', entities: {}, confidence: 0, action: null }
   }
 
+  // Minimum confidence required — matches below this are treated as UNKNOWN
+  const MIN_INTENT_CONFIDENCE = 0.6
+
   let bestMatch = { intent: 'UNKNOWN', entities: {}, confidence: 0, action: null }
 
   for (const intentDef of INTENTS) {
@@ -42,6 +45,11 @@ export function detectIntent(normalizedText) {
       // Perfect match — short-circuit
       if (score >= 1.0) return bestMatch
     }
+  }
+
+  // Reject low-confidence matches — return UNKNOWN instead
+  if (bestMatch.confidence < MIN_INTENT_CONFIDENCE) {
+    return { intent: 'UNKNOWN', entities: {}, confidence: 0, action: null }
   }
 
   return bestMatch
@@ -72,9 +80,16 @@ function matchPattern(input, pattern, entityNames) {
 }
 
 /**
- * matchWithEntities — handles patterns like "register for $name"
+ * matchWithEntities — handles patterns like "register for $name" or "find $name event"
  *
- * Fixed tokens must match; $tokens consume remaining words as entity value.
+ * Fixed tokens must match in order; $tokens extract entity values.
+ * When a $ token has a trailing fixed token in the pattern, it captures only
+ * the words up to (not including) that next fixed token — not the entire rest
+ * of input. When no trailing fixed token exists, it falls back to consuming
+ * all remaining input words.
+ *
+ * Input is consumed sequentially to prevent a single word from satisfying
+ * multiple pattern tokens.
  */
 function matchWithEntities(inputWords, patternWords, entityNames, entities) {
   let inputIdx = 0
@@ -85,21 +100,64 @@ function matchWithEntities(inputWords, patternWords, entityNames, entities) {
     const pw = patternWords[i]
 
     if (pw.startsWith('$')) {
-      // Grab everything remaining as the entity value
       const entityKey = pw.substring(1)
-      const remaining = inputWords.slice(inputIdx).join(' ')
 
-      if (remaining) {
-        entities[entityKey] = remaining
-        inputIdx = inputWords.length
+      // Look ahead in patternWords for the next fixed (non-$) token
+      let nextFixedToken = null
+      for (let j = i + 1; j < patternWords.length; j++) {
+        if (!patternWords[j].startsWith('$')) {
+          nextFixedToken = patternWords[j]
+          break
+        }
+      }
+
+      if (nextFixedToken) {
+        // Find where the next fixed token appears in the remaining input
+        let boundaryIdx = -1
+        for (let k = inputIdx; k < inputWords.length; k++) {
+          if (inputWords[k] === nextFixedToken) {
+            boundaryIdx = k
+            break
+          }
+        }
+
+        if (boundaryIdx > inputIdx) {
+          // Capture words between current position and the boundary
+          entities[entityKey] = inputWords.slice(inputIdx, boundaryIdx).join(' ')
+          inputIdx = boundaryIdx // leave boundary word for the fixed-token loop
+        } else if (boundaryIdx === inputIdx) {
+          // Entity would be empty — next fixed token is right here, skip entity
+        } else {
+          // Trailing fixed token not found in input — consume rest as entity
+          const remaining = inputWords.slice(inputIdx).join(' ')
+          if (remaining) {
+            entities[entityKey] = remaining
+            inputIdx = inputWords.length
+          }
+        }
+      } else {
+        // No trailing fixed token — consume all remaining input
+        const remaining = inputWords.slice(inputIdx).join(' ')
+        if (remaining) {
+          entities[entityKey] = remaining
+          inputIdx = inputWords.length
+        }
       }
     } else {
       totalFixed++
 
-      if (inputIdx < inputWords.length && inputWords[inputIdx] === pw) {
-        matchedFixed++
-        inputIdx++
+      // Scan forward from current position to find this fixed token (preserving order)
+      let found = false
+      while (inputIdx < inputWords.length) {
+        if (inputWords[inputIdx] === pw) {
+          matchedFixed++
+          inputIdx++
+          found = true
+          break
+        }
+        inputIdx++ // consume non-matching word so it can't be reused
       }
+      // If not found, this required token is missing — matchedFixed stays the same
     }
   }
 

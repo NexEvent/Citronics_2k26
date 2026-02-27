@@ -77,7 +77,7 @@ const TOKEN_MAP = {
   'ke': 'of',
   'ki': 'of',
   'ko': 'to',
-  'me': 'in',
+  'mein': 'in',
   'pe': 'on',
   'se': 'from',
   'aur': 'and',

@@ -88,6 +88,18 @@ export async function resolveCommand(intent, entities, context) {
     case 'INFO_CONTACT':
       return { success: true, data: null, ...base }
 
+    // ── FAQ — no service calls, templates have the answers ─────────────────
+    case 'FAQ_CERTIFICATE':
+    case 'FAQ_CANCEL_REGISTRATION':
+    case 'FAQ_REFUND':
+    case 'FAQ_TEAM_SIZE':
+    case 'FAQ_WIFI':
+    case 'FAQ_FOOD':
+    case 'FAQ_WHAT_TO_BRING':
+    case 'FAQ_PARKING':
+    case 'FAQ_ACCOMMODATION':
+      return { success: true, data: null, ...base }
+
     // ── Context-aware — pass currentPage to template ──────────────────────
     case 'CONTEXT_WHERE_AM_I':
     case 'CONTEXT_WHAT_CAN_I_DO':

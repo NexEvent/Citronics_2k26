@@ -18,17 +18,21 @@ import { buildResponse } from './response-templates'
  *
  * @param {string} transcript  Raw speech text from browser STT
  * @param {object} context     { currentPage, userId?, role?, isAuthenticated? } from API layer
- * @returns {object}           { reply, action, data, intent, confidence }
+ * @returns {object}           { reply, speakText, action, data, intent, confidence }
+ *
+ * Confidence gates:
+ *   - Intent engine rejects matches below 0.6 (returns UNKNOWN)
+ *   - This facade rejects UNKNOWN intents with a friendly LOW_CONFIDENCE reply
  */
 export async function processCommand(transcript, context = {}) {
-  // Step 1: Normalize Hinglish/Hindi → canonical English
+  // Step 1: Normalize speech → canonical English
   const normalized = normalize(transcript)
 
-  // Step 2: Detect intent + extract entities
+  // Step 2: Detect intent + extract entities (gate: MIN_INTENT_CONFIDENCE = 0.6)
   const { intent, entities, confidence } = detectIntent(normalized)
 
-  // Step 3: Confidence gate — reject low-confidence matches
-  if (confidence < 0.4) {
+  // Step 3: Confidence gate — UNKNOWN means intent engine found nothing reliable
+  if (intent === 'UNKNOWN') {
     return buildResponse('LOW_CONFIDENCE', { transcript: normalized, currentPage: context.currentPage })
   }
 

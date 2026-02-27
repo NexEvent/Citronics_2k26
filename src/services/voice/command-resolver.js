@@ -11,6 +11,7 @@
  * Context object now includes `currentPage` for page-relative queries.
  */
 import dashboardService from 'src/services/dashboard-service'
+import eventService from 'src/services/event-service'
 import {
   findEvent,
   getEventsByDepartment,
@@ -178,6 +179,133 @@ export async function resolveCommand(intent, entities, context) {
     case 'RECOMMEND_EVENT': {
       return { success: true, data: { recommend: true }, ...base }
     }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // ── Cart Operations ───────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════
+    case 'ADD_TO_CART':
+    case 'ADD_CART_AND_CHECKOUT': {
+      // Step 1: Find event name from knowledge base
+      const kbMatch = findEvent(entities.name)
+      if (!kbMatch || kbMatch.confidence < 0.4) {
+        return {
+          success: false,
+          data: null,
+          ...base,
+          error: `I couldn't find an event matching "${entities.name || 'that'}". Try saying the full event name!`
+        }
+      }
+
+      // Step 2: Look up the real DB event by name to get the event ID
+      try {
+        const dbEvents = await eventService.getPublishedEvents({ search: kbMatch.event.name, limit: 5 })
+        const dbEvent = dbEvents.find(e =>
+          e.title.toLowerCase() === kbMatch.event.name.toLowerCase()
+        ) || dbEvents[0]
+
+        if (!dbEvent) {
+          return {
+            success: false,
+            data: null,
+            ...base,
+            error: `I found "${kbMatch.event.name}" in my knowledge base but it's not currently available for booking.`
+          }
+        }
+
+        const spotsLeft = Math.max(0, (dbEvent.seats || 0) - (dbEvent.registered || 0))
+        if (spotsLeft <= 0) {
+          return {
+            success: false,
+            data: {
+              event: kbMatch.event,
+              dbEvent,
+              soldOut: true
+            },
+            ...base,
+            error: `Sorry, ${kbMatch.event.name} is sold out! No spots left.`
+          }
+        }
+
+        // Build cart item payload for the client to dispatch
+        const cartItem = {
+          eventId: dbEvent.id,
+          title: dbEvent.title,
+          ticketPrice: parseFloat(dbEvent.ticket_price) || 0,
+          quantity: 1,
+          image: dbEvent.images?.[0] || null,
+          startTime: dbEvent.start_time,
+          venue: dbEvent.venue || kbMatch.event.venue,
+          maxAvailable: spotsLeft
+        }
+
+        const navigateToCart = intent === 'ADD_CART_AND_CHECKOUT'
+
+        return {
+          success: true,
+          data: {
+            event: kbMatch.event,
+            dbEvent,
+            cartItem,
+            navigateToCart
+          },
+          ...base
+        }
+      } catch (err) {
+        console.error('[voice] Cart lookup error:', err)
+        return {
+          success: false,
+          data: null,
+          ...base,
+          error: 'Could not look up event availability right now. Please try again.'
+        }
+      }
+    }
+
+    case 'NAV_CART':
+      return { success: true, data: null, ...base }
+
+    case 'REMOVE_FROM_CART': {
+      // Find event to remove — need DB lookup for the event ID
+      const removeMatch = findEvent(entities.name)
+      if (!removeMatch || removeMatch.confidence < 0.4) {
+        return {
+          success: false,
+          data: null,
+          ...base,
+          error: `I couldn't find "${entities.name || 'that'}" to remove. Check your cart!`
+        }
+      }
+
+      try {
+        const dbEvents = await eventService.getPublishedEvents({ search: removeMatch.event.name, limit: 5 })
+        const dbEvent = dbEvents.find(e =>
+          e.title.toLowerCase() === removeMatch.event.name.toLowerCase()
+        ) || dbEvents[0]
+
+        return {
+          success: true,
+          data: {
+            event: removeMatch.event,
+            eventId: dbEvent?.id || null,
+            eventTitle: removeMatch.event.name
+          },
+          ...base
+        }
+      } catch {
+        return {
+          success: true,
+          data: {
+            event: removeMatch.event,
+            eventId: null,
+            eventTitle: removeMatch.event.name
+          },
+          ...base
+        }
+      }
+    }
+
+    case 'CLEAR_CART':
+      return { success: true, data: null, ...base }
 
     // ── Knowledge base — no service calls, templates have the answers ─────
     case 'INFO_WHAT_IS_CITRO':

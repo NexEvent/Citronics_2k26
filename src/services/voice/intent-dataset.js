@@ -224,6 +224,63 @@ const INTENTS = [
     action: { type: 'reply' }
   },
 
+  // ── Cart / Checkout ────────────────────────────────────────────────────────
+  {
+    id: 'ADD_TO_CART',
+    patterns: [
+      'add $name to cart', 'add $name to my cart',
+      'put $name in cart', 'put $name in my cart',
+      'select $name', 'book $name', 'buy $name',
+      'i want $name', 'add $name', 'cart $name',
+      'get ticket for $name', 'get tickets for $name',
+      'buy ticket for $name', 'buy tickets for $name'
+    ],
+    entities: ['name'],
+    action: { type: 'add-to-cart' }
+  },
+  {
+    id: 'ADD_CART_AND_CHECKOUT',
+    patterns: [
+      'select $name and checkout', 'select $name and move to checkout',
+      'add $name and checkout', 'add $name to cart and checkout',
+      'book $name and checkout', 'buy $name and checkout',
+      'add $name and go to cart', 'select $name and go to cart',
+      'add $name to cart and go to checkout',
+      'select $name and proceed to checkout',
+      'select $name and pay', 'buy $name and pay'
+    ],
+    entities: ['name'],
+    action: { type: 'add-to-cart-and-checkout' }
+  },
+  {
+    id: 'NAV_CART',
+    patterns: [
+      'go to cart', 'open cart', 'show cart', 'view cart',
+      'my cart', 'show my cart', 'checkout', 'go to checkout',
+      'proceed to checkout', 'move to checkout', 'open checkout',
+      'cart page', 'take me to cart', 'take me to checkout'
+    ],
+    action: { type: 'navigate', path: '/cart' }
+  },
+  {
+    id: 'REMOVE_FROM_CART',
+    patterns: [
+      'remove $name from cart', 'delete $name from cart',
+      'remove $name', 'take out $name from cart',
+      'cancel $name from cart'
+    ],
+    entities: ['name'],
+    action: { type: 'remove-from-cart' }
+  },
+  {
+    id: 'CLEAR_CART',
+    patterns: [
+      'clear cart', 'empty cart', 'clear my cart', 'empty my cart',
+      'remove everything from cart', 'delete all from cart'
+    ],
+    action: { type: 'clear-cart' }
+  },
+
   // ── Registration ──────────────────────────────────────────────────────────
   {
     id: 'REGISTER_EVENT',

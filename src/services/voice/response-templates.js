@@ -250,6 +250,75 @@ const TEMPLATES = {
   },
 
   // ══════════════════════════════════════════════════════════════════════════
+  // ── Cart / Checkout ──────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  ADD_TO_CART: {
+    reply: (ctx) => {
+      if (ctx.error) return ctx.error
+      const ev = ctx.data?.event
+      const cartItem = ctx.data?.cartItem
+      if (!ev || !cartItem) return "I couldn't add that to your cart. Try saying the full event name!"
+      return `🛒 Added "${ev.name}" to your cart!\n💰 Price: ₹${cartItem.ticketPrice}\n📍 ${ev.venue} — ${ev.date}\n\nSay 'checkout' to proceed or keep adding events!`
+    },
+    speakable: (ctx) => {
+      const ev = ctx.data?.event
+      if (!ev) return null
+      return `Added ${ev.name} to your cart! Say checkout when you're ready.`
+    },
+    action: (ctx) => {
+      if (!ctx.data?.cartItem) return null
+      return { type: 'add-to-cart', cartItem: ctx.data.cartItem }
+    }
+  },
+  ADD_CART_AND_CHECKOUT: {
+    reply: (ctx) => {
+      if (ctx.error) return ctx.error
+      const ev = ctx.data?.event
+      const cartItem = ctx.data?.cartItem
+      if (!ev || !cartItem) return "I couldn't add that to your cart. Try saying the full event name!"
+      return `🛒 Added "${ev.name}" to your cart! (₹${cartItem.ticketPrice})\n🚀 Taking you to checkout now!`
+    },
+    speakable: (ctx) => {
+      const ev = ctx.data?.event
+      if (!ev) return null
+      return `Added ${ev.name} to your cart. Taking you to checkout!`
+    },
+    action: (ctx) => {
+      if (!ctx.data?.cartItem) return null
+      return {
+        type: 'add-to-cart-and-checkout',
+        cartItem: ctx.data.cartItem,
+        path: '/cart'
+      }
+    }
+  },
+  NAV_CART: {
+    reply: 'Opening your cart! 🛒',
+    speakable: 'Opening your cart!',
+    action: { type: 'navigate', path: '/cart' }
+  },
+  REMOVE_FROM_CART: {
+    reply: (ctx) => {
+      if (ctx.error) return ctx.error
+      const name = ctx.data?.eventTitle || 'that event'
+      return `🗑️ Removed "${name}" from your cart.`
+    },
+    speakable: (ctx) => {
+      const name = ctx.data?.eventTitle || 'that event'
+      return `Removed ${name} from your cart.`
+    },
+    action: (ctx) => {
+      if (!ctx.data?.eventId) return null
+      return { type: 'remove-from-cart', eventId: ctx.data.eventId }
+    }
+  },
+  CLEAR_CART: {
+    reply: '🗑️ Your cart has been cleared!',
+    speakable: 'Cart cleared!',
+    action: { type: 'clear-cart' }
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
   // ── Citro Knowledge Base ─────────────────────────────────────────────────
   // ══════════════════════════════════════════════════════════════════════════
   INFO_WHAT_IS_CITRO: {
@@ -514,10 +583,13 @@ export function buildResponse(intent, ctx = {}) {
     speakText = template.speakable
   }
 
+  // Resolve action: can be a function (for dynamic cart actions) or static object
+  const action = typeof template.action === 'function' ? template.action(ctx) : (template.action || null)
+
   return {
     reply,
     speakText,
-    action: template.action || null,
+    action,
     data: ctx.data || null,
     intent,
     confidence: ctx.confidence || 0

@@ -103,7 +103,7 @@ const VoiceAssistant = () => {
   })
 
   // ── Text-to-Speech (TTS) ─────────────────────────────────────────────────
-  const { speak } = useTextToSpeech({ rate: 1.0, pitch: 1.0, lang: 'en-US' })
+  const { speak } = useTextToSpeech({ rate: 0.92, pitch: 1.08, lang: 'en-US' })
 
   // ── Speak Citro's replies (selective — only when speakText is provided) ──
   useEffect(() => {

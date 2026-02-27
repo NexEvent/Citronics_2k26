@@ -85,6 +85,34 @@ const INTENTS = [
     action: { type: 'query', handler: 'getUpcomingEvents' }
   },
   {
+    id: 'LIST_ALL_EVENTS',
+    patterns: [
+      'list all events', 'list out all events', 'list me out all events',
+      'show me all events', 'all events list', 'list events',
+      'can you list all events', 'list every event',
+      'what are all events', 'tell me all events',
+      'all the events', 'every event', 'complete event list',
+      'full event list', 'show complete events',
+      'which events you know', 'what events you know',
+      'what events do you know', 'what events do you have',
+      'which events do you have', 'what events are there',
+      'which events are there', 'how many events you know',
+      'what all events', 'tell me events', 'which events'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'RECOMMEND_EVENT',
+    patterns: [
+      'which is best event', 'best event', 'recommended events',
+      'which event should attend', 'top events', 'popular events',
+      'suggest events', 'best events happening', 'which is best',
+      'what is best event', 'most popular event', 'highlight events',
+      'must attend events', 'which events are best'
+    ],
+    action: { type: 'reply' }
+  },
+  {
     id: 'SEARCH_EVENT',
     patterns: [
       'search event $name', 'find event $name', 'search $name',
@@ -93,6 +121,107 @@ const INTENTS = [
     ],
     entities: ['name'],
     action: { type: 'query', handler: 'searchEvents' }
+  },
+
+  // ── Event-Specific Queries (Knowledge Base powered) ───────────────────────
+  {
+    id: 'EVENT_DETAILS',
+    patterns: [
+      'tell me about $name', 'what is $name', 'details of $name',
+      'info about $name', 'about $name event', 'describe $name',
+      'explain $name', '$name details', '$name info',
+      'what is $name about', 'tell about $name', 'details $name'
+    ],
+    entities: ['name'],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'NAV_EVENT',
+    patterns: [
+      'open $name', 'show $name', 'take me to $name',
+      'go to $name', 'open $name event', 'show me $name',
+      'navigate to $name', 'visit $name'
+    ],
+    entities: ['name'],
+    action: { type: 'navigate', path: '/events' }
+  },
+  {
+    id: 'EVENT_WHEN',
+    patterns: [
+      'when is $name', 'what time is $name', 'time of $name',
+      'when does $name start', 'schedule of $name', 'date of $name',
+      '$name timing', '$name date', '$name time', 'when $name'
+    ],
+    entities: ['name'],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'EVENT_WHERE',
+    patterns: [
+      'where is $name', 'venue of $name', 'location of $name',
+      '$name venue', '$name location', 'where is $name happening',
+      'where will $name be', '$name where'
+    ],
+    entities: ['name'],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'EVENT_PRICE',
+    patterns: [
+      'price of $name', 'how much is $name', 'cost of $name',
+      '$name price', '$name cost', '$name fee', 'fee for $name',
+      'ticket price of $name', 'how much for $name', '$name ticket price'
+    ],
+    entities: ['name'],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'EVENT_PRIZE',
+    patterns: [
+      'prize of $name', 'prize for $name', 'what is the prize for $name',
+      '$name prize', '$name prize money', 'prize money of $name',
+      'reward for $name', 'winning prize $name', 'how much prize $name'
+    ],
+    entities: ['name'],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'DEPT_EVENTS',
+    patterns: [
+      '$name department events', 'events by $name', 'events of $name',
+      'events from $name', '$name events', 'show $name department events',
+      'what events does $name have', 'list $name events',
+      'events in $name department', 'events under $name'
+    ],
+    entities: ['name'],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'DAY_EVENTS',
+    patterns: [
+      'events on day $name', 'day $name events', 'what is on day $name',
+      'show day $name', 'day $name schedule', 'schedule for day $name',
+      'events on april $name', 'april $name events',
+      'day 1 events', 'day 2 events', 'day 3 events',
+      'first day events', 'second day events', 'third day events',
+      'what events are on day 1', 'what events are on day 2', 'what events are on day 3'
+    ],
+    entities: ['name'],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'FEST_INFO',
+    patterns: [
+      'about the fest', 'about citronics fest', 'tell me about the fest',
+      'citronics 2026', 'about citronics 2026', 'fest details',
+      'what is citronics 2026', 'when is the fest', 'fest schedule',
+      'how many events', 'total events', 'how many events are there',
+      'fest theme', 'what is the theme',
+      'about citronics', 'citronics', 'tell me about citronics',
+      'what is citronics', 'citronix', 'about citronix',
+      'tell me about citronix', 'what is citronix'
+    ],
+    action: { type: 'reply' }
   },
 
   // ── Registration ──────────────────────────────────────────────────────────
@@ -218,12 +347,48 @@ const INTENTS = [
     action: { type: 'context' }
   },
 
-  // ── Greetings / Meta ──────────────────────────────────────────────────────
+  // ── Greetings / Meta / Friendly Chat ────────────────────────────────────
   {
     id: 'GREETING',
     patterns: [
-      'hello', 'hi', 'namaste', 'hey', 'good morning', 'good evening',
-      'good afternoon', 'whats up', 'howdy', 'sup'
+      'hello', 'hi', 'hey', 'namaste', 'good morning', 'good evening',
+      'good afternoon', 'whats up', 'howdy', 'sup', 'hi there',
+      'hey there', 'hello there', 'greetings', 'yo'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'HOW_ARE_YOU',
+    patterns: [
+      'how are you', 'how is it going', 'how do you do',
+      'how you doing', 'are you fine', 'are you okay',
+      'how are you doing', 'whats going on', 'hows life'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'COMPLIMENT',
+    patterns: [
+      'you are great', 'you are awesome', 'nice', 'awesome', 'cool',
+      'amazing', 'wonderful', 'brilliant', 'fantastic', 'good job',
+      'well done', 'great work', 'love it', 'you rock', 'superb',
+      'love you', 'you are the best', 'impressive'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'JOKE',
+    patterns: [
+      'tell me joke', 'joke', 'make me laugh', 'say something funny',
+      'tell joke', 'funny', 'humor', 'entertain me'
+    ],
+    action: { type: 'reply' }
+  },
+  {
+    id: 'BORED',
+    patterns: [
+      'bored', 'boring', 'nothing do', 'what should do',
+      'suggest something', 'any suggestions', 'what do recommend'
     ],
     action: { type: 'reply' }
   },

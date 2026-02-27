@@ -109,12 +109,82 @@ const TOKEN_MAP = {
   'hey citro': 'hey citro',
 }
 
+// ── Speech Recognition Corrections ────────────────────────────────────────────
+// Common words that browser STT mishears for Citronics event names.
+// Applied BEFORE token translation so the corrected form flows through normally.
+const SPEECH_CORRECTIONS = {
+  'cardiology': 'codeology',
+  'cardio logy': 'codeology',
+  'code ology': 'codeology',
+  'codiology': 'codeology',
+  'pharma tone': 'pharmathon',
+  'pharma thon': 'pharmathon',
+  'pharmacon': 'pharmathon',
+  'pharmacy thon': 'pharmathon',
+  'zinga': 'zenga',
+  'genga': 'zenga',
+  'jenga': 'zenga',
+  'zenga block': 'zenga block',
+  'robo race': 'robo race',
+  'robot race': 'robo race',
+  'robo swim': 'robo swim',
+  'robot swim': 'robo swim',
+  'robo soccer': 'robo soccer',
+  'robot soccer': 'robo soccer',
+  'auto quest': 'auto quest',
+  'arch mania': 'arch mania',
+  'archmania': 'arch mania',
+  'design verse': 'designverse',
+  'ad mad': 'ad-mad show',
+  'admad': 'ad-mad show',
+  'shark tank': 'shark tank',
+  'tech bingo': 'tech bingo',
+  'tambola': 'tech bingo tambola',
+  'boardroom battle': 'boardroom battle',
+  'real to deal': 'reel to deal',
+  'reel to deal': 'reel to deal',
+  'clash of titans': 'clash of titan',
+  'clash of titan': 'clash of titan',
+  'youth parliament': 'youth parliament',
+  'master chef': 'master chef',
+  'master shift': 'master chef',
+  'brand quiz': 'brand quiz',
+  'share market': 'share market simulation',
+  'stock market': 'share market simulation',
+  'prompt it right': 'prompt it right',
+  'innovate 2026': 'innovate 2026',
+  'battle of design': 'battle of design',
+  'newspaper tall': 'newspaper tall structure',
+  'news paper tall': 'newspaper tall structure',
+  'line follower': 'line follower',
+  'ai slave': 'ai slave',
+  'ai image story': 'ai image story creation',
+  'build your own chatbot': 'build your own chatbot',
+  'build chatbot': 'build your own chatbot',
+  'chatbot': 'build your own chatbot',
+  'business ethics': 'business ethics decision making',
+  'debate competition': 'debate competition',
+  'reel making': 'reel making competition',
+  'pharma model': 'pharma model',
+  'pharma innoventia': 'pharma innoventia',
+  'project competition software': 'project competition software',
+  'project competition hardware': 'project competition hardware',
+  'project software': 'project competition software',
+  'project hardware': 'project competition hardware',
+  'citronix': 'citronics',
+  'citronik': 'citronics',
+  'citroniks': 'citronics',
+  'citronics': 'citronics'
+}
+
 // Filler words to strip after translation
+// NOTE: Greeting words (hi, hello, hey) are NOT fillers — they must reach
+// the intent engine so GREETING / HOW_ARE_YOU etc. can match.
 const FILLER_WORDS = new Set([
   'um', 'uh', 'hmm', 'like', 'actually', 'basically',
-  'please', 'ok', 'okay', 'hey', 'hi', 'hello',
+  'please', 'ok', 'okay',
   'citro', 'the', 'a', 'an', 'just', 'can', 'you',
-  'i', 'want', 'to', 'need', 'would'
+  'want', 'need', 'would'
 ])
 
 /**
@@ -127,7 +197,15 @@ export function normalize(raw) {
 
   let text = raw.toLowerCase().trim()
 
-  // Replace multi-word tokens first (longer phrases take priority)
+  // Step 0: Apply speech recognition corrections FIRST
+  // (fixes common STT mishearings like 'cardiology' → 'codeology')
+  const sortedCorrections = Object.entries(SPEECH_CORRECTIONS).sort((a, b) => b[0].length - a[0].length)
+  for (const [misheard, corrected] of sortedCorrections) {
+    const regex = new RegExp(`\\b${escapeRegex(misheard)}\\b`, 'gi')
+    text = text.replace(regex, corrected)
+  }
+
+  // Step 1: Replace Hindi/Hinglish tokens (longer phrases first)
   const sortedTokens = Object.entries(TOKEN_MAP).sort((a, b) => b[0].length - a[0].length)
 
   for (const [hindi, english] of sortedTokens) {

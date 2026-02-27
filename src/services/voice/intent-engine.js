@@ -6,11 +6,13 @@
  *   1. Exact phrase matching
  *   2. Token overlap scoring (lightweight similarity)
  *   3. Entity extraction from $variable patterns
+ *   4. Event name fuzzy matching via knowledge base
  *
  * No ML, no AI APIs — pure string logic.
  */
 import INTENTS from './intent-dataset'
 import { normalizeForIntent } from './normalizer'
+import { findEvent, getDepartmentCode } from './event-knowledge'
 
 /**
  * detectIntent — main export
@@ -25,7 +27,7 @@ export function detectIntent(normalizedText) {
   }
 
   // Minimum confidence required — matches below this are treated as UNKNOWN
-  const MIN_INTENT_CONFIDENCE = 0.6
+  const MIN_INTENT_CONFIDENCE = 0.5
 
   let bestMatch = { intent: 'UNKNOWN', entities: {}, confidence: 0, action: null }
 
@@ -44,6 +46,21 @@ export function detectIntent(normalizedText) {
 
       // Perfect match — short-circuit
       if (score >= 1.0) return bestMatch
+    }
+  }
+
+  // ── Event name fallback ─────────────────────────────────────────────────
+  // If no strong intent matched but the text might be an event name,
+  // try to find it in the knowledge base and treat as EVENT_DETAILS
+  if (bestMatch.confidence < MIN_INTENT_CONFIDENCE) {
+    const eventMatch = findEvent(cleaned)
+    if (eventMatch && eventMatch.confidence >= 0.5) {
+      return {
+        intent: 'EVENT_DETAILS',
+        entities: { name: eventMatch.event.name },
+        confidence: eventMatch.confidence * 0.85,
+        action: { type: 'reply' }
+      }
     }
   }
 

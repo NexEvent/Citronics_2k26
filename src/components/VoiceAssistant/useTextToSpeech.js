@@ -25,9 +25,13 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 function pickBestVoice(voices) {
   if (!voices || voices.length === 0) return null
 
+  // Prefer softer, female voices for a friendlier Citro personality.
+  // Priority: Google female US → Google female UK → Microsoft female → any Google → Natural → fallback
   const priorities = [
+    v => v.lang === 'en-US' && v.name.includes('Google') && /female|Zira|Aria|Jenny|Sara/i.test(v.name),
     v => v.lang === 'en-US' && v.name.includes('Google'),
     v => v.lang === 'en-GB' && v.name.includes('Google'),
+    v => v.lang.startsWith('en') && /Zira|Aria|Jenny|Sara|Samantha|Karen|Moira|Female/i.test(v.name),
     v => v.lang.startsWith('en') && v.name.includes('Google'),
     v => v.lang.startsWith('en') && v.name.includes('Natural'),
     v => v.lang.startsWith('en') && !v.localService,   // remote/high-quality
@@ -78,7 +82,7 @@ const useTextToSpeech = ({ rate = 1.0, pitch = 1.0, lang = 'en-US' } = {}) => {
       utterance.lang = lang
       utterance.rate = rate
       utterance.pitch = pitch
-      utterance.volume = 1.0
+      utterance.volume = 0.85  // slightly lower volume for softer feel
 
       // Use the session-locked voice for uniform sound
       if (lockedVoiceRef.current) {

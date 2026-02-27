@@ -3,6 +3,7 @@
  *
  * Maps detected intents → actual service calls.
  * Reuses existing services (dashboard-service, etc.) — no duplication.
+ * Uses the event knowledge base for instant event-specific answers.
  *
  * Called from the voice service facade (index.js) via the API layer.
  * This is the ONLY place where business logic execution happens for voice.
@@ -10,6 +11,13 @@
  * Context object now includes `currentPage` for page-relative queries.
  */
 import dashboardService from 'src/services/dashboard-service'
+import {
+  findEvent,
+  getEventsByDepartment,
+  getEventsByDay,
+  getDepartmentCode,
+  FEST_INFO
+} from './event-knowledge'
 
 /**
  * resolveCommand — execute the action for a detected intent
@@ -32,6 +40,24 @@ export async function resolveCommand(intent, entities, context) {
     case 'NAV_REGISTER':
     case 'NAV_BACK':
       return { success: true, data: null, ...base }
+
+    // ── Navigate to a specific event by name ──────────────────────────────
+    case 'NAV_EVENT': {
+      const match = findEvent(entities.name)
+      if (match && match.confidence >= 0.4) {
+        return {
+          success: true,
+          data: { event: match.event, confidence: match.confidence },
+          ...base
+        }
+      }
+      return {
+        success: false,
+        data: null,
+        ...base,
+        error: `Could not find an event matching "${entities.name || 'that'}"`
+      }
+    }
 
     // ── Dashboard stats ───────────────────────────────────────────────────
     case 'QUERY_STATS': {
@@ -65,9 +91,10 @@ export async function resolveCommand(intent, entities, context) {
 
     // ── Register for event ────────────────────────────────────────────────
     case 'REGISTER_EVENT': {
+      const match = findEvent(entities.name)
       return {
         success: true,
-        data: null,
+        data: match ? { event: match.event } : null,
         ...base,
         message: `Registration flow for "${entities.name || 'unknown'}"`
       }
@@ -76,6 +103,80 @@ export async function resolveCommand(intent, entities, context) {
     // ── My registrations ──────────────────────────────────────────────────
     case 'QUERY_MY_REGISTRATIONS': {
       return { success: true, data: null, ...base }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // ── Event Knowledge Base Queries ──────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════
+    case 'EVENT_DETAILS':
+    case 'EVENT_WHEN':
+    case 'EVENT_WHERE':
+    case 'EVENT_PRICE':
+    case 'EVENT_PRIZE': {
+      const match = findEvent(entities.name)
+      if (match && match.confidence >= 0.4) {
+        return {
+          success: true,
+          data: { event: match.event, confidence: match.confidence },
+          ...base
+        }
+      }
+      return {
+        success: false,
+        data: null,
+        ...base,
+        error: `I couldn't find an event matching "${entities.name || 'that'}". Try saying the full event name!`
+      }
+    }
+
+    case 'DEPT_EVENTS': {
+      const deptCode = getDepartmentCode(entities.name)
+      if (deptCode) {
+        const events = getEventsByDepartment(deptCode)
+        return {
+          success: true,
+          data: { department: deptCode, events },
+          ...base
+        }
+      }
+      return {
+        success: false,
+        data: null,
+        ...base,
+        error: `I couldn't find a department matching "${entities.name || 'that'}".`
+      }
+    }
+
+    case 'DAY_EVENTS': {
+      // Extract day number from entities
+      let dayNum = null
+      const raw = (entities.name || '').toLowerCase().trim()
+      if (raw.includes('1') || raw.includes('first') || raw.includes('8')) dayNum = 1
+      else if (raw.includes('2') || raw.includes('second') || raw.includes('9')) dayNum = 2
+      else if (raw.includes('3') || raw.includes('third') || raw.includes('10')) dayNum = 3
+
+      if (dayNum) {
+        const events = getEventsByDay(dayNum)
+        return { success: true, data: { day: dayNum, events }, ...base }
+      }
+      return {
+        success: false,
+        data: null,
+        ...base,
+        error: 'Please specify day 1, 2, or 3. Citronics runs from April 8–10.'
+      }
+    }
+
+    case 'FEST_INFO': {
+      return { success: true, data: { fest: FEST_INFO }, ...base }
+    }
+
+    case 'LIST_ALL_EVENTS': {
+      return { success: true, data: { allEvents: true }, ...base }
+    }
+
+    case 'RECOMMEND_EVENT': {
+      return { success: true, data: { recommend: true }, ...base }
     }
 
     // ── Knowledge base — no service calls, templates have the answers ─────
@@ -105,12 +206,16 @@ export async function resolveCommand(intent, entities, context) {
     case 'CONTEXT_WHAT_CAN_I_DO':
       return { success: true, data: null, ...base }
 
-    // ── Greeting / Meta — no service calls needed ─────────────────────────
+    // ── Greeting / Meta / Friendly — no service calls needed ──────────────
     case 'GREETING':
     case 'HELP':
     case 'THANK_YOU':
     case 'WHO_ARE_YOU':
     case 'GOODBYE':
+    case 'HOW_ARE_YOU':
+    case 'COMPLIMENT':
+    case 'JOKE':
+    case 'BORED':
       return { success: true, data: null, ...base }
 
     // ── Unknown / fallback ────────────────────────────────────────────────

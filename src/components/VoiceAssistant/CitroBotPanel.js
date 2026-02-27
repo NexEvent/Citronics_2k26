@@ -44,23 +44,28 @@ import { IconMicrophone, IconMicrophoneOff, IconX } from '@tabler/icons-react'
 const CHIP_SETS = [
   [
     { label: 'Show events', icon: '🗓' },
-    { label: 'What is Citro?', icon: '🤖' },
+    { label: 'Tell me about Robo Soccer', icon: '🤖' },
     { label: 'Help', icon: '💡' },
   ],
   [
-    { label: 'How to register?', icon: '✋' },
-    { label: 'Upcoming events', icon: '📅' },
-    { label: 'Open dashboard', icon: '📊' },
+    { label: 'CSE events', icon: '💻' },
+    { label: 'Day 1 events', icon: '📅' },
+    { label: 'About the fest', icon: '🎪' },
   ],
   [
-    { label: 'Where is the event?', icon: '📍' },
-    { label: 'Go home', icon: '🏠' },
-    { label: 'Show stats', icon: '📈' },
+    { label: 'Price of Shark Tank', icon: '💰' },
+    { label: 'When is Codeology?', icon: '📆' },
+    { label: 'MBA events', icon: '🏛️' },
+  ],
+  [
+    { label: 'Prize of Robo Race', icon: '🏆' },
+    { label: 'Where is Master Chef?', icon: '📍' },
+    { label: 'How to register?', icon: '✋' },
   ],
   [
     { label: 'Who are you?', icon: '🤔' },
-    { label: 'When is the event?', icon: '📆' },
-    { label: 'Upcoming events', icon: '🔮' },
+    { label: 'Open dashboard', icon: '📊' },
+    { label: 'Day 2 events', icon: '🔮' },
   ]
 ]
 
@@ -140,7 +145,7 @@ const MessageBubble = ({ message, theme, index }) => {
     >
       <Box sx={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
         <Box sx={{
-          maxWidth: '85%', px: 1.3, py: 0.6, borderRadius: 2.5,
+          maxWidth: '85%', px: 1.3, py: 0.6, borderRadius: 1,
           bgcolor: isUser
             ? theme.palette.primary.main
             : theme.palette.mode === 'dark'
@@ -233,7 +238,7 @@ const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClo
         >
           {/* ── Glassmorphic container ── */}
           <Box sx={{
-            borderRadius: 4,
+            borderRadius: 1,
             overflow: 'hidden',
             bgcolor: isDark ? alpha('#1A1D36', 0.95) : alpha('#fff', 0.97),
             backdropFilter: 'blur(20px) saturate(1.4)',
@@ -431,7 +436,7 @@ const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClo
                                 onClick={() => handleChipClick(chip.label)}
                                 sx={{
                                   px: 1.1, py: 0.4,
-                                  borderRadius: 5,
+                                  borderRadius: 1,
                                   fontSize: '0.62rem',
                                   fontWeight: 600,
                                   color: isDark ? alpha('#fff', 0.55) : 'text.secondary',

@@ -18,6 +18,7 @@ import { useAppPalette } from 'src/components/palette'
 import { motion, AnimatePresence } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import { fetchEvents, fetchDepartments } from 'src/store/slices/eventsSlice'
+import { addToCart } from 'src/store/slices/cartSlice'
 
 const MotionBox = motion(Box)
 
@@ -74,6 +75,7 @@ function getEventImage(event) {
 function EventCard({ event, index }) {
   const c = useAppPalette()
   const router = useRouter()
+  const dispatch = useDispatch()
   const accent = c.primary
   const imageUrl = getEventImage(event)
   const spotsLeft = event.seats > 0 ? event.seats - (event.registered || 0) : null
@@ -245,6 +247,36 @@ function EventCard({ event, index }) {
             variant='contained'
             size='small'
             disableElevation
+            onClick={() => dispatch(addToCart({
+              eventId: event.id,
+              title: event.title,
+              ticketPrice: event.ticket_price || 0,
+              quantity: 1,
+              image: getEventImage(event),
+              startTime: event.start_time,
+              venue: event.venue,
+              maxAvailable: event.seats > 0 ? Math.max(0, event.seats - (event.registered || 0)) : null
+            }))}
+            sx={{
+              minWidth: 130,
+              height: 38,
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              bgcolor: accent,
+              color: c.isDark ? c.black : c.white,
+              '&:hover': { bgcolor: alpha(accent, 0.85), boxShadow: `0 4px 20px ${alpha(accent, 0.25)}` },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Add to Cart
+          </Button>
+          <Button
+            variant='contained'
+            size='small'
+            disableElevation
             sx={{
               minWidth: 130,
               height: 38,
@@ -260,7 +292,7 @@ function EventCard({ event, index }) {
               transition: 'all 0.2s ease'
             }}
           >
-            Register
+            Buy Ticket
           </Button>
           <Button
             variant='text'
@@ -462,12 +494,7 @@ export default function EventsPageView() {
               Upcoming Events
             </Typography>
           </Box>
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary', fontSize: '0.82rem', maxWidth: 280, textAlign: { xs: 'left', sm: 'right' }, lineHeight: 1.5, opacity: 0.8 }}
-          >
-            All upcoming events at Citronics 2026.
-          </Typography>
+          
         </MotionBox>
 
         {/* Filter Bar */}
@@ -518,18 +545,7 @@ export default function EventsPageView() {
 
           <Box sx={{ flexGrow: 1 }} />
 
-          <FormControl size='small' sx={{ minWidth: 130, ...inputSx }}>
-            <Select
-              value={sortOrder}
-              onChange={e => { setSortOrder(e.target.value); setPage(1) }}
-              aria-label='Sort order'
-              sx={{ '& .MuiSelect-select': { py: 1 } }}
-            >
-              <MenuItem value='newest'>Newest</MenuItem>
-              <MenuItem value='oldest'>Oldest</MenuItem>
-              <MenuItem value='popular'>Popular</MenuItem>
-            </Select>
-          </FormControl>
+          
         </MotionBox>
 
         {/* Events List */}

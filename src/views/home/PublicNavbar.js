@@ -2,7 +2,7 @@
 import Navbar from 'src/components/Navbar'
 
 const NAV_LINKS = [
-  { label: 'Home', href: '#hero' },
+
   { label: 'About', href: '#about' },
   { label: 'Events', href: '/events' },
   { label: 'Schedule', href: '#schedule' }

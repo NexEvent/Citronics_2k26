@@ -1,6 +1,7 @@
 import Head from 'next/head'
+import { useEffect } from 'react'
 import { Router } from 'next/router'
-import { Provider } from 'react-redux'
+import { Provider, useDispatch } from 'react-redux'
 import { SessionProvider } from 'next-auth/react'
 import { CacheProvider } from '@emotion/react'
 import NProgress from 'nprogress'
@@ -36,6 +37,9 @@ import { SettingsConsumer, SettingsProvider } from 'src/context/SettingsContext'
 // Utils
 import { createEmotionCache } from 'src/lib/emotionCache'
 
+// Cart
+import { hydrateCart } from 'src/store/slices/cartSlice'
+
 // Styles
 import 'react-perfect-scrollbar/dist/css/styles.css'
 
@@ -56,6 +60,13 @@ const Guard = ({ children, authGuard, guestGuard }) => {
   if (guestGuard) return <GuestGuard fallback={<Spinner />}>{children}</GuestGuard>
   if (!guestGuard && !authGuard) return <>{children}</>
   return <AuthGuard fallback={<Spinner />}>{children}</AuthGuard>
+}
+
+/** Hydrate cart from localStorage once on mount */
+const CartHydrator = () => {
+  const dispatch = useDispatch()
+  useEffect(() => { dispatch(hydrateCart()) }, [dispatch])
+  return null
 }
 
 /**
@@ -79,6 +90,7 @@ const App = props => {
   return (
     <SessionProvider session={session}>
       <Provider store={store}>
+        <CartHydrator />
         <CacheProvider value={emotionCache}>
           <Head>
             <title>{themeConfig.templateName}</title>

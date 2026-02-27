@@ -14,6 +14,7 @@ import { useAppPalette } from 'src/components/palette'
 import { motion } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import { fetchEventById, clearCurrentEvent } from 'src/store/slices/eventsSlice'
+import { addToCart } from 'src/store/slices/cartSlice'
 import { fontFamilyHeading } from 'src/theme/typography'
 
 const MotionBox = motion(Box)
@@ -634,6 +635,45 @@ export default function EventDetailView() {
             }}
           >
             See All Events
+          </Button>
+
+          {/* Add to Cart */}
+          <Button
+            variant='outlined'
+            disableElevation
+            disabled={spotsLeft <= 0}
+            onClick={() => dispatch(addToCart({
+              eventId: event.id,
+              title: event.title,
+              ticketPrice: event.ticket_price || 0,
+              quantity: 1,
+              image: getEventImage(event),
+              startTime: event.start_time,
+              venue: event.venue,
+              maxAvailable: spotsLeft > 0 ? spotsLeft : 0
+            }))}
+            startIcon={<Icon icon='tabler:shopping-cart-plus' fontSize={18} />}
+            sx={{
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              textTransform: 'none',
+              px: 2.5,
+              height: 44,
+              borderColor: c.bgPaper,
+              color: c.bgPaper,
+              '&:hover': {
+                borderColor: c.bgPaper,
+                color: c.bgPaper,
+                bgcolor: alpha(c.bgPaper, 0.12)
+              },
+              '&.Mui-disabled': {
+                borderColor: c.dividerA30,
+                color: c.textDisabled
+              }
+            }}
+          >
+            Add to Cart
           </Button>
 
           {/* Register */}

@@ -6,7 +6,9 @@ import Button from '@mui/material/Button'
 import { alpha } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/router'
+import { useDispatch } from 'react-redux'
 import { useAppPalette } from 'src/components/palette'
+import { addToCart } from 'src/store/slices/cartSlice'
 
 const MotionBox = motion(Box)
 
@@ -50,6 +52,7 @@ function getImage(event) {
  */function SiloCard({ event, index, accent }) {
   const c = useAppPalette()
   const router = useRouter()
+  const dispatch = useDispatch()
   const [hovered, setHovered] = useState(false)
 
   const { full: dateStr, time: timeStr } = parseDate(event.start_time)
@@ -207,6 +210,39 @@ function getImage(event) {
             }}
           >
             View Details
+          </Button>
+          <Button
+            variant='outlined'
+            onClick={e => {
+              e.stopPropagation()
+              dispatch(addToCart({
+                eventId: event.id,
+                title: event.title,
+                ticketPrice: event.ticket_price || 0,
+                quantity: 1,
+                image: getImage(event),
+                startTime: event.start_time,
+                venue: event.venue,
+                maxAvailable: event.seats > 0 ? Math.max(0, event.seats - (event.registered || 0)) : null
+              }))
+            }}
+            sx={{
+              borderColor: alpha(accent, 0.5),
+              color: accent,
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              letterSpacing: 1.2,
+              textTransform: 'uppercase',
+              px: 3.5,
+              py: 1,
+              borderRadius: '8px',
+              '&:hover': {
+                borderColor: accent,
+                bgcolor: alpha(accent, 0.08)
+              }
+            }}
+          >
+            Add to Cart
           </Button>
         </Box>
       </Box>

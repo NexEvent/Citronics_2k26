@@ -1,172 +1,95 @@
-﻿import { useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import Box from '@mui/material/Box'
-import Container from '@mui/material/Container'
-import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
 import { alpha } from '@mui/material/styles'
-import { motion } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import { useAppPalette } from 'src/components/palette'
 
-const MotionBox = motion(Box)
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Placeholder event images per day (replace with real images when available)
+   ═══════════════════════════════════════════════════════════════════════════ */
+const DAY_IMAGES = [
+  [
+    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1587825140708-dfaf18c4c3d1?w=600&h=400&fit=crop'
+  ],
+  [
+    'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=600&h=400&fit=crop'
+  ],
+  [
+    'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1559223607-a43c990c692c?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&h=400&fit=crop'
+  ]
+]
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ScheduleSection — Aceternity-style scroll-progress vertical timeline
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * Renders a single timeline entry for a scheduled session.
- * @param {object} props
- * @param {object} props.item - Schedule item data (time, event, dept, paletteKey)
- * @param {boolean} props.isLast - Whether this is the last item (hides the connector line)
- * @param {number} props.delay - Framer-motion animation delay in seconds
- */
-function TimelineEntry({ item, isLast, delay }) {
-  const c = useAppPalette()
-  const color = c.theme.palette[item.paletteKey]?.main || c.primary
-
-  return (
-    <MotionBox
-      initial={{ opacity: 0, x: -20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true, amount: 0.5 }}
-      transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
-      sx={{ display: 'flex', gap: 2.5, pb: isLast ? 0 : 2.5 }}
-    >
-      {/* Timeline dot + line */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20, flexShrink: 0 }}>
-        <Box
-          sx={{
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            bgcolor: color,
-            border: `3px solid ${alpha(color, 0.2)}`,
-            boxShadow: `0 0 12px ${alpha(color, 0.4)}`,
-            mt: 0.4,
-            flexShrink: 0
-          }}
-        />
-        {!isLast && (
-          <Box
-            sx={{
-              width: 1.5,
-              flexGrow: 1,
-              background: `linear-gradient(${alpha(color, 0.25)}, ${c.dividerA10})`,
-              mt: 0.5
-            }}
-          />
-        )}
-      </Box>
-
-      {/* Content */}
-      <Box sx={{ flexGrow: 1, pb: 0.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-          <Typography
-            variant='caption'
-            sx={{ fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', minWidth: 72, fontSize: '0.75rem' }}
-          >
-            {item.time}
-          </Typography>
-          <Typography variant='body2' sx={{ fontWeight: item.dept === 'all' ? 600 : 400, color: c.textPrimary }}>
-            {item.event}
-          </Typography>
-          {item.dept !== 'all' && (
-            <Chip
-              label={item.dept.toUpperCase()}
-              size='small'
-              sx={{
-                height: 20,
-                fontSize: '0.6rem',
-                fontWeight: 700,
-                bgcolor: alpha(color, 0.1),
-                color,
-                border: `1px solid ${alpha(color, 0.15)}`,
-                '& .MuiChip-label': { px: 0.8 }
-              }}
-            />
-          )}
-        </Box>
-      </Box>
-    </MotionBox>
-  )
-}
-
-/**
- * Renders a clickable day selector tab for the schedule.
- * @param {object} props
- * @param {object} props.day - Day data (label, date)
- * @param {number} props.index - Tab index (used for color selection)
- * @param {boolean} props.isActive - Whether this day is currently selected
- * @param {Function} props.onClick - Callback when the tab is clicked
- */
-function DayCard({ day, index, isActive, onClick }) {
-  const c = useAppPalette()
-  const colors = [c.primary, c.info, c.success]
-  const color = colors[index % colors.length]
-
-  return (
-    <MotionBox
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      onClick={onClick}
-      sx={{
-        p: 2.5,
-        borderRadius: '16px',
-        cursor: 'pointer',
-        border: isActive ? `2px solid ${color}` : `1px solid ${c.dividerA50}`,
-        background: isActive ? alpha(color, 0.06) : c.bgPaperA40,
-        backdropFilter: 'blur(8px)',
-        textAlign: 'center',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          border: `2px solid ${alpha(color, 0.5)}`,
-          background: alpha(color, 0.04)
-        }
-      }}
-    >
-      <Typography variant='overline' sx={{ color: isActive ? color : c.textDisabled, fontWeight: 700, letterSpacing: 2 }}>
-        {day.day}
-      </Typography>
-      <Typography variant='h6' sx={{ fontWeight: 700, color: isActive ? color : c.textPrimary, lineHeight: 1.2 }}>
-        {day.date}
-      </Typography>
-      <Typography variant='caption' sx={{ color: isActive ? color : c.textSecondary, fontStyle: 'italic' }}>
-        {day.theme}
-      </Typography>
-    </MotionBox>
-  )
-}
-
-/**
- * Multi-day schedule section on the home page.
- * Renders day selector tabs and a timeline of sessions for the active day.
+ * Multi-day schedule section with Aceternity-style scroll-progress timeline.
+ *
+ * - Day titles ("Day 1", "Day 2", "Day 3") are sticky on the left and scroll
+ *   with the line, stopping when the next day arrives.
+ * - Events are shown as clean text list items (no boxes).
+ * - 4-image grid per day, Aceternity-reference style with soft shadows.
+ * - Scroll-linked gradient line powered by framer-motion useScroll.
+ *
  * @param {object} props
  * @param {Array} [props.scheduleDays=[]] - Array of day objects from the home API
  */
 export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
   const c = useAppPalette()
-  const [activeDay, setActiveDay] = useState(0)
-  const day = SCHEDULE_DAYS[activeDay]
+  const timelineRef = useRef(null)
+  const [height, setHeight] = useState(0)
 
-  // Guard: nothing to render when data hasn't loaded yet
-  if (!SCHEDULE_DAYS.length || !day) return null
+  // Continuously measure timeline height via ResizeObserver
+  useEffect(() => {
+    const node = timelineRef.current
+    if (!node) return
+
+    const measure = () => setHeight(node.getBoundingClientRect().height)
+    measure()
+
+    const ro = new ResizeObserver(measure)
+    ro.observe(node)
+
+    return () => ro.disconnect()
+  }, [SCHEDULE_DAYS])
+
+  if (!SCHEDULE_DAYS.length) return null
+
+  // Soft multi-layer shadow matching Aceternity image cards
+  const imgShadow = [
+    `0 0 24px ${alpha(c.textPrimary, 0.06)}`,
+    `0 1px 1px ${alpha(c.black, 0.05)}`,
+    `0 0 0 1px ${alpha(c.textPrimary, 0.04)}`,
+    `0 0 4px ${alpha(c.textPrimary, 0.08)}`,
+    `0 16px 68px ${alpha(c.textPrimary, 0.05)}`,
+    `inset 0 1px 0 ${alpha(c.white, 0.1)}`
+  ].join(', ')
 
   return (
     <Box
       id='schedule'
       sx={{
-        py: { xs: 10, md: 16 }
+        width: '100%',
+        bgcolor: c.bgDefault,
+        fontFamily: 'inherit',
+        px: { xs: 0, md: 5 }
       }}
     >
-      <Container maxWidth='xl'>
-        {/* Section header */}
-        <MotionBox
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          sx={{ textAlign: 'center', mb: 6 }}
-        >
+      {/* ── Section header ─────────────────────────────────────────── */}
+      <Box sx={{ maxWidth: 1200, mx: 'auto', py: { xs: 8, md: 10 }, px: { xs: 2, md: 4, lg: 5 } }}>
+        <Box>
           <Box
             sx={{
               display: 'inline-flex',
@@ -177,7 +100,7 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
               borderRadius: '100px',
               background: c.infoA8,
               border: `1px solid ${c.infoA15}`,
-              mb: 2.5
+              mb: 2
             }}
           >
             <Icon icon='tabler:clock' fontSize={14} style={{ color: c.info }} />
@@ -185,68 +108,263 @@ export default function ScheduleSection({ scheduleDays: SCHEDULE_DAYS = [] }) {
               3-DAY AGENDA
             </Typography>
           </Box>
-          <Typography variant='h3' sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.5px' }}>
-            Event Schedule
-          </Typography>
-          <Typography variant='body1' sx={{ color: c.textSecondary, maxWidth: 520, mx: 'auto', lineHeight: 1.7 }}>
-            Three action-packed days of competitions, workshops, and unforgettable cultural nights.
-          </Typography>
-        </MotionBox>
 
-        {/* Day selectors */}
-        <Grid container spacing={2} sx={{ mb: 5 }}>
-          {SCHEDULE_DAYS.map((d, i) => (
-            <Grid item xs={4} key={d.day}>
-              <DayCard day={d} index={i} isActive={activeDay === i} onClick={() => setActiveDay(i)} />
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Timeline */}
-        <MotionBox key={activeDay} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <Box
+          <Typography
+            variant='h3'
             sx={{
-              p: { xs: 3, md: 5 },
-              borderRadius: '24px',
-              background: c.bgPaperA50,
-              border: `1px solid ${c.dividerA50}`,
-              backdropFilter: 'blur(16px)',
+              fontWeight: 800,
+              mb: 1.5,
+              letterSpacing: '-0.5px',
               maxWidth: 700,
-              mx: 'auto'
+              fontSize: { xs: '1.25rem', md: '2.25rem' }
             }}
           >
-            {/* Day header */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+            Event Schedule
+          </Typography>
+          <Typography
+            variant='body2'
+            sx={{ color: c.textSecondary, maxWidth: 440, lineHeight: 1.7, fontSize: { xs: '0.85rem', md: '1rem' } }}
+          >
+            Three action-packed days of competitions, workshops, and unforgettable cultural nights.
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ── Timeline body ──────────────────────────────────────────── */}
+      <Box ref={timelineRef} sx={{ position: 'relative', maxWidth: 1200, mx: 'auto', pb: { xs: 8, md: 10 } }}>
+        {SCHEDULE_DAYS.map((day, dayIndex) => (
+          <Box
+            key={day.day}
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-start',
+              pt: dayIndex === 0 ? { xs: 2, md: 5 } : { xs: 5, md: 20 },
+              gap: { xs: 0, md: 5 }
+            }}
+          >
+            {/* ── LEFT: day title + dot (scrolls with content) ──── */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: 'center',
+                alignSelf: 'flex-start',
+                zIndex: 40,
+                maxWidth: { xs: 56, lg: 360 },
+                width: { md: '100%' }
+              }}
+            >
+              {/* Dot — centered on the 2px line */}
               <Box
                 sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '14px',
-                  background: c.gradientPrimary,
+                  position: 'absolute',
+                  left: { xs: 2, md: 2 },
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  bgcolor: c.bgDefault,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 4px 16px ${c.primaryA30}`
+                  zIndex: 1
                 }}
               >
-                <Icon icon='tabler:calendar-event' fontSize={24} style={{ color: c.primaryContrast }} />
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    bgcolor: c.isDark ? c.grey[800] : c.grey[200],
+                    border: `1px solid ${c.isDark ? c.grey[700] : c.grey[300]}`
+                  }}
+                />
               </Box>
-              <Box>
-                <Typography variant='h5' sx={{ fontWeight: 700, lineHeight: 1 }}>
-                  {day.day} — {day.date}
-                </Typography>
-                <Typography variant='caption' sx={{ color: c.textSecondary, letterSpacing: 2 }}>
-                  THEME: {day.theme.toUpperCase()}
-                </Typography>
-              </Box>
+
+              {/* Day title — desktop (large, sticky, scrolls with section) */}
+              <Typography
+                sx={{
+                  display: { xs: 'none', md: 'block' },
+                  pl: 8,
+                  fontWeight: 700,
+                  color: c.textSecondary,
+                  whiteSpace: 'nowrap',
+                  fontSize: { md: '1.5rem', lg: '3rem' },
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                {day.day}
+              </Typography>
             </Box>
 
-            {day.highlights.map((item, i) => (
-              <TimelineEntry key={i} item={item} isLast={i === day.highlights.length - 1} delay={i * 0.07} />
-            ))}
+            {/* ── RIGHT: content ──────────────────────────────── */}
+            <Box sx={{ position: 'relative', pl: { xs: 9, md: 2 }, pr: { xs: 2, md: 4 }, width: '100%' }}>
+              {/* Day title — mobile only */}
+              <Typography
+                sx={{
+                  display: { xs: 'block', md: 'none' },
+                  mb: 2,
+                  fontWeight: 700,
+                  fontSize: '1.75rem',
+                  color: c.textSecondary,
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                {day.day}
+              </Typography>
+
+              {/* Day description */}
+              <Box>
+                <Typography
+                  sx={{
+                    color: c.textPrimary,
+                    mb: 3,
+                    fontSize: { xs: '1rem', sm: '1.15rem', md: '1.35rem' },
+                    fontWeight: 500,
+                    lineHeight: 1.6
+                  }}
+                >
+                  {day.date} &mdash; Theme: <strong>{day.theme}</strong>
+                </Typography>
+              </Box>
+
+              {/* ── Event list (clean text, no boxes) ─────────── */}
+              <Box sx={{ mb: 4 }}>
+                {day.highlights.map((item, i) => {
+                  const color = c.theme.palette[item.paletteKey]?.main || c.primary
+
+                  return (
+                    <Box
+                      key={i}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        py: 1.5,
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      {/* Checkmark / bullet */}
+                      <Icon
+                        icon='tabler:circle-check-filled'
+                        fontSize={20}
+                        style={{ color: c.textPrimary, flexShrink: 0 }}
+                      />
+
+                      {/* Time */}
+                      <Typography
+                        component='span'
+                        sx={{
+                          fontWeight: 600,
+                          color: c.textPrimary,
+                          fontVariantNumeric: 'tabular-nums',
+                          fontSize: { xs: '0.875rem', md: '1rem' },
+                          minWidth: 80,
+                          py: 0.25,
+                          px: 0.5
+                        }}
+                      >
+                        {item.time}
+                      </Typography>
+
+                      {/* Event name */}
+                      <Typography
+                        component='span'
+                        sx={{
+                          color: c.textPrimary,
+                          fontWeight: item.dept === 'all' ? 600 : 400,
+                          fontSize: { xs: '0.875rem', md: '1rem' }
+                        }}
+                      >
+                        {item.event}
+                      </Typography>
+
+                      {/* Department tag (inline, subtle) */}
+                      {item.dept !== 'all' && (
+                        <Typography
+                          component='span'
+                          sx={{
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            color,
+                            bgcolor: alpha(color, 0.1),
+                            border: `1px solid ${alpha(color, 0.2)}`,
+                            borderRadius: '6px',
+                            px: 0.8,
+                            py: 0.15,
+                            lineHeight: 1.4,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em'
+                          }}
+                        >
+                          {item.dept}
+                        </Typography>
+                      )}
+                    </Box>
+                  )
+                })}
+              </Box>
+
+              {/* ── Image grid (2×2, Aceternity reference style) ── */}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr' },
+                  gap: 2,
+                  mb: 2
+                }}
+              >
+                {(DAY_IMAGES[dayIndex] || DAY_IMAGES[0]).map((src, imgIdx) => (
+                  <Box key={imgIdx}>
+                    <Box
+                      component='img'
+                      src={src}
+                      alt={`${day.day} event ${imgIdx + 1}`}
+                      loading='lazy'
+                      sx={{
+                        width: '100%',
+                        height: { xs: 100, md: 180, lg: 240 },
+                        objectFit: 'cover',
+                        borderRadius: '12px',
+                        boxShadow: imgShadow,
+                        display: 'block'
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Box>
+            </Box>
           </Box>
-        </MotionBox>
-      </Container>
+        ))}
+
+        {/* ── Scroll-progress line ─────────────────────────────────── */}
+        <Box
+          sx={{
+            position: 'absolute',
+            left: { xs: 20, md: 20 },
+            top: 0,
+            width: 2,
+            height: height || '100%',
+            overflow: 'hidden',
+            background: `linear-gradient(to bottom, transparent 0%, ${c.isDark ? c.grey[700] : c.grey[200]} 10%, ${c.isDark ? c.grey[700] : c.grey[200]} 90%, transparent 99%)`,
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+            zIndex: 0
+          }}
+        >
+          <Box
+            sx={{
+              height: '100%',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              width: 2,
+              borderRadius: 9999,
+              background: `linear-gradient(to top, ${c.primary}, ${c.info}, transparent)`
+            }}
+          />
+        </Box>
+      </Box>
     </Box>
   )
 }

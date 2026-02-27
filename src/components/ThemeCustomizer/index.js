@@ -10,7 +10,6 @@ import Tooltip from '@mui/material/Tooltip'
 import Fade from '@mui/material/Fade'
 import Slider from '@mui/material/Slider'
 import { styled, alpha } from '@mui/material/styles'
-import useMediaQuery from '@mui/material/useMediaQuery'
 
 // Icons
 import {
@@ -73,9 +72,6 @@ const TriggerButton = styled(IconButton)(({ theme }) => ({
     backgroundColor: theme.palette.primary.dark,
     width: 52,
     boxShadow: `-6px 0 24px ${alpha(theme.palette.primary.main, 0.55)}`
-  },
-  [theme.breakpoints.down('lg')]: {
-    display: 'none'
   }
 }))
 
@@ -182,7 +178,6 @@ const FontSizeChip = styled(Box, {
 
 const ThemeCustomizer = () => {
   const c = useAppPalette()
-  const isLargeScreen = useMediaQuery(c.theme.breakpoints.up('lg'))
   const { settings, saveSettings } = useSettings()
   const [open, setOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -243,8 +238,6 @@ const ThemeCustomizer = () => {
       direction: 'ltr'
     })
   }, [saveSettings])
-
-  if (!isLargeScreen) return null
 
   const isDark = c.isDark
   const activePreset = COLOR_PRESETS.find(p => p.name === (settings.themeColor || 'primary')) || COLOR_PRESETS[0]

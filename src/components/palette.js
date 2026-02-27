@@ -23,13 +23,13 @@ export const glass = {
   backdrop: 'blur(20px) saturate(180%)',
 
   // Text on glass
-  textBright: 'rgba(250, 250, 250, 0.98)',
-  textDefault: 'rgba(244, 239, 239, 0.99)',
-  textMuted: 'rgba(200, 200, 200, 0.75)',
-  textMutedAlt: 'rgba(200, 200, 200, 0.8)',
-  textSubtle: 'rgba(200, 200, 200, 0.6)',
-  textDimmer: 'rgba(200, 200, 200, 0.7)',
-  textNav: 'rgba(246, 241, 241, 0.75)',
+  textBright: 'rgba(255, 255, 255, 1)',
+  textDefault: 'rgba(255, 255, 255, 1)',
+  textMuted: 'rgba(255, 255, 255, 0.92)',
+  textMutedAlt: 'rgba(255, 255, 255, 0.92)',
+  textSubtle: 'rgba(255, 255, 255, 0.75)',
+  textDimmer: 'rgba(255, 255, 255, 0.88)',
+  textNav: 'rgba(255, 255, 255, 1)',
 
   // Dot / decorative
   dot: 'rgba(220, 220, 220, 0.85)',

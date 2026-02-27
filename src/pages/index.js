@@ -14,7 +14,7 @@ import EventsSection from 'src/views/home/EventsSection'
 import ScheduleSection from 'src/views/home/ScheduleSection'
 import TestimonialsSection from 'src/views/home/TestimonialsSection'
 import SponsorsSection from 'src/views/home/SponsorsSection'
-import CTABanner from 'src/views/home/CTABanner'
+//import CTABanner from 'src/views/home/CTABanner'
 import PublicFooter from 'src/views/home/PublicFooter'
 import { fetchHomeData } from 'src/store/slices/eventsSlice'
 
@@ -81,7 +81,7 @@ const Home = () => {
         <ScheduleSection scheduleDays={scheduleDays} />
         <TestimonialsSection testimonials={testimonials} />
         <SponsorsSection sponsors={sponsors} />
-        <CTABanner />
+        {/*<CTABanner />*/}
         <PublicFooter />
     </Box>
   )

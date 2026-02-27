@@ -16,14 +16,16 @@ import Collapse from '@mui/material/Collapse'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { Classic } from '@theme-toggles/react'
 import '@theme-toggles/react/css/Classic.css'
-import { IconMenu2, IconX, IconBell } from '@tabler/icons-react'
+import { IconMenu2, IconX, IconBell, IconShoppingCart } from '@tabler/icons-react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
+import { useSelector } from 'react-redux'
 import Icon from 'src/components/Icon'
 import { useSettings } from 'src/hooks/useSettings'
 import themeConfig from 'src/configs/themeConfig'
 import { useAppPalette, glass } from 'src/components/palette'
+import { selectCartItemCount, selectCartEventCount } from 'src/store/slices/cartSlice'
 
 /* ── Animated nav link with vertical slide on hover ─────────────────────── */
 const AnimatedNavLink = ({ href, children, active, onClick }) => {
@@ -87,17 +89,30 @@ const AnimatedNavLink = ({ href, children, active, onClick }) => {
   )
 }
 
-/* ── Four-dot logo mark ──────────────────────────────────────────────────── */
-const LogoDots = () => (
-  <Box component={Link} href='/' aria-label='Home' sx={{ position: 'relative', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}>
-    {[
-      { top: 0, left: '50%', transform: 'translateX(-50%)' },
-      { bottom: 0, left: '50%', transform: 'translateX(-50%)' },
-      { left: 0, top: '50%', transform: 'translateY(-50%)' },
-      { right: 0, top: '50%', transform: 'translateY(-50%)' }
-    ].map((pos, i) => (
-      <Box key={i} sx={{ position: 'absolute', width: 7, height: 7, borderRadius: '50%', bgcolor: glass.dot, ...pos }} />
-    ))}
+/* ── Navbar logo ─────────────────────────────────────────────────────────── */
+const NavLogo = () => (
+  <Box
+    component={Link}
+    href='/'
+    aria-label='Home'
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0,
+      textDecoration: 'none'
+    }}
+  >
+    <Box
+      component='img'
+      src='/logo/citronics2.png'
+      alt={themeConfig.templateName}
+      sx={{
+        height: { xs: 44, md: 54 },
+        width: 'auto',
+        objectFit: 'contain',
+        display: 'block'
+      }}
+    />
   </Box>
 )
 
@@ -115,6 +130,7 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
   const isMobile = useMediaQuery(c.theme.breakpoints.down('md'))
   const { settings, saveSettings } = useSettings()
   const { data: session } = useSession()
+  const cartEventCount = useSelector(selectCartEventCount)
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -162,7 +178,7 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
 
   /* ── Glass pill colours ──────────────────────────────────────────────── */
   const glassBg = glass.bg
-  const glassBorder = `1px solid ${c.whiteA20}`
+  const glassBorder = `1px solid ${c.whiteA40}`
   const backdropBlur = glass.backdrop
 
   return (
@@ -198,8 +214,8 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
           {/* ── Main row ─────────────────────────────────────────────────── */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 3, md: 5 } }}>
 
-            {/* Logo dots */}
-            <LogoDots />
+            {/* Logo */}
+            <NavLogo />
 
             {/* Desktop nav links */}
             {!isMobile && navLinks?.length > 0 && (
@@ -255,6 +271,46 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
                   }}
                 >
                   <IconBell size={24} />
+                </IconButton>
+              </Tooltip>
+
+              {/* Cart */}
+              <Tooltip title='Cart'>
+                <IconButton
+                  size='medium'
+                  aria-label='Cart'
+                  onClick={() => router.push('/cart')}
+                  sx={{
+                    color: glass.textNav,
+                    position: 'relative',
+                    transition: 'color 0.2s, background-color 0.2s',
+                    '&:hover': { color: c.white, bgcolor: c.whiteA10 }
+                  }}
+                >
+                  <IconShoppingCart size={24} />
+                  {cartEventCount > 0 && (
+                    <Box
+                      component='span'
+                      sx={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        bgcolor: c.error,
+                        color: c.white,
+                        fontSize: '0.65rem',
+                        fontWeight: 800,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        lineHeight: 1
+                      }}
+                    >
+                      {cartEventCount > 9 ? '9+' : cartEventCount}
+                    </Box>
+                  )}
                 </IconButton>
               </Tooltip>
 
@@ -334,66 +390,9 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
                 <>
                   {!isMobile && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      {/* Login — ghost button */}
-                      <Button
-                        component={Link}
-                        href='/login'
-                        size='medium'
-                        sx={{
-                          px: 3, py: 1,
-                          borderRadius: '9999px',
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          fontSize: '0.95rem',
-                          color: glass.textDefault,
-                          border: `1px solid ${c.white}`,
-                          bgcolor: 'transparent',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            color: c.white,
-                            borderColor: c.whiteA40,
-                            bgcolor: c.whiteA6
-                          }
-                        }}
-                      >
-                        Login
-                      </Button>
+                     
 
-                      {/* Signup — white gradient with glow */}
-                      <Box sx={{ position: 'relative', '&:hover .signup-glow': { opacity: 0.7, filter: 'blur(14px)' } }}>
-                        <Box
-                          className='signup-glow'
-                          sx={{
-                            position: 'absolute', inset: -6,
-                            borderRadius: '9999px',
-                            bgcolor: glass.badgeBg,
-                            filter: 'blur(10px)',
-                            opacity: 0.4,
-                            pointerEvents: 'none',
-                            transition: 'opacity 0.3s, filter 0.3s'
-                          }}
-                        />
-                        <Button
-                          component={Link}
-                          href='/register'
-                          size='medium'
-                          sx={{
-                            position: 'relative', zIndex: 1,
-                            px: 4.5, py: 1,
-                            borderRadius: '9999px',
-                            textTransform: 'none',
-                            fontWeight: 700,
-                            fontSize: '0.95rem',
-                            color: glass.btnText,
-                            background: glass.btnGradient,
-                            whiteSpace: 'nowrap',
-                            transition: 'all 0.2s',
-                            '&:hover': { background: glass.btnGradientHover }
-                          }}
-                        >
-                          Sign Up
-                        </Button>
-                      </Box>
+                     
                     </Box>
                   )}
                 </>
@@ -436,51 +435,16 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
                           borderRadius: '10px',
                           textDecoration: 'none',
                           fontSize: '0.875rem',
-                          fontWeight: activeSection === link.href?.replace('#', '') ? 600 : 400,
-                          color: activeSection === link.href?.replace('#', '') ? c.white : glass.textMuted,
-                          bgcolor: activeSection === link.href?.replace('#', '') ? c.whiteA8 : 'transparent',
+                          fontWeight: activeSection === link.href?.replace('#', '') ? 700 : 500,
+                          color: c.white,
+                          bgcolor: activeSection === link.href?.replace('#', '') ? c.whiteA15 : 'transparent',
                           transition: 'all 0.2s',
-                          '&:hover': { color: c.white, bgcolor: c.whiteA8 }
+                          '&:hover': { color: c.white, bgcolor: c.whiteA10 }
                         }}
                       >
                         {link.label}
                       </Box>
                     ))}
-                  </Box>
-                )}
-
-                {/* Auth buttons on mobile */}
-                {!session?.user && (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pb: 0.5 }}>
-                    <Button
-                      fullWidth
-                      component={Link}
-                      href='/login'
-                      sx={{
-                        borderRadius: '9999px', textTransform: 'none', fontWeight: 500,
-                        fontSize: '0.875rem', color: glass.textMutedAlt,
-                        border: `1px solid ${c.whiteA15}`,
-                        bgcolor: glass.bgMobileLogin,
-                        '&:hover': { color: c.white, borderColor: c.whiteA40, bgcolor: c.whiteA6 }
-                      }}
-                    >
-                      Login
-                    </Button>
-                    <Button
-                      fullWidth
-                      component={Link}
-                      href='/register'
-                      sx={{
-                        borderRadius: '9999px', textTransform: 'none', fontWeight: 700,
-                        fontSize: '0.875rem', color: glass.btnText,
-                        background: glass.btnGradient,
-                        whiteSpace: 'nowrap',
-                        boxShadow: `0 0 18px ${glass.btnGlow}`,
-                        '&:hover': { background: glass.btnGradientHover, boxShadow: `0 0 26px ${glass.btnGlowHover}` }
-                      }}
-                    >
-                      Sign Up
-                    </Button>
                   </Box>
                 )}
               </Box>

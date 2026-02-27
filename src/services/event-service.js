@@ -99,6 +99,7 @@ const eventService = {
         e.featured,
         e.status,
         e.images,
+        e.ticket_price,
         d.id            AS "departmentId",
         d.name          AS "departmentName"
       FROM events e
@@ -195,6 +196,7 @@ const eventService = {
         e.tags,
         e.featured,
         e.images,
+        e.ticket_price,
         d.id            AS "departmentId",
         d.name          AS "departmentName"
       FROM events e
@@ -205,6 +207,40 @@ const eventService = {
       ORDER BY e.start_time ASC
       LIMIT $1
     `, [limit])
+  },
+
+  /**
+   * Validate cart: fetch fresh event data for a list of event IDs.
+   * Returns ticket_price, availability, and metadata from the DB.
+   * Only returns published, public events.
+   *
+   * @param {number[]} eventIds - Array of event IDs to validate
+   */
+  async getEventsByIds(eventIds) {
+    if (!eventIds || eventIds.length === 0) return []
+
+    // Build parameterized IN clause
+    const placeholders = eventIds.map((_, i) => `$${i + 1}`).join(', ')
+
+    return dbAny(`
+      SELECT
+        e.id,
+        e.name          AS title,
+        e.ticket_price,
+        e.max_tickets   AS seats,
+        e.registered,
+        e.start_time,
+        e.end_time,
+        e.venue,
+        e.images,
+        e.status,
+        d.name          AS "departmentName"
+      FROM events e
+      LEFT JOIN departments d ON d.id = e.department_id
+      WHERE e.id IN (${placeholders})
+        AND e.status = 'published'
+        AND e.visibility = 'public'
+    `, eventIds)
   },
 
 }

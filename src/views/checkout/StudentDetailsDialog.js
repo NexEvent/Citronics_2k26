@@ -18,6 +18,7 @@ import { useAppPalette } from 'src/components/palette'
 import Icon from 'src/components/Icon'
 import {
   registerUser,
+  verifyUser,
   lookupPhone,
   closeStudentDialog,
   setExistingUser,
@@ -220,14 +221,28 @@ export default function StudentDetailsDialog() {
   const handleSubmit = async e => {
     e.preventDefault()
 
-    // If phone is already registered — skip registration, go straight to checkout
-    if (phoneLookup?.exists && phoneLookup.userId) {
-      dispatch(setExistingUser({ userId: phoneLookup.userId }))
-      dispatch(closeStudentDialog())
-      router.push('/checkout')
+    // Existing user path — verify password before binding userId
+    if (phoneLookup?.exists) {
+      if (!form.password) {
+        setVerifyError('Please enter your password to continue.')
+        return
+      }
+      setVerifyError('')
+      setVerifying(true)
+      const cleaned = form.phone.trim().replace(/[\s\-+()]/g, '').slice(-10)
+      const result = await dispatch(verifyUser({ phone: cleaned, password: form.password }))
+      setVerifying(false)
+      if (verifyUser.fulfilled.match(result)) {
+        dispatch(setExistingUser({ userId: result.payload.userId }))
+        dispatch(closeStudentDialog())
+        router.push('/checkout')
+      } else {
+        setVerifyError(result.payload || 'Incorrect password. Please try again.')
+      }
       return
     }
 
+    // New user path
     if (!validateAll()) return
 
     setServerError('')
@@ -247,20 +262,10 @@ export default function StudentDetailsDialog() {
       router.push('/checkout')
     } else if (registerUser.rejected.match(result)) {
       const payload = result.payload
-      // PHONE_EXISTS — primary identity match, continue with existing account
-      if (payload?.code === 'PHONE_EXISTS') {
-        if (payload.userId) {
-          dispatch(setExistingUser({ userId: payload.userId }))
-          router.push('/checkout')
-        } else {
-          setErrors(prev => ({ ...prev, phone: 'This phone number is already registered.' }))
-          setServerError('Phone number recognised but no account ID returned. Please contact support.')
-        }
-        return
-      }
-      // EMAIL_EXISTS — secondary check, block and show field error
-      if (payload?.code === 'EMAIL_EXISTS') {
-        setErrors(prev => ({ ...prev, email: 'This email is already registered. Please use a different email.' }))
+      // PHONE_EXISTS at registration time — user should have used the verify path above
+      if (payload?.code === 'PHONE_EXISTS' || payload?.code === 'EMAIL_EXISTS') {
+        const field = payload.code === 'PHONE_EXISTS' ? 'phone' : 'email'
+        setErrors(prev => ({ ...prev, [field]: payload.message || 'Already registered.' }))
         return
       }
       setServerError(typeof payload === 'string' ? payload : payload?.message || 'Registration failed')
@@ -274,7 +279,7 @@ export default function StudentDetailsDialog() {
   return (
     <Dialog
       open={open}
-      onClose={registering ? undefined : handleClose}
+      onClose={registering || verifying ? undefined : handleClose}
       maxWidth='sm'
       fullWidth
       TransitionComponent={Fade}
@@ -298,7 +303,7 @@ export default function StudentDetailsDialog() {
         </Box>
         <IconButton
           onClick={handleClose}
-          disabled={registering}
+          disabled={registering || verifying}
           size='small'
           sx={{ color: c.textDisabled, '&:hover': { color: c.textPrimary } }}
         >
@@ -450,7 +455,7 @@ export default function StudentDetailsDialog() {
         <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1.5 }}>
           <Button
             onClick={handleClose}
-            disabled={registering}
+            disabled={registering || verifying}
             sx={{
               borderRadius: '10px',
               fontWeight: 600,
@@ -466,7 +471,7 @@ export default function StudentDetailsDialog() {
           <Button
             type='submit'
             variant='contained'
-            disabled={registering}
+            disabled={registering || verifying}
             sx={{
               borderRadius: '10px',
               fontWeight: 700,
@@ -486,14 +491,12 @@ export default function StudentDetailsDialog() {
               }
             }}
           >
-            {registering ? (
+            {registering || verifying ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CircularProgress size={18} sx={{ color: 'inherit' }} />
-                Registering...
+                {verifying ? 'Verifying...' : 'Registering...'}
               </Box>
-            ) : (
-              'Submit & Continue'
-            )}
+            ) : phoneLookup?.exists ? 'Verify & Continue' : 'Submit & Continue'}
           </Button>
         </DialogActions>
       </form>

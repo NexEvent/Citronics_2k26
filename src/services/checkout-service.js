@@ -117,62 +117,82 @@ const checkoutService = {
    * @returns {Promise<{userId: number}>}
    */
   async registerUserAndStudent({ name, email, phone, password, college, city, referredBy }) {
-    // Phone is the primary identity — check it first
-    if (phone) {
-      const existingPhone = await dbOneOrNone('SELECT id FROM users WHERE phone = $1', [phone])
-      if (existingPhone) {
-        throw Object.assign(new Error('An account with this phone number already exists'), { code: 'PHONE_EXISTS', userId: existingPhone.id })
-      }
-    }
-
-    // Secondary check: email
-    const existing = await dbOneOrNone('SELECT id FROM users WHERE email = $1', [email])
-    if (existing) {
-      throw Object.assign(new Error('An account with this email already exists'), { code: 'EMAIL_EXISTS' })
-    }
-
-    // Hash password
+    // Hash password (CPU-bound, safe outside transaction)
     const salt = await bcrypt.genSalt(12)
     const passwordHash = await bcrypt.hash(password, salt)
 
-    // Resolve referral code to a user_id
+    // Resolve referral code (read-only, safe outside transaction)
     let referredByUserId = null
     if (referredBy && referredBy.trim()) {
       const referrer = await dbOneOrNone(
         'SELECT user_id FROM students WHERE referral_code = $1',
         [referredBy.trim().toUpperCase()]
       )
-      if (referrer) {
-        referredByUserId = referrer.user_id
-      }
+      if (referrer) referredByUserId = referrer.user_id
     }
 
-    // Transaction: insert user → insert student
-    const result = await dbTx(async t => {
-      // Insert user
-      const user = await t.one(`
-        INSERT INTO users (name, email, phone, password_hash, role)
-        VALUES ($1, $2, $3, $4, 'student')
-        RETURNING id
-      `, [name, email.toLowerCase(), phone || null, passwordHash])
+    try {
+      const result = await dbTx(async t => {
+        // ── Uniqueness checks INSIDE transaction to prevent race conditions ──
+        if (phone) {
+          const existingPhone = await t.oneOrNone('SELECT id FROM users WHERE phone = $1', [phone])
+          if (existingPhone) {
+            throw Object.assign(
+              new Error('An account with this phone number already exists'),
+              { code: 'PHONE_EXISTS', userId: existingPhone.id }
+            )
+          }
+        }
 
-      // Generate student_id (CIT-XXXX format)
-      const studentId = `CIT-${String(user.id).padStart(4, '0')}`
+        const existing = await t.oneOrNone('SELECT id FROM users WHERE email = $1', [email])
+        if (existing) {
+          throw Object.assign(
+            new Error('An account with this email already exists'),
+            { code: 'EMAIL_EXISTS' }
+          )
+        }
 
-      // Generate a unique referral code for this student
-      const referralCode = _generateReferralCode()
+        // Insert user
+        const user = await t.one(`
+          INSERT INTO users (name, email, phone, password_hash, role)
+          VALUES ($1, $2, $3, $4, 'student')
+          RETURNING id
+        `, [name, email.toLowerCase(), phone || null, passwordHash])
 
-      // Insert student
-      await t.none(`
-        INSERT INTO students (user_id, student_id, college, city, referred_by, referral_code)
-        VALUES ($1, $2, $3, $4, $5, $6)
-      `, [user.id, studentId, college, city, referredByUserId, referralCode])
+        // Generate student_id (CIT-XXXX format)
+        const studentId = `CIT-${String(user.id).padStart(4, '0')}`
 
-      // studentId and referralCode are stored in DB only — not exposed to frontend
-      return { userId: user.id }
-    })
+        // Generate a unique referral code for this student
+        const referralCode = _generateReferralCode()
 
-    return result
+        // Insert student
+        await t.none(`
+          INSERT INTO students (user_id, student_id, college, city, referred_by, referral_code)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `, [user.id, studentId, college, city, referredByUserId, referralCode])
+
+        // studentId and referralCode are stored in DB only — not exposed to frontend
+        return { userId: user.id }
+      })
+
+      return result
+    } catch (err) {
+      // Re-throw our typed business errors as-is
+      if (err.code === 'PHONE_EXISTS' || err.code === 'EMAIL_EXISTS') throw err
+
+      // Graceful fallback for DB-level unique constraint violations (concurrent inserts)
+      if (err.code === '23505') {
+        const detail = (err.detail || err.constraint || '').toLowerCase()
+        if (detail.includes('phone')) {
+          throw Object.assign(new Error('An account with this phone number already exists'), { code: 'PHONE_EXISTS' })
+        }
+        if (detail.includes('email')) {
+          throw Object.assign(new Error('An account with this email already exists'), { code: 'EMAIL_EXISTS' })
+        }
+      }
+
+      throw err
+    }
   },
 
   // ── Create Booking ───────────────────────────────────────────────────────────
@@ -259,6 +279,24 @@ const checkoutService = {
 
       return { bookings, grandTotal: parseFloat(grandTotal.toFixed(2)) }
     })
+  },
+
+  // ── Verify User By Phone ───────────────────────────────────────────────────
+
+  /**
+   * Verify a user's identity by phone + password.
+   * Returns { userId } on success, null if phone not found or password wrong.
+   * Never reveals which part failed (prevents enumeration).
+   */
+  async verifyUserByPhone(phone, password) {
+    const user = await dbOneOrNone(
+      'SELECT id, password_hash FROM users WHERE phone = $1',
+      [phone]
+    )
+    if (!user) return null
+    const valid = await bcrypt.compare(password, user.password_hash)
+    if (!valid) return null
+    return { userId: user.id }
   },
 
   // ── Find User By Phone ───────────────────────────────────────────────────────

@@ -27,11 +27,11 @@ export default async function handler(req, res) {
         }
         const user = await checkoutService.findUserByPhone(clean)
         if (user) {
-          return res.status(200).json({
-            success: true,
-            exists: true,
-            data: { userId: user.id, name: user.name, email: user.email, college: user.college || '', city: user.city || '' }
-          })
+          // Return only a masked name — no userId until password is verified
+          const maskedName = user.name
+            ? user.name.split(' ').map(w => w.charAt(0) + '*'.repeat(Math.max(0, w.length - 1))).join(' ')
+            : ''
+          return res.status(200).json({ success: true, exists: true, data: { maskedName } })
         }
         return res.status(200).json({ success: true, exists: false })
       } catch (error) {

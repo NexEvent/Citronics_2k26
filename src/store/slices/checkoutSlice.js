@@ -71,6 +71,25 @@ export const registerUser = createAsyncThunk(
 )
 
 /**
+ * Verify an existing user's identity by phone + password.
+ * Only called when phone lookup confirms the number is registered.
+ * Returns userId on success — never exposes userId without proof-of-ownership.
+ */
+export const verifyUser = createAsyncThunk(
+  'checkout/verifyUser',
+  async ({ phone, password }, { rejectWithValue }) => {
+    try {
+      const clean = phone.trim().replace(/[\s\-+()]/g, '').slice(-10)
+      const { data } = await axios.post('/api/checkout/verify', { phone: clean, password })
+      if (!data.success) return rejectWithValue(data.message || 'Verification failed')
+      return data.data
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Incorrect password. Please try again.')
+    }
+  }
+)
+
+/**
  * Confirm booking — backend re-validates and creates bookings.
  */
 export const confirmBooking = createAsyncThunk(

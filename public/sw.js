@@ -1,5 +1,5 @@
 /**
- * EventHub Service Worker
+ * Citronics Service Worker
  *
  * Network-first strategy with cache fallback.
  * Provides offline support for the PWA.
@@ -17,7 +17,7 @@ const PRECACHE_ASSETS = [
   '/offline.html',
   '/images/icons/pwa/icon-192x192.png',
   '/images/icons/pwa/icon-512x512.png',
-  '/images/logo.png'
+  '/logo/citronics2.png'
 ]
 
 // ─── Install ─────────────────────────────────────────────────────────────────

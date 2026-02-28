@@ -555,11 +555,23 @@ export default function EventsPageView() {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 4 }}>
           <AnimatePresence mode='wait'>
             {eventsLoading ? (
-              Array.from({ length: EVENTS_PER_PAGE }).map((_, i) => <EventCardSkeleton key={`sk-${i}`} />)
-            ) : eventsError ? (
               <MotionBox
+                key='loading'
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
+              >
+                {Array.from({ length: EVENTS_PER_PAGE }).map((_, i) => <EventCardSkeleton key={`sk-${i}`} />)}
+              </MotionBox>
+            ) : eventsError ? (
+              <MotionBox
+                key='error'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 sx={{ textAlign: 'center', py: 12, borderRadius: '16px', border: `1.5px dashed ${alpha(c.error, 0.3)}` }}
               >
                 <Icon icon='tabler:alert-triangle' fontSize={44} style={{ color: c.error }} />
@@ -580,11 +592,23 @@ export default function EventsPageView() {
                 </Button>
               </MotionBox>
             ) : events.length > 0 ? (
-              events.map((ev, i) => <EventCard key={ev.id} event={ev} index={i} />)
-            ) : (
               <MotionBox
+                key={`events-${activeDept}-${page}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
+              >
+                {events.map((ev, i) => <EventCard key={ev.id} event={ev} index={i} />)}
+              </MotionBox>
+            ) : (
+              <MotionBox
+                key='empty'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 sx={{ textAlign: 'center', py: 12, borderRadius: '16px', border: `1.5px dashed ${c.dividerA30}` }}
               >
                 <Icon icon='tabler:calendar-off' fontSize={44} style={{ color: c.textDisabled }} />

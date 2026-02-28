@@ -5,9 +5,9 @@
 const themeConfig = {
   // ** App Identity
   templateName: 'Citronics',
-  appLogo: '/images/logo.png',
-  appLogoInvert: '/images/logo-invert.png',
-  defaultAvatar: '/images/avatars/default-avatar.png',
+  appLogo: '/logo/citronics2.png',
+  appLogoInvert: '/logo/citronics2.png',
+  defaultAvatar: '/images/icons/pwa/icon-96x96.png',
 
   // ** Layout Configs
   layout: 'vertical', // vertical | horizontal

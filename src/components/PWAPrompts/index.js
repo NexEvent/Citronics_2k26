@@ -46,7 +46,7 @@ const PWAPrompts = () => {
           sx={{ alignItems: 'center' }}
         >
           <Typography variant='body2' fontWeight={500}>
-            Add EventHub to your home screen
+            Add Citronics to your home screen
           </Typography>
         </Alert>
       </Snackbar>
@@ -64,7 +64,7 @@ const PWAPrompts = () => {
           sx={{ alignItems: 'center' }}
         >
           <Typography variant='body2' fontWeight={500}>
-            A new version of EventHub is ready!
+            A new version of Citronics is ready!
           </Typography>
         </Alert>
       </Snackbar>

@@ -197,7 +197,7 @@ function getImage(event) {
             variant='outlined'
             onClick={e => {
               e.stopPropagation()
-              router.push(`/events`)
+              router.push(`/events/${event.id}`)
             }}
             sx={{
               borderColor: alpha(accent, 0.5),

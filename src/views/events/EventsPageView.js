@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import { fetchEvents, fetchDepartments } from 'src/store/slices/eventsSlice'
 import { addToCart, selectCartItems } from 'src/store/slices/cartSlice'
+import { setCheckoutItems, openStudentDialog } from 'src/store/slices/checkoutSlice'
 
 const MotionBox = motion(Box)
 
@@ -280,6 +281,14 @@ function EventCard({ event, index }) {
             variant='contained'
             size='small'
             disableElevation
+            disabled={spotsLeft !== null && spotsLeft <= 0}
+            onClick={() => {
+              dispatch(setCheckoutItems({
+                items: [{ eventId: event.id, quantity: 1 }],
+                source: 'buyNow'
+              }))
+              dispatch(openStudentDialog())
+            }}
             sx={{
               minWidth: 130,
               height: 38,
@@ -295,7 +304,7 @@ function EventCard({ event, index }) {
               transition: 'all 0.2s ease'
             }}
           >
-            Buy Ticket
+            {spotsLeft !== null && spotsLeft <= 0 ? 'Sold Out' : 'Buy Ticket'}
           </Button>
           <Button
             variant='text'

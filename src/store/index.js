@@ -3,6 +3,7 @@ import dashboardReducer from './slices/dashboardSlice'
 import eventsReducer from './slices/eventsSlice'
 import voiceReducer from './slices/voiceSlice'
 import cartReducer from './slices/cartSlice'
+import checkoutReducer from './slices/checkoutSlice'
 
 /**
  * Redux Store Configuration — Citronics
@@ -13,7 +14,8 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     events: eventsReducer,
     voice: voiceReducer,
-    cart: cartReducer
+    cart: cartReducer,
+    checkout: checkoutReducer
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

@@ -31,6 +31,7 @@ import ThemeCustomizer from 'src/components/ThemeCustomizer'
 import MobileBottomNav from 'src/components/MobileBottomNav'
 import dynamic from 'next/dynamic'
 const VoiceAssistant = dynamic(() => import('src/components/VoiceAssistant'), { ssr: false })
+const StudentDetailsDialog = dynamic(() => import('src/views/checkout/StudentDetailsDialog'), { ssr: false })
 
 // Context
 import { SettingsConsumer, SettingsProvider } from 'src/context/SettingsContext'
@@ -131,6 +132,7 @@ const App = props => {
                   {/* <ScrollToTop /> */}
                   <PWAPrompts />
                   <VoiceAssistant />
+                  <StudentDetailsDialog />
                   <Toaster position={settings.toastPosition || themeConfig.toastPosition} />
                 </AppThemeProvider>
               )}

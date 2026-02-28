@@ -12,6 +12,7 @@ import Skeleton from '@mui/material/Skeleton'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import Icon from 'src/components/Icon'
+import { store } from 'src/store'
 import {
   selectCartItems,
   selectCartItemCount,
@@ -21,6 +22,7 @@ import {
   clearCart,
   validateCart
 } from 'src/store/slices/cartSlice'
+import { setCheckoutItems, openStudentDialog } from 'src/store/slices/checkoutSlice'
 
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
 
@@ -526,8 +528,13 @@ export default function CartView() {
                 // All events removed (sold out / unpublished) — EmptyCart will render
                 return
               }
-              // TODO: replace with actual checkout route when implemented
-              toast('Checkout coming soon!', { icon: '🛒' })
+              // Set checkout items (eventId + quantity only) and navigate
+              const currentItems = store.getState().cart.items
+              dispatch(setCheckoutItems({
+                items: currentItems.map(i => ({ eventId: i.eventId, quantity: i.quantity })),
+                source: 'cart'
+              }))
+              dispatch(openStudentDialog())
             }}
             sx={{
               mt: 3,

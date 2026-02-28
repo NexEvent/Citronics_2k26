@@ -16,6 +16,7 @@ import { motion } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import { fetchEventById, clearCurrentEvent } from 'src/store/slices/eventsSlice'
 import { addToCart } from 'src/store/slices/cartSlice'
+import { setCheckoutItems, openStudentDialog } from 'src/store/slices/checkoutSlice'
 import { fontFamilyHeading } from 'src/theme/typography'
 
 const MotionBox = motion(Box)
@@ -576,6 +577,13 @@ export default function EventDetailView() {
                   disableElevation
                   fullWidth
                   disabled={spotsLeft <= 0}
+                  onClick={() => {
+                    dispatch(setCheckoutItems({
+                      items: [{ eventId: event.id, quantity: 1 }],
+                      source: 'buyNow'
+                    }))
+                    dispatch(openStudentDialog())
+                  }}
                   sx={{
                     bgcolor: color,
                     color: c.white,
@@ -588,7 +596,7 @@ export default function EventDetailView() {
                     '&.Mui-disabled': { bgcolor: c.dividerA30, color: c.textDisabled }
                   }}
                 >
-                  {spotsLeft <= 0 ? 'Sold Out' : 'Register Now'}
+                  {spotsLeft <= 0 ? 'Sold Out' : 'Buy Now'}
                 </Button>
                 <Button
                   variant='outlined'
@@ -752,11 +760,18 @@ export default function EventDetailView() {
             Add to Cart
           </Button>
 
-          {/* Register */}
+          {/* Buy Now */}
           <Button
             variant='outlined'
             disableElevation
             disabled={spotsLeft <= 0}
+            onClick={() => {
+              dispatch(setCheckoutItems({
+                items: [{ eventId: event.id, quantity: 1 }],
+                source: 'buyNow'
+              }))
+              dispatch(openStudentDialog())
+            }}
             sx={{
               borderRadius: '10px',
               fontFamily: fontFamilyHeading,
@@ -780,7 +795,7 @@ export default function EventDetailView() {
               transition: 'all 0.2s ease'
             }}
           >
-            {spotsLeft <= 0 ? 'Sold Out' : 'Register Now'}
+            {spotsLeft <= 0 ? 'Sold Out' : 'Buy Now'}
           </Button>
         </Box>
       </Box>

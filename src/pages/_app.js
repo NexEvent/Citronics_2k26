@@ -105,17 +105,14 @@ const App = props => {
             <meta name='apple-mobile-web-app-title' content={themeConfig.templateName} />
             <meta name='format-detection' content='telephone=no' />
             <meta name='mobile-web-app-capable' content='yes' />
-            <meta name='theme-color' content='#7367F0' />
+            <meta name='theme-color' content='#7C3AED' />
             <link rel='manifest' href='/manifest.json' />
-            <link rel='apple-touch-icon' href='/images/icons/pwa/apple-touch-icon.png' />
-            <link rel='icon' type='image/png' sizes='32x32' href='/images/icons/pwa/icon-32x32.png' />
-            <link rel='icon' type='image/png' sizes='16x16' href='/images/icons/pwa/icon-16x16.png' />
 
             {/* Open Graph */}
             <meta property='og:type' content='website' />
             <meta property='og:title' content={themeConfig.templateName} />
             <meta property='og:description' content='Citronics — The official college event management platform' />
-            <meta property='og:image' content='/images/og-image.png' />
+            <meta property='og:image' content='/images/icons/pwa/icon-512x512.png' />
           </Head>
 
           <SettingsProvider {...(setConfig ? { pageSettings: setConfig() } : {})}>

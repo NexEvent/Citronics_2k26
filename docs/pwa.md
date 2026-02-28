@@ -1,5 +1,10 @@
 # PWA Setup & Offline Strategy
 
+> **App name:** Citronics  
+> **Theme colour:** `#7C3AED`  
+> **Icons location:** `public/images/icons/pwa/`  
+> **Icon generator:** `node scripts/generate-pwa-icons.js`
+
 ---
 
 ## What's Implemented
@@ -9,40 +14,49 @@
 | Web App Manifest | `public/manifest.json` |
 | Service Worker | `public/sw.js` |
 | Offline fallback page | `public/offline.html` |
-| SW registration | `src/components/PWAPrompts/usePWA.js` |
-| Install prompt | `src/components/PWAPrompts/InstallPrompt.js` |
-| Update notification | `src/components/PWAPrompts/UpdatePrompt.js` |
+| SW registration + A2HS hook | `src/hooks/usePWA.js` |
+| Install / Update / Offline UI | `src/components/PWAPrompts/index.js` |
+| PWA meta tags (static) | `src/pages/_document.js` |
+| PWA meta tags (dynamic) | `src/pages/_app.js` → `<Head>` |
+| SW headers (no-cache) | `next.config.js` |
+| Icon generation script | `scripts/generate-pwa-icons.js` |
 
 ---
 
 ## Service Worker (`public/sw.js`)
 
-### Cache name
+### Cache versioning
 
 ```js
-const CACHE_NAME = 'eventhub-v1'
+const CACHE_VERSION = 'v1'
+const CACHE_NAME = `citronics-${CACHE_VERSION}`
 ```
 
-> When you make breaking changes to cached assets, increment the version: `eventhub-v2`.  
-> The activate handler automatically cleans up old caches.
+> When you make breaking changes to cached assets, bump the version: `v2`, `v3`, …  
+> The `activate` handler automatically deletes **all** caches whose name ≠ `CACHE_NAME`,  
+> including the legacy `eventhub-*` caches from the pre-rebrand era (migration is automatic).
 
 ### Caching strategy — Network First
 
 ```
 Request
-  ↓
-Network  →  success?  →  clone response → cache it  →  return response
-  ↓ fail
-Cache  →  hit?  →  return cached response
-  ↓ miss
-Navigation request?  →  return /offline.html
-  ↓
-503 plain text
+  │
+  ├─► Network ──success?──► clone → cache.put() ──► return response
+  │
+  └─► (network failed)
+        │
+        ├─► cache.match() ──hit?──► return cached response
+        │
+        └─► (cache miss)
+              │
+              └─► navigation? ──► /offline.html
+                    │
+                    └─► 503 plain text
 ```
 
-We use network-first (not cache-first) because event data changes frequently.
+Network-first is chosen because event/ticket data changes frequently and stale reads are dangerous.
 
-### What gets pre-cached on install (app shell)
+### App-shell pre-cached on install
 
 ```js
 const PRECACHE_ASSETS = [
@@ -52,90 +66,129 @@ const PRECACHE_ASSETS = [
   '/offline.html',
   '/images/icons/pwa/icon-192x192.png',
   '/images/icons/pwa/icon-512x512.png',
-  '/images/logo.png'
+  '/logo/citronics2.png'
 ]
 ```
 
-### What is NOT cached
+### What is intentionally NOT cached
 
-- `/api/*` routes — always network, never cache (stale data is dangerous)
-- Cross-origin requests
-- Non-GET requests (POST, PUT, DELETE)
+| Pattern | Reason |
+|---------|--------|
+| `/api/*` | Always network — stale API data causes bugs |
+| Cross-origin requests | Outside SW scope |
+| Non-GET methods | POST / PUT / DELETE must not be intercepted |
+| `/_next/*` | Next.js internals — still network-first, but not skipped |
 
 ---
 
-## Registering the Service Worker
-
-The SW is registered in `src/components/PWAPrompts/usePWA.js`:
+## Service Worker Registration (`src/hooks/usePWA.js`)
 
 ```js
-useEffect(() => {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker
-      .register('/sw.js')
-      .then(reg => {
-        // Poll for updates
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available → show UpdatePrompt
-              setUpdateAvailable(true)
-            }
-          })
-        })
-      })
-  }
-}, [])
+const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+
+// Detect background update
+reg.addEventListener('updatefound', () => {
+  const newWorker = reg.installing
+  newWorker.addEventListener('statechange', () => {
+    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+      setUpdateAvailable(true) // show "New version ready" banner
+    }
+  })
+})
 ```
 
-The `<PWAPrompts>` wrapper is mounted once in `UserLayout.js`.
+The hook also tracks:
+- `isOnline` — `navigator.onLine` + `online`/`offline` events
+- `isInstallable` — set when `beforeinstallprompt` fires
+- `isInstalled` — detected via `(display-mode: standalone)` media query
+
+`<PWAPrompts>` is mounted once in `src/pages/_app.js`.
 
 ---
 
 ## Manifest (`public/manifest.json`)
 
-Key fields explained:
-
 ```json
 {
-  "name":             "EventHub",          // full name shown at install
-  "short_name":       "EventHub",          // name on home screen icon
-  "start_url":        "/dashboard",        // URL opened when app launches
-  "display":          "standalone",        // hides browser chrome
-  "theme_color":      "#7C3AED",           // status bar / title bar color
-  "background_color": "#ffffff",           // splash screen background
-  "scope":            "/"                  // what URLs the SW controls
+  "name":             "Citronics",
+  "short_name":       "Citronics",
+  "start_url":        "/",
+  "display":          "standalone",
+  "theme_color":      "#7C3AED",
+  "background_color": "#ffffff",
+  "scope":            "/"
 }
 ```
 
-### Icons required
+> `start_url: "/"` is correct — the root page is public and always accessible.  
+> Do **not** use `/dashboard` as start_url; unauthenticated users would get a redirect loop.
 
-Place these in `public/images/icons/pwa/`:
+### Icon matrix
 
+| File | Size | Purpose |
+|------|------|---------|
+| `icon-48x48.png` | 48×48 | any |
+| `icon-72x72.png` | 72×72 | any |
+| `icon-96x96.png` | 96×96 | any (shortcut icons) |
+| `icon-128x128.png` | 128×128 | any |
+| `icon-144x144.png` | 144×144 | any (MS tile) |
+| `icon-152x152.png` | 152×152 | any |
+| `icon-192x192.png` | 192×192 | any ← **required for installability** |
+| `icon-384x384.png` | 384×384 | any |
+| `icon-512x512.png` | 512×512 | any ← **required for installability** |
+| `icon-192x192-maskable.png` | 192×192 | maskable |
+| `icon-512x512-maskable.png` | 512×512 | maskable |
+| `apple-touch-icon.png` | 180×180 | linked in `<head>` for iOS |
+
+> **Why separate `any` and `maskable` entries?**  
+> Combining `"purpose": "any maskable"` in one entry causes some browsers/launchers to apply  
+> the maskable safe-zone clipping to all uses (including favicon), which looks wrong.  
+> Keep them as separate objects.
+
+### Re-generating icons
+
+```bash
+# Reads: public/logo/citronics2.png
+# Writes: public/images/icons/pwa/
+node scripts/generate-pwa-icons.js
 ```
-icon-16x16.png
-icon-32x32.png
-icon-96x96.png
-apple-touch-icon.png    (180×180)
-icon-192x192.png        (required for installability)
-icon-512x512.png        (required for installability)
-```
 
-Use a tool like [RealFaviconGenerator](https://realfavicongenerator.net) to generate all sizes from a single SVG.
+Maskable icons are generated with a `#7C3AED` background and 10 % padding on each side  
+so the logo stays inside the safe zone on every launcher shape (circle, squircle, etc.).
 
 ---
 
-## Linking Manifest in `_document.js`
+## Meta Tags
+
+### `src/pages/_document.js` (static — runs server-side, no JS)
 
 ```jsx
 <Head>
-  <link rel="manifest"         href="/manifest.json" />
-  <meta name="theme-color"     content="#7C3AED" />
-  <link rel="apple-touch-icon" href="/images/icons/pwa/apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-capable"          content="yes" />
+  {/* Fonts */}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  ...
+
+  {/* PWA icons */}
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/pwa/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32"  href="/images/icons/pwa/icon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16"  href="/images/icons/pwa/icon-16x16.png" />
+  <meta name="msapplication-TileImage" content="/images/icons/pwa/icon-144x144.png" />
+  <meta name="msapplication-TileColor" content="#7C3AED" />
+</Head>
+```
+
+### `src/pages/_app.js` (dynamic — can read Next.js `Head` context)
+
+```jsx
+<Head>
+  <title>Citronics</title>
+  <meta name="application-name"                   content="Citronics" />
+  <meta name="apple-mobile-web-app-capable"        content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title"            content="EventHub" />
+  <meta name="apple-mobile-web-app-title"          content="Citronics" />
+  <meta name="mobile-web-app-capable"              content="yes" />
+  <meta name="theme-color"                         content="#7C3AED" />
+  <link rel="manifest"                             href="/manifest.json" />
 </Head>
 ```
 
@@ -144,34 +197,30 @@ Use a tool like [RealFaviconGenerator](https://realfavicongenerator.net) to gene
 ## `next.config.js` — Service Worker Headers
 
 ```js
-async headers() {
-  return [
-    {
-      source: '/sw.js',
-      headers: [
-        { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
-        { key: 'Content-Type',  value: 'application/javascript; charset=utf-8' }
-      ]
-    }
+{
+  source: '/sw.js',
+  headers: [
+    { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+    { key: 'Content-Type',  value: 'application/javascript; charset=utf-8' }
   ]
 }
 ```
 
-This ensures the browser always fetches the latest SW, not a cached version.
+This ensures the browser **always** fetches the freshest SW, regardless of HTTP cache.
 
 ---
 
 ## Background Sync (Offline Registrations)
 
-When the user submits an event registration while offline, the request is stored in IndexedDB.  
-When connectivity is restored, the service worker fires a `sync` event and replays the requests.
+Offline registration requests are stored in IndexedDB.  
+When connectivity is restored, the SW replays them automatically.
 
 ```js
-// In the browser (before going offline)
+// Browser side — queue before going offline
 await navigator.serviceWorker.ready
 await registration.sync.register('sync-registrations')
 
-// In sw.js
+// sw.js — replay on reconnect
 self.addEventListener('sync', event => {
   if (event.tag === 'sync-registrations') {
     event.waitUntil(syncPendingRegistrations())
@@ -179,34 +228,61 @@ self.addEventListener('sync', event => {
 })
 ```
 
+The IDB store is `citronics-offline` → object store `pending-registrations` (keyPath: `id`).
+
 ---
 
-## Forcing an Update
-
-When a new version of the SW is deployed, show the user an update banner:
+## Forcing a SW Update
 
 ```js
-// In UpdatePrompt component
-const handleUpdate = () => {
-  navigator.serviceWorker.controller?.postMessage({ type: 'SKIP_WAITING' })
-  window.location.reload()
-}
-```
+// In usePWA.js → applyUpdate()
+swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' })
+window.location.reload()
 
-The SW listens:
-
-```js
+// sw.js listens:
 self.addEventListener('message', event => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
 })
 ```
 
+The `<PWAPrompts>` component surfaces this as a non-intrusive top-centre snackbar.
+
 ---
 
 ## Testing PWA Locally
 
-1. Build the app: `npm run build && npm run start`
-2. Open Chrome DevTools → Application → Service Workers
-3. Application → Manifest — check for any errors
-4. Use "Offline" checkbox in Network tab to test offline fallback
-5. Use Lighthouse → PWA audit to verify installability
+```bash
+yarn build && yarn start
+```
+
+Then in Chrome DevTools:
+
+| Tab | What to check |
+|-----|---------------|
+| Application → Service Workers | Status = "activated and running", no errors |
+| Application → Manifest | No red warnings; icons load; `start_url` resolves |
+| Application → Storage | Cache Storage → `citronics-v1` entries present |
+| Network → Offline ✓ | Navigate to `/events` → should show `/offline.html` |
+| Lighthouse → PWA | All green; installability criteria met |
+
+### Checklist for installability (Chrome / Edge)
+
+- [x] Valid `manifest.json` served with correct MIME type
+- [x] `display: standalone` (or `minimal-ui`)
+- [x] 192×192 and 512×512 icons present
+- [x] `start_url` responds with 200
+- [x] Served over HTTPS (or `localhost`)
+- [x] Service Worker registered and active
+- [x] SW fetch handler present
+
+---
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---------|-------------|-----|
+| Install prompt never shows | SW not registered / no fetch handler | Check DevTools → Application → Service Workers |
+| Icons show as blank | Wrong path in manifest | Run `node scripts/generate-pwa-icons.js` and verify paths |
+| Offline page not showing | SW pre-cache failed on install | Check SW console errors; ensure `/offline.html` is reachable |
+| Stale content after deploy | Browser cached old SW | Bump `CACHE_VERSION` in `sw.js` |
+| `display-mode: standalone` not working | `start_url` scope mismatch | Ensure `start_url` is within `scope: "/"` |

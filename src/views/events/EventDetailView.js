@@ -16,7 +16,8 @@ import { motion } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import { fetchEventById, clearCurrentEvent } from 'src/store/slices/eventsSlice'
 import { addToCart } from 'src/store/slices/cartSlice'
-import { setCheckoutItems, openStudentDialog } from 'src/store/slices/checkoutSlice'
+import { useSession } from 'next-auth/react'
+import { setCheckoutItems, setExistingUser, openStudentDialog } from 'src/store/slices/checkoutSlice'
 import { fontFamilyHeading } from 'src/theme/typography'
 
 const MotionBox = motion(Box)
@@ -183,6 +184,7 @@ export default function EventDetailView() {
   const c = useAppPalette()
   const router = useRouter()
   const dispatch = useDispatch()
+  const { data: session } = useSession()
   const { id } = router.query
   const { currentEvent: event, currentEventLoading: loading, currentEventError } = useSelector(state => state.events)
   const timeLeft = useCountdown(event?.start_time)
@@ -582,7 +584,12 @@ export default function EventDetailView() {
                       items: [{ eventId: event.id, quantity: 1 }],
                       source: 'buyNow'
                     }))
-                    dispatch(openStudentDialog())
+                    if (session?.user?.id) {
+                      dispatch(setExistingUser({ userId: session.user.id }))
+                      router.push('/checkout')
+                    } else {
+                      dispatch(openStudentDialog())
+                    }
                   }}
                   sx={{
                     bgcolor: color,
@@ -770,7 +777,12 @@ export default function EventDetailView() {
                 items: [{ eventId: event.id, quantity: 1 }],
                 source: 'buyNow'
               }))
-              dispatch(openStudentDialog())
+              if (session?.user?.id) {
+                dispatch(setExistingUser({ userId: session.user.id }))
+                router.push('/checkout')
+              } else {
+                dispatch(openStudentDialog())
+              }
             }}
             sx={{
               borderRadius: '10px',

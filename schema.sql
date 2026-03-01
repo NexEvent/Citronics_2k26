@@ -73,6 +73,7 @@ CREATE TABLE events (
     venue VARCHAR(255),
     max_tickets INTEGER NOT NULL CHECK (max_tickets > 0),
     ticket_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00 CHECK (ticket_price >= 0),
+    registered INTEGER NOT NULL DEFAULT 0 CHECK (registered >= 0),
     department_id BIGINT,
     created_by BIGINT,
     status event_status NOT NULL DEFAULT 'draft',
@@ -106,8 +107,6 @@ CREATE TABLE bookings (
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX idx_bookings_unique_confirmed ON bookings (user_id, event_id) WHERE status = 'confirmed';
-
 CREATE INDEX idx_bookings_user_id ON bookings(user_id);
 CREATE INDEX idx_bookings_event_id_status ON bookings(event_id, status);
 CREATE INDEX idx_bookings_status_expires_at ON bookings(status, expires_at);
@@ -134,11 +133,19 @@ CREATE INDEX idx_tickets_check_in_by ON tickets(check_in_by);
 CREATE TABLE payments (
     id BIGSERIAL PRIMARY KEY,
     booking_id BIGINT NOT NULL,
+    user_id BIGINT,
     amount DECIMAL(10, 2) NOT NULL CHECK (amount >= 0),
-    gateway VARCHAR(50) NOT NULL DEFAULT 'HDFC',
+    gateway VARCHAR(50) NOT NULL DEFAULT 'HDFC_JUSPAY',
     gateway_version VARCHAR(20),
     transaction_id VARCHAR(255),
     idempotency_key VARCHAR(255) NOT NULL UNIQUE,
+    juspay_order_id VARCHAR(255) UNIQUE,
+    payment_method VARCHAR(100),
+    payment_method_type VARCHAR(50),
+    gateway_status VARCHAR(50),
+    gateway_response_code VARCHAR(50),
+    gateway_response_message TEXT,
+    sdk_payload JSONB,
     raw_payload JSONB,
     webhook_signature VARCHAR(255),
     webhook_received_at TIMESTAMP WITH TIME ZONE,
@@ -148,9 +155,13 @@ CREATE TABLE payments (
     refund_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_payments_booking_id ON payments(booking_id);
+CREATE INDEX idx_payments_user_id ON payments(user_id);
 CREATE INDEX idx_payments_status ON payments(status);
 CREATE INDEX idx_payments_idempotency_key ON payments(idempotency_key);
+CREATE INDEX idx_payments_juspay_order_id ON payments(juspay_order_id);
+CREATE INDEX idx_payments_transaction_id ON payments(transaction_id);

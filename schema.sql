@@ -1,5 +1,7 @@
-- Enums
-CREATE TYPE user_role AS ENUM ('student', 'admin', 'organizer');
+-- Enums
+-- Admin roles: owner (superadmin), admin, executive (read-only)
+-- User roles: student (end-user), organizer (event head)
+CREATE TYPE user_role AS ENUM ('student', 'admin', 'organizer', 'owner', 'executive');
 CREATE TYPE booking_status AS ENUM ('pending', 'confirmed', 'cancelled');
 CREATE TYPE payment_status AS ENUM ('pending', 'success', 'failed', 'refunded');
 CREATE TYPE event_status AS ENUM ('draft', 'published', 'active', 'cancelled', 'completed');
@@ -11,11 +13,13 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     phone VARCHAR(20) UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255),
     role user_role NOT NULL,
     verified BOOLEAN DEFAULT FALSE,
+    created_by BIGINT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_users_email ON users(email);

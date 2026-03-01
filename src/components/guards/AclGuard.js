@@ -18,7 +18,12 @@ const AclGuard = ({ children, aclAbilities, guestGuard = false, authGuard = true
 
   useEffect(() => {
     if (session?.user && session.user.role && !guestGuard && router.route === '/') {
-      router.replace('/dashboard')
+      const role = session.user.role.toLowerCase()
+      if (['owner', 'admin', 'executive'].includes(role)) {
+        router.replace('/admin/dashboard')
+      } else {
+        router.replace('/dashboard')
+      }
     }
   }, [session?.user, guestGuard, router])
 

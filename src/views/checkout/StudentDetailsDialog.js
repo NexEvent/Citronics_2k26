@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/router'
+import { signIn } from 'next-auth/react'
 import Box from '@mui/material/Box'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -223,7 +224,7 @@ export default function StudentDetailsDialog() {
   const handleSubmit = async e => {
     e.preventDefault()
 
-    // Existing user path — verify password before binding userId
+    // ── Existing user path — verify password then sign in ──
     if (phoneLookup?.exists) {
       if (!form.password) {
         setVerifyError('Please enter your password to continue.')
@@ -232,19 +233,33 @@ export default function StudentDetailsDialog() {
       setVerifyError('')
       setVerifying(true)
       const cleaned = form.phone.trim().replace(/[\s\-+()]/g, '').slice(-10)
+
       const result = await dispatch(verifyUser({ phone: cleaned, password: form.password }))
-      setVerifying(false)
       if (verifyUser.fulfilled.match(result)) {
-        dispatch(setExistingUser({ userId: result.payload.userId }))
-        dispatch(closeStudentDialog())
-        router.push('/checkout')
+        // Create a real NextAuth session using phone + password
+        const signInResult = await signIn('credentials', {
+          email: cleaned,         // provider accepts phone as identifier
+          password: form.password,
+          redirect: false
+        })
+
+        setVerifying(false)
+
+        if (signInResult?.ok) {
+          dispatch(setExistingUser({ userId: result.payload.userId }))
+          dispatch(closeStudentDialog())
+          router.push('/checkout')
+        } else {
+          setVerifyError('Login failed. Please try again.')
+        }
       } else {
+        setVerifying(false)
         setVerifyError(result.payload || 'Incorrect password. Please try again.')
       }
       return
     }
 
-    // New user path
+    // ── New user path — register then sign in ──
     if (!validateAll()) return
 
     setServerError('')
@@ -260,14 +275,34 @@ export default function StudentDetailsDialog() {
     }))
 
     if (registerUser.fulfilled.match(result)) {
-      // Navigate to checkout — user data is now stored in DB
-      router.push('/checkout')
+      // Create a real NextAuth session so payment endpoints work
+      const signInResult = await signIn('credentials', {
+        email: form.email.trim(),
+        password: form.password,
+        redirect: false
+      })
+
+      if (signInResult?.ok) {
+        // Store userId in Redux + close dialog → navigate to checkout
+        dispatch(setExistingUser({ userId: result.payload.userId }))
+        dispatch(closeStudentDialog())
+        router.push('/checkout')
+      } else {
+        // Registration succeeded but auto-login failed — rare edge case
+        setServerError('Account created but auto-login failed. Please refresh and try again.')
+      }
     } else if (registerUser.rejected.match(result)) {
       const payload = result.payload
-      // PHONE_EXISTS at registration time — user should have used the verify path above
-      if (payload?.code === 'PHONE_EXISTS' || payload?.code === 'EMAIL_EXISTS') {
-        const field = payload.code === 'PHONE_EXISTS' ? 'phone' : 'email'
-        setErrors(prev => ({ ...prev, [field]: payload.message || 'Already registered.' }))
+      // PHONE_EXISTS — switch to returning-user verify mode automatically
+      if (payload?.code === 'PHONE_EXISTS') {
+        setPhoneLookup({ exists: true, name: '' })
+        setErrors({})
+        setServerError('')
+        setVerifyError('This phone number is already registered. Please enter your password to continue.')
+        return
+      }
+      if (payload?.code === 'EMAIL_EXISTS') {
+        setErrors(prev => ({ ...prev, email: payload.message || 'This email is already registered.' }))
         return
       }
       setServerError(typeof payload === 'string' ? payload : payload?.message || 'Registration failed')
@@ -375,80 +410,101 @@ export default function StudentDetailsDialog() {
               )}
             </Box>
 
-            {/* Full Name */}
-            <StyledField
-              icon='tabler:user'
-              label='Full Name'
-              name='name'
-              value={phoneLookup?.exists ? phoneLookup.name : form.name}
-              onChange={handleChange}
-              error={errors.name}
-              disabled={!!phoneLookup?.exists}
-              required={!phoneLookup?.exists}
-            />
+            {/* ── Returning user: only show password ── */}
+            {phoneLookup?.exists ? (
+              <Box sx={{ gridColumn: { sm: '1 / -1' } }}>
+                <StyledField
+                  icon='tabler:lock'
+                  label='Enter your password'
+                  name='password'
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={handleChange}
+                  error={verifyError || errors.password}
+                  endAdornment={
+                    <InputAdornment position='end'>
+                      <IconButton
+                        onClick={() => setShowPassword(prev => !prev)}
+                        edge='end'
+                        size='small'
+                        tabIndex={-1}
+                        sx={{ color: c.textDisabled }}
+                      >
+                        <Icon icon={showPassword ? 'tabler:eye-off' : 'tabler:eye'} fontSize={18} />
+                      </IconButton>
+                    </InputAdornment>
+                  }
+                />
+              </Box>
+            ) : (
+              <>
+                {/* ── New user: show all fields ── */}
+                {/* Full Name */}
+                <StyledField
+                  icon='tabler:user'
+                  label='Full Name'
+                  name='name'
+                  value={form.name}
+                  onChange={handleChange}
+                  error={errors.name}
+                />
 
-            {/* Email */}
-            <StyledField
-              icon='tabler:mail'
-              label='Email Address'
-              name='email'
-              type='email'
-              value={phoneLookup?.exists ? phoneLookup.email : form.email}
-              onChange={handleChange}
-              error={errors.email}
-              disabled={!!phoneLookup?.exists}
-              required={!phoneLookup?.exists}
-            />
+                {/* Email */}
+                <StyledField
+                  icon='tabler:mail'
+                  label='Email Address'
+                  name='email'
+                  type='email'
+                  value={form.email}
+                  onChange={handleChange}
+                  error={errors.email}
+                />
 
-            {/* Password */}
-            <StyledField
-              icon='tabler:lock'
-              label='Password'
-              name='password'
-              type={showPassword ? 'text' : 'password'}
-              value={phoneLookup?.exists ? '••••••' : form.password}
-              onChange={phoneLookup?.exists ? undefined : handleChange}
-              error={errors.password}
-              disabled={!!phoneLookup?.exists}
-              required={!phoneLookup?.exists}
-              endAdornment={
-                <InputAdornment position='end'>
-                  <IconButton
-                    onClick={() => setShowPassword(prev => !prev)}
-                    edge='end'
-                    size='small'
-                    tabIndex={-1}
-                    sx={{ color: c.textDisabled }}
-                  >
-                    <Icon icon={showPassword ? 'tabler:eye-off' : 'tabler:eye'} fontSize={18} />
-                  </IconButton>
-                </InputAdornment>
-              }
-            />
+                {/* Password */}
+                <StyledField
+                  icon='tabler:lock'
+                  label='Password'
+                  name='password'
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                  endAdornment={
+                    <InputAdornment position='end'>
+                      <IconButton
+                        onClick={() => setShowPassword(prev => !prev)}
+                        edge='end'
+                        size='small'
+                        tabIndex={-1}
+                        sx={{ color: c.textDisabled }}
+                      >
+                        <Icon icon={showPassword ? 'tabler:eye-off' : 'tabler:eye'} fontSize={18} />
+                      </IconButton>
+                    </InputAdornment>
+                  }
+                />
 
-            {/* College */}
-            <StyledField
-              icon='tabler:building'
-              label='College'
-              name='college'
-              value={phoneLookup?.exists ? phoneLookup.college : form.college}
-              onChange={handleChange}
-              error={errors.college}
-              disabled={!!phoneLookup?.exists}
-              required={!phoneLookup?.exists}
-            />
+                {/* College */}
+                <StyledField
+                  icon='tabler:building'
+                  label='College'
+                  name='college'
+                  value={form.college}
+                  onChange={handleChange}
+                  error={errors.college}
+                />
 
-            {/* City */}
-            <StyledField
-              icon='tabler:map-pin'
-              label='City'
-              name='city'
-              value={phoneLookup?.exists ? phoneLookup.city : form.city}
-              onChange={handleChange}
-              error={errors.city}
-              disabled={!!phoneLookup?.exists}
-              required={!phoneLookup?.exists}
-            />
+                {/* City */}
+                <StyledField
+                  icon='tabler:map-pin'
+                  label='City'
+                  name='city'
+                  value={form.city}
+                  onChange={handleChange}
+                  error={errors.city}
+                />
+              </>
+            )}
           </Box>
 
           
@@ -496,9 +552,9 @@ export default function StudentDetailsDialog() {
             {registering || verifying ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CircularProgress size={18} sx={{ color: 'inherit' }} />
-                {verifying ? 'Verifying...' : 'Registering...'}
+                {verifying ? 'Logging in...' : 'Creating account...'}
               </Box>
-            ) : phoneLookup?.exists ? 'Verify & Continue' : 'Submit & Continue'}
+            ) : phoneLookup?.exists ? 'Login & Continue' : 'Register & Continue'}
           </Button>
         </DialogActions>
       </form>

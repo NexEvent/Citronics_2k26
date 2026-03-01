@@ -19,7 +19,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import { fetchEvents, fetchDepartments } from 'src/store/slices/eventsSlice'
 import { addToCart, selectCartItems } from 'src/store/slices/cartSlice'
-import { setCheckoutItems, openStudentDialog } from 'src/store/slices/checkoutSlice'
+import { useSession } from 'next-auth/react'
+import { setCheckoutItems, setExistingUser, openStudentDialog } from 'src/store/slices/checkoutSlice'
 
 const MotionBox = motion(Box)
 
@@ -77,6 +78,7 @@ function EventCard({ event, index }) {
   const c = useAppPalette()
   const router = useRouter()
   const dispatch = useDispatch()
+  const { data: session } = useSession()
   const cartItems = useSelector(selectCartItems)
   const accent = c.primary
   const isInCart = cartItems.some(item => item.eventId === event.id)
@@ -287,7 +289,12 @@ function EventCard({ event, index }) {
                 items: [{ eventId: event.id, quantity: 1 }],
                 source: 'buyNow'
               }))
-              dispatch(openStudentDialog())
+              if (session?.user?.id) {
+                dispatch(setExistingUser({ userId: session.user.id }))
+                router.push('/checkout')
+              } else {
+                dispatch(openStudentDialog())
+              }
             }}
             sx={{
               minWidth: 130,

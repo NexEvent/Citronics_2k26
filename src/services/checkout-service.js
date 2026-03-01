@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs'
+import { v4 as uuidv4 } from 'uuid'
 import { dbOneOrNone, dbTx } from 'src/lib/database'
 
 /**
@@ -266,6 +267,23 @@ const checkoutService = {
           WHERE id = $2
         `, [quantity, eventId])
 
+        // Generate tickets for this booking (one per quantity unit)
+        const tickets = []
+        for (let i = 0; i < quantity; i++) {
+          const qrCode = uuidv4()
+          const ticket = await t.one(`
+            INSERT INTO tickets (booking_id, qr_code)
+            VALUES ($1, $2)
+            RETURNING id, qr_code, created_at
+          `, [booking.id, qrCode])
+
+          tickets.push({
+            ticketId: ticket.id,
+            qrCode: ticket.qr_code,
+            issuedAt: ticket.created_at
+          })
+        }
+
         bookings.push({
           bookingId: booking.id,
           eventId: booking.event_id,
@@ -274,7 +292,8 @@ const checkoutService = {
           pricePerTicket: parseFloat(booking.price_at_booking),
           totalAmount: parseFloat(booking.total_amount),
           status: booking.status,
-          bookedAt: booking.booked_at
+          bookedAt: booking.booked_at,
+          tickets
         })
 
         grandTotal += parseFloat(booking.total_amount)

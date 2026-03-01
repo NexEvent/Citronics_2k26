@@ -17,13 +17,11 @@ const dashboardService = {
   async getStats() {
     return dbOneOrNone(`
       SELECT
-        COALESCE((SELECT COUNT(*)  FROM events),                                0) AS total_events,
-        COALESCE((SELECT COUNT(*)  FROM events  WHERE status = 'published'),    0) AS active_events,
-        COALESCE((SELECT COUNT(*)  FROM registrations),                         0) AS total_registrations,
-        COALESCE((SELECT COUNT(*)  FROM tickets WHERE status = 'sold'),         0) AS tickets_sold,
-        COALESCE((SELECT SUM(amount_paid)
-                    FROM registrations
-                   WHERE payment_status = 'paid'),                              0) AS total_revenue
+        COALESCE((SELECT COUNT(*)  FROM events),                                          0) AS total_events,
+        COALESCE((SELECT COUNT(*)  FROM events  WHERE status = 'published'),               0) AS active_events,
+        COALESCE((SELECT COUNT(*)  FROM bookings WHERE status = 'confirmed'),              0) AS total_registrations,
+        COALESCE((SELECT COUNT(*)  FROM tickets),                                          0) AS tickets_sold,
+        COALESCE((SELECT SUM(amount) FROM payments WHERE status = 'success'),              0) AS total_revenue
     `)
   },
 
@@ -35,19 +33,18 @@ const dashboardService = {
     return dbAny(`
       SELECT
         e.id,
-        e.title,
-        e.event_date,
+        e.name                               AS title,
+        e.start_time                         AS event_date,
         e.status,
-        e.capacity,
-        COALESCE(v.name,       'TBA')  AS venue_name,
-        COALESCE(COUNT(r.id),  0)      AS registrations_count
-      FROM       events        e
-      LEFT JOIN  venues        v  ON  v.id = e.venue_id
-      LEFT JOIN  registrations r  ON  r.event_id = e.id
-      WHERE  e.event_date >= NOW()
+        e.max_tickets                        AS capacity,
+        COALESCE(e.venue, 'TBA')             AS venue_name,
+        COALESCE(COUNT(b.id), 0)             AS registrations_count
+      FROM       events   e
+      LEFT JOIN  bookings b  ON  b.event_id = e.id AND b.status = 'confirmed'
+      WHERE  e.start_time >= NOW()
         AND  e.status = 'published'
-      GROUP  BY e.id, v.name
-      ORDER  BY e.event_date ASC
+      GROUP  BY e.id
+      ORDER  BY e.start_time ASC
       LIMIT  5
     `)
   },
@@ -58,17 +55,17 @@ const dashboardService = {
   async getRecentRegistrations() {
     return dbAny(`
       SELECT
-        r.id,
-        r.created_at,
-        r.payment_status,
-        COALESCE(r.amount_paid, 0)            AS amount_paid,
-        COALESCE(e.title,       'Unknown')    AS event_title,
-        COALESCE(u.first_name || ' ' || u.last_name, u.email) AS attendee_name,
+        b.id,
+        b.booked_at                           AS created_at,
+        b.status                              AS payment_status,
+        COALESCE(b.total_amount, 0)           AS amount_paid,
+        COALESCE(e.name, 'Unknown')           AS event_title,
+        COALESCE(u.name, u.email)             AS attendee_name,
         u.email                               AS attendee_email
-      FROM   registrations r
-      JOIN   events  e  ON  e.id = r.event_id
-      JOIN   users   u  ON  u.id = r.user_id
-      ORDER  BY r.created_at DESC
+      FROM   bookings b
+      JOIN   events  e  ON  e.id = b.event_id
+      JOIN   users   u  ON  u.id = b.user_id
+      ORDER  BY b.booked_at DESC
       LIMIT  10
     `)
   }

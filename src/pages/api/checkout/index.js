@@ -133,7 +133,8 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── PATCH — Confirm booking ─────────────────────────────────────────────
+    // ── PATCH — Confirm booking (deprecated — use /api/payment/initiate for paid events) ──
+    // Kept for backward compatibility with free events (ticket_price = 0)
     case 'PATCH': {
       try {
         const { userId, items } = req.body

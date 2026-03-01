@@ -90,7 +90,8 @@ export const verifyUser = createAsyncThunk(
 )
 
 /**
- * Confirm booking — backend re-validates and creates bookings.
+ * Confirm booking — for FREE events only (ticket_price = 0).
+ * Paid events should use initiatePayment instead.
  */
 export const confirmBooking = createAsyncThunk(
   'checkout/confirm',
@@ -100,12 +101,52 @@ export const confirmBooking = createAsyncThunk(
         userId,
         items: items.map(item => ({ eventId: item.eventId, quantity: item.quantity }))
       }
-      // PATCH /api/checkout — confirm booking
+      // PATCH /api/checkout — confirm booking (free events only)
       const { data } = await axios.patch('/api/checkout', payload)
       if (!data.success) return rejectWithValue(data.message || 'Booking failed')
       return data.data
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Booking failed')
+    }
+  }
+)
+
+/**
+ * Initiate payment via HDFC SmartGateway (Juspay).
+ * Creates pending bookings + Juspay order session.
+ * Returns SDK payload for the frontend to open the payment page.
+ */
+export const initiatePayment = createAsyncThunk(
+  'checkout/initiatePayment',
+  async ({ userId, items }, { rejectWithValue }) => {
+    try {
+      const payload = {
+        userId,
+        items: items.map(item => ({ eventId: item.eventId, quantity: item.quantity }))
+      }
+      const { data } = await axios.post('/api/payment/initiate', payload)
+      if (!data.success) return rejectWithValue(data.message || 'Payment initiation failed')
+      return data.data
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to initiate payment')
+    }
+  }
+)
+
+/**
+ * Verify payment status with Juspay (server-side).
+ * Called after user returns from payment page.
+ * This is what actually confirms the booking + generates tickets.
+ */
+export const verifyPayment = createAsyncThunk(
+  'checkout/verifyPayment',
+  async (orderId, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.post('/api/payment/verify', { orderId })
+      if (!data.success) return rejectWithValue(data.message || 'Payment verification failed')
+      return data.data
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Payment verification failed')
     }
   }
 )
@@ -121,7 +162,7 @@ export const confirmBooking = createAsyncThunk(
  */
 const initialState = {
   // Step tracking
-  step: 'idle', // 'idle' | 'validating' | 'ready' | 'registering' | 'confirming' | 'success' | 'error'
+  step: 'idle', // 'idle' | 'validating' | 'ready' | 'registering' | 'confirming' | 'paying' | 'verifying' | 'success' | 'error'
 
   // Validated items from backend
   validatedItems: [],
@@ -134,6 +175,14 @@ const initialState = {
   // Booking result
   bookings: [],
   bookingGrandTotal: 0,
+
+  // Payment state (HDFC Juspay)
+  paymentOrderId: null,
+  paymentSdkPayload: null,
+  paymentStatus: null, // 'pending' | 'success' | 'failed'
+  tickets: [],
+  initiatingPayment: false,
+  verifyingPayment: false,
 
   // Student details dialog
   showStudentDialog: false,
@@ -242,6 +291,53 @@ const checkoutSlice = createSlice({
         state.error = action.payload
         state.step = 'error'
       })
+
+      // ── initiatePayment ──
+      .addCase(initiatePayment.pending, state => {
+        state.initiatingPayment = true
+        state.error = null
+        state.step = 'paying'
+      })
+      .addCase(initiatePayment.fulfilled, (state, action) => {
+        state.initiatingPayment = false
+        state.paymentOrderId = action.payload.orderId
+        state.paymentSdkPayload = action.payload.sdkPayload
+        state.bookings = action.payload.bookings
+        state.bookingGrandTotal = action.payload.amount
+        state.paymentStatus = 'pending'
+        state.step = 'paying'
+      })
+      .addCase(initiatePayment.rejected, (state, action) => {
+        state.initiatingPayment = false
+        state.error = action.payload
+        state.step = 'error'
+      })
+
+      // ── verifyPayment ──
+      .addCase(verifyPayment.pending, state => {
+        state.verifyingPayment = true
+        state.error = null
+        state.step = 'verifying'
+      })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
+        state.verifyingPayment = false
+        state.paymentStatus = action.payload.status
+        if (action.payload.tickets) {
+          state.tickets = action.payload.tickets
+        }
+        if (action.payload.payment) {
+          state.bookingGrandTotal = action.payload.payment.amount || state.bookingGrandTotal
+        }
+        state.step = action.payload.status === 'success' ? 'success' : action.payload.status === 'failed' ? 'error' : 'verifying'
+        if (action.payload.status === 'failed') {
+          state.error = action.payload.message || 'Payment failed'
+        }
+      })
+      .addCase(verifyPayment.rejected, (state, action) => {
+        state.verifyingPayment = false
+        state.error = action.payload
+        state.step = 'error'
+      })
   }
 })
 
@@ -254,6 +350,10 @@ export const selectCheckoutError = state => state.checkout.error
 export const selectCheckoutUserId = state => state.checkout.userId
 export const selectCheckoutBookings = state => state.checkout.bookings
 export const selectShowStudentDialog = state => state.checkout.showStudentDialog
+export const selectPaymentOrderId = state => state.checkout.paymentOrderId
+export const selectPaymentSdkPayload = state => state.checkout.paymentSdkPayload
+export const selectPaymentStatus = state => state.checkout.paymentStatus
+export const selectTickets = state => state.checkout.tickets
 
 export const {
   setCheckoutItems,

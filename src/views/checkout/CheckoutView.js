@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/router'
+import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
@@ -16,13 +17,18 @@ import Icon from 'src/components/Icon'
 import {
   validateCheckout,
   confirmBooking,
+  initiatePayment,
   resetCheckout,
+  setExistingUser,
   selectValidatedItems,
   selectCheckoutGrandTotal,
   selectCheckoutStep,
   selectCheckoutError,
   selectCheckoutUserId,
-  selectCheckoutBookings
+  selectCheckoutBookings,
+  selectPaymentSdkPayload,
+  selectPaymentOrderId,
+  selectTickets
 } from 'src/store/slices/checkoutSlice'
 import { clearCart } from 'src/store/slices/cartSlice'
 
@@ -318,6 +324,7 @@ export default function CheckoutView() {
   const router = useRouter()
   const dispatch = useDispatch()
   const accent = c.primary
+  const { data: session, status: sessionStatus } = useSession()
 
   const step = useSelector(selectCheckoutStep)
   const validatedItems = useSelector(selectValidatedItems)
@@ -325,12 +332,28 @@ export default function CheckoutView() {
   const error = useSelector(selectCheckoutError)
   const userId = useSelector(selectCheckoutUserId)
   const bookings = useSelector(selectCheckoutBookings)
-  const { checkoutItems, source, confirming, bookingGrandTotal } = useSelector(state => state.checkout)
+  const sdkPayload = useSelector(selectPaymentSdkPayload)
+  const paymentOrderId = useSelector(selectPaymentOrderId)
+  const tickets = useSelector(selectTickets)
+  const { checkoutItems, source, confirming, bookingGrandTotal, initiatingPayment } = useSelector(state => state.checkout)
+
+  // Use session userId as fallback if Redux state lost (e.g., page refresh)
+  const effectiveUserId = userId || session?.user?.id
+
+  // Determine if this is a paid checkout
+  const isPaidCheckout = grandTotal > 0
+
+  // Sync session userId into Redux if not already set
+  useEffect(() => {
+    if (!userId && session?.user?.id) {
+      dispatch(setExistingUser({ userId: session.user.id }))
+    }
+  }, [userId, session, dispatch])
 
   // Guard + validate on mount
   useEffect(() => {
-    if (!userId) {
-      // User arrived without completing registration — send back
+    if (sessionStatus === 'loading') return // wait for session check
+    if (!effectiveUserId) {
       toast.error('Please complete your details before checkout.')
       router.replace('/cart')
       return
@@ -340,23 +363,61 @@ export default function CheckoutView() {
       return
     }
     dispatch(validateCheckout(checkoutItems))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionStatus]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle Juspay SDK payload — open payment page when SDK payload is ready
+  useEffect(() => {
+    if (sdkPayload && sdkPayload.payment_links?.web) {
+      // Redirect to Juspay hosted payment page
+      window.location.href = sdkPayload.payment_links.web
+    } else if (sdkPayload && sdkPayload.sdk_payload?.payload?.clientAuthToken) {
+      // Alternative: if Juspay returns a client auth token for inline SDK
+      // For now, fall back to redirecting via payment link
+      const paymentLink = sdkPayload.payment_links?.web || sdkPayload.payment_links?.mobile
+      if (paymentLink) {
+        window.location.href = paymentLink
+      }
+    }
+  }, [sdkPayload])
 
   const handleConfirmBooking = useCallback(async () => {
-    if (!userId || validatedItems.length === 0) return
+    if (!effectiveUserId || validatedItems.length === 0) return
 
-    const result = await dispatch(confirmBooking({
-      userId,
-      items: validatedItems.map(item => ({ eventId: item.eventId, quantity: item.quantity }))
-    }))
+    const itemsPayload = validatedItems.map(item => ({ eventId: item.eventId, quantity: item.quantity }))
 
-    if (confirmBooking.fulfilled.match(result)) {
-      toast.success('Booking confirmed successfully!', { duration: 5000 })
-      if (source === 'cart') dispatch(clearCart())
+    if (isPaidCheckout) {
+      // ── Paid events: Initiate Juspay payment ──
+      const result = await dispatch(initiatePayment({ userId: effectiveUserId, items: itemsPayload }))
+
+      if (initiatePayment.fulfilled.match(result)) {
+        const payload = result.payload
+
+        // Try to redirect to Juspay payment page
+        const paymentUrl = payload.sdkPayload?.payment_links?.web ||
+                           payload.sdkPayload?.payment_links?.mobile
+
+        if (paymentUrl) {
+          if (source === 'cart') dispatch(clearCart())
+          window.location.href = paymentUrl
+        } else {
+          // Fallback: store the SDK payload and wait for useEffect to handle
+          toast('Redirecting to payment page...', { icon: '💳', duration: 3000 })
+        }
+      } else {
+        toast.error(result.payload || 'Failed to initiate payment. Please try again.')
+      }
     } else {
-      toast.error(result.payload || 'Booking failed. Please try again.')
+      // ── Free events: Direct booking confirmation ──
+      const result = await dispatch(confirmBooking({ userId: effectiveUserId, items: itemsPayload }))
+
+      if (confirmBooking.fulfilled.match(result)) {
+        toast.success('Booking confirmed successfully!', { duration: 5000 })
+        if (source === 'cart') dispatch(clearCart())
+      } else {
+        toast.error(result.payload || 'Booking failed. Please try again.')
+      }
     }
-  }, [dispatch, userId, validatedItems, source])
+  }, [dispatch, effectiveUserId, validatedItems, source, isPaidCheckout])
 
   // Show success view
   if (step === 'success') {
@@ -555,14 +616,14 @@ export default function CheckoutView() {
             </Box>
           )}
 
-          {/* Confirm Booking CTA */}
+          {/* Confirm Booking / Pay Now CTA */}
           <Button
             variant='contained'
             size='large'
             fullWidth
-            disabled={confirming}
+            disabled={confirming || initiatingPayment}
             onClick={handleConfirmBooking}
-            endIcon={confirming ? undefined : <Icon icon='tabler:lock' />}
+            endIcon={confirming || initiatingPayment ? undefined : <Icon icon={isPaidCheckout ? 'tabler:credit-card' : 'tabler:lock'} />}
             sx={{
               mt: 3,
               py: 1.8,
@@ -583,11 +644,13 @@ export default function CheckoutView() {
               transition: 'all 0.25s ease'
             }}
           >
-            {confirming ? (
+            {confirming || initiatingPayment ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CircularProgress size={20} sx={{ color: 'inherit' }} />
-                Confirming...
+                {initiatingPayment ? 'Initiating Payment...' : 'Confirming...'}
               </Box>
+            ) : isPaidCheckout ? (
+              `Pay ${formatCurrency(grandTotal)} Now`
             ) : (
               'Confirm Booking'
             )}
@@ -597,9 +660,22 @@ export default function CheckoutView() {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 2, gap: 0.5 }}>
             <Icon icon='tabler:shield-check' fontSize={14} style={{ color: c.textDisabled }} />
             <Typography variant='caption' sx={{ color: c.textDisabled, fontWeight: 500 }}>
-              Secure checkout — prices verified from database
+              {isPaidCheckout
+                ? 'Secure payment via HDFC SmartGateway — 256-bit SSL encrypted'
+                : 'Secure checkout — prices verified from database'
+              }
             </Typography>
           </Box>
+
+          {/* Payment methods note for paid events */}
+          {isPaidCheckout && (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1, gap: 0.5 }}>
+              <Icon icon='tabler:building-bank' fontSize={13} style={{ color: c.textDisabled }} />
+              <Typography variant='caption' sx={{ color: c.textDisabled, fontWeight: 400, fontSize: '0.68rem' }}>
+                UPI • Cards • Net Banking • Wallets
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Box>
     </Container>

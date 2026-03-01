@@ -32,6 +32,7 @@
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "dotenv": "^17.3.1",
+    "expresscheckout-nodejs": "^1.0.0",
     "framer-motion": "^12.34.3",
     "i18next": "^23.11.0",
     "next": "^14.2.29",
@@ -47,6 +48,7 @@
     "react-perfect-scrollbar": "^1.5.8",
     "react-redux": "^9.2.0",
     "sharp": "^0.34.5",
+    "uuid": "^13.0.0",
     "vercel": "^50.23.2"
   },
   "devDependencies": {

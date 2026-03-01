@@ -42,8 +42,19 @@ const paymentService = {
       const createdBookings = []
       let total = 0
 
+      // Deduplicate items by eventId, summing quantities for duplicate entries
+      const itemMap = new Map()
+      for (const item of items) {
+        const eid = item.eventId
+        const qty = item.quantity
+        if (!eid || !qty || qty < 1) continue
+        itemMap.set(eid, (itemMap.get(eid) || 0) + qty)
+      }
+      const dedupedItems = Array.from(itemMap.entries()).map(([eventId, quantity]) => ({ eventId, quantity }))
+      if (dedupedItems.length === 0) throw new Error('No valid items provided')
+
       // Sort by eventId to prevent deadlocks
-      const sortedItems = [...items].sort((a, b) => a.eventId - b.eventId)
+      const sortedItems = dedupedItems.sort((a, b) => a.eventId - b.eventId)
 
       for (const item of sortedItems) {
         const { eventId, quantity } = item
@@ -70,33 +81,24 @@ const paymentService = {
         const ticketPrice = parseFloat(event.ticket_price) || 0
         const totalAmount = parseFloat((ticketPrice * quantity).toFixed(2))
 
-        // Check for existing active booking (pending or confirmed)
-        const existingBooking = await t.oneOrNone(`
-          SELECT id, status FROM bookings
-          WHERE user_id = $1 AND event_id = $2 AND status IN ('pending', 'confirmed')
+        // Cancel any stale pending bookings for this event to avoid seat-reservation leaks
+        const stalePending = await t.any(`
+          SELECT id, quantity FROM bookings
+          WHERE user_id = $1 AND event_id = $2 AND status = 'pending'
+          FOR UPDATE
         `, [userId, eventId])
 
-        if (existingBooking) {
-          if (existingBooking.status === 'confirmed') {
-            throw new Error(`You already have a confirmed booking for "${event.title}"`)
-          }
-          // Cancel stale pending booking AND release its reserved seats
-          const staleBooking = await t.oneOrNone(`
-            SELECT id, quantity FROM bookings WHERE id = $1 AND status = 'pending'
-          `, [existingBooking.id])
+        for (const stale of stalePending) {
+          await t.none(`
+            UPDATE bookings SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+          `, [stale.id])
 
-          if (staleBooking) {
-            await t.none(`
-              UPDATE bookings SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
-              WHERE id = $1
-            `, [staleBooking.id])
-
-            // Release seats held by the stale booking
-            await t.none(`
-              UPDATE events SET registered = GREATEST(0, registered - $1), updated_at = CURRENT_TIMESTAMP
-              WHERE id = $2
-            `, [staleBooking.quantity, eventId])
-          }
+          // Release seats held by the stale booking
+          await t.none(`
+            UPDATE events SET registered = GREATEST(0, registered - $1), updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+          `, [stale.quantity, eventId])
         }
 
         // Create pending booking (15 min expiry)
@@ -532,8 +534,8 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
       bookingIds = rawPayload.bookingIds.map(id => parseInt(id, 10))
     }
 
-    // Update payment to success
-    await t.none(`
+    // Update payment to success — only if not already in a terminal state
+    const paymentUpdated = await t.oneOrNone(`
       UPDATE payments SET
         status = 'success',
         transaction_id = $1,
@@ -545,7 +547,8 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
         raw_payload = COALESCE(raw_payload, '{}'::jsonb) || $6::jsonb,
         paid_at = CURRENT_TIMESTAMP,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $7
+      WHERE id = $7 AND status NOT IN ('success', 'failed', 'refunded')
+      RETURNING id
     `, [
       transactionId,
       gatewayResponse.payment?.resp_code || null,
@@ -555,6 +558,14 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
       JSON.stringify({ verifiedResponse: gatewayResponse }),
       paymentId
     ])
+
+    // If payment was already in a terminal state, skip ticket generation
+    if (!paymentUpdated) {
+      return {
+        payment: { id: paymentId, status: 'already_processed', transactionId },
+        tickets: []
+      }
+    }
 
     // Confirm bookings and generate tickets
     const allTickets = []
@@ -619,8 +630,8 @@ async function _failPayment(paymentId, primaryBookingId, rawPayload, transaction
       bookingIds = rawPayload.bookingIds.map(id => parseInt(id, 10))
     }
 
-    // Update payment
-    await t.none(`
+    // Update payment — only if not already in a terminal state
+    const paymentUpdated = await t.oneOrNone(`
       UPDATE payments SET
         status = 'failed',
         transaction_id = $1,
@@ -629,7 +640,8 @@ async function _failPayment(paymentId, primaryBookingId, rawPayload, transaction
         gateway_response_message = $4,
         raw_payload = COALESCE(raw_payload, '{}'::jsonb) || $5::jsonb,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $6
+      WHERE id = $6 AND status NOT IN ('success', 'failed', 'refunded')
+      RETURNING id
     `, [
       transactionId,
       gatewayStatus,
@@ -638,6 +650,8 @@ async function _failPayment(paymentId, primaryBookingId, rawPayload, transaction
       JSON.stringify({ failedResponse: gatewayResponse }),
       paymentId
     ])
+
+    if (!paymentUpdated) return // Already in terminal state
 
     // Cancel bookings and release seats
     for (const bookingId of bookingIds) {
@@ -675,12 +689,12 @@ async function _cancelPendingPayment(paymentId) {
         bookingIds = payment.raw_payload.bookingIds.map(id => parseInt(id, 10))
       }
 
-      // Cancel payment
+      // Cancel payment — only if still pending
       await t.none(`
         UPDATE payments SET status = 'failed', gateway_status = 'SESSION_CREATION_FAILED',
           gateway_response_message = 'Failed to create Juspay order session',
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1
+        WHERE id = $1 AND status = 'pending'
       `, [paymentId])
 
       // Cancel bookings and release seats

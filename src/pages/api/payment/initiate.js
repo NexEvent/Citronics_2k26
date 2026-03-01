@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth/next'
 import nextAuthConfig from 'src/lib/nextAuthConfig'
 import paymentService from 'src/services/payment-service'
-import { dbOneOrNone } from 'src/lib/database'
 
 /**
  * POST /api/payment/initiate
@@ -9,10 +8,9 @@ import { dbOneOrNone } from 'src/lib/database'
  * Creates pending bookings and initiates a Juspay payment session.
  * Returns the SDK payload needed by the frontend to open the payment page.
  *
- * SECURITY: Prefers session userId. Falls back to body userId with DB verification
- *           for cases where session cookie is lost (e.g. page refresh, expired JWT).
+ * SECURITY: Requires authenticated session. userId is derived server-side only.
  *
- * Body: { items: [{eventId, quantity}], userId?: number }
+ * Body: { items: [{eventId, quantity}] }
  * Response: { success, data: { orderId, sdkPayload, amount, bookings } }
  */
 export default async function handler(req, res) {
@@ -23,21 +21,14 @@ export default async function handler(req, res) {
 
   try {
     // ── Authentication ──────────────────────────────────────────────────
-    // Prefer session userId (most secure); fall back to body userId with DB check
     const session = await getServerSession(req, res, nextAuthConfig)
-    let userId = session?.user?.id
-
-    if (!userId && req.body.userId) {
-      // Fallback: verify the supplied userId actually exists in the DB
-      const parsed = parseInt(req.body.userId, 10)
-      if (parsed > 0) {
-        const user = await dbOneOrNone('SELECT id FROM users WHERE id = $1', [parsed])
-        if (user) userId = user.id
-      }
-    }
+    const userId = session?.user?.id
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Authentication required' })
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required. Please sign in and try again.'
+      })
     }
 
     const { items } = req.body

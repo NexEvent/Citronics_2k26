@@ -243,16 +243,6 @@ const checkoutService = {
         const ticketPrice = parseFloat(event.ticket_price) || 0
         const totalAmount = parseFloat((ticketPrice * quantity).toFixed(2))
 
-        // Check for existing confirmed booking
-        const existingBooking = await t.oneOrNone(`
-          SELECT id FROM bookings
-          WHERE user_id = $1 AND event_id = $2 AND status = 'confirmed'
-        `, [userId, eventId])
-
-        if (existingBooking) {
-          throw new Error(`You already have a confirmed booking for "${event.title}"`)
-        }
-
         // Insert booking
         const booking = await t.one(`
           INSERT INTO bookings (user_id, event_id, quantity, price_at_booking, total_amount, status)

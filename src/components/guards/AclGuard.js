@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 import { AbilityContext } from 'src/layouts/components/acl/Can'
@@ -14,7 +14,19 @@ import NotAuthorized from 'src/pages/401'
 const AclGuard = ({ children, aclAbilities, guestGuard = false, authGuard = true }) => {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [ability, setAbility] = useState(null)
+
+  // Build ability synchronously from session — always in sync, no stale state
+  const ability = useMemo(() => {
+    if (!session?.user) return null
+    const meta = {
+      eventIds: session.user.eventIds ?? [],
+      userId: session.user.id
+    }
+    const role = session.user.role
+      ? session.user.role.charAt(0).toUpperCase() + session.user.role.slice(1).toLowerCase()
+      : 'Student'
+    return buildAbilityFor(role, meta)
+  }, [session])
 
   // Only redirect staff/admin roles to dashboard from home — students stay on home page
   const STAFF_ROLES = ['owner', 'admin', 'head', 'Owner', 'Admin', 'Head']
@@ -30,21 +42,6 @@ const AclGuard = ({ children, aclAbilities, guestGuard = false, authGuard = true
       router.replace('/dashboard')
     }
   }, [session?.user, guestGuard, router])
-
-  // Build (or rebuild) ability whenever session changes
-  useEffect(() => {
-    if (session?.user) {
-      const meta = {
-        eventIds: session.user.eventIds ?? [],
-        userId: session.user.id
-      }
-      // Normalize role to PascalCase to match CASL switch-cases
-      const role = session.user.role
-        ? session.user.role.charAt(0).toUpperCase() + session.user.role.slice(1).toLowerCase()
-        : 'Student'
-      setAbility(buildAbilityFor(role, meta))
-    }
-  }, [session])
 
   // Wait for session to load and ability to be built before making any decisions
   if (status === 'loading' || (session?.user && !ability)) {
@@ -64,14 +61,8 @@ const AclGuard = ({ children, aclAbilities, guestGuard = false, authGuard = true
     return <Spinner />
   }
 
-  // Check permissions — normalize role here too in case ability build is stale
-  const normalizedRole = session.user.role
-    ? session.user.role.charAt(0).toUpperCase() + session.user.role.slice(1).toLowerCase()
-    : 'Student'
-  const currentAbility = ability || buildAbilityFor(normalizedRole, {
-    eventIds: session.user.eventIds ?? [],
-    userId: session.user.id
-  })
+  // ability is always in sync with session via useMemo — no stale state possible
+  const currentAbility = ability ?? buildAbilityFor('Student', { eventIds: [], userId: session.user.id })
 
   if (currentAbility.can(aclAbilities.action, aclAbilities.subject)) {
     return <AbilityContext.Provider value={currentAbility}>{children}</AbilityContext.Provider>

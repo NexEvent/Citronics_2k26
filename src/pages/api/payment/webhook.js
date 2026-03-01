@@ -65,8 +65,11 @@ export default async function handler(req, res) {
         console.warn('[Webhook] Invalid signature — rejecting')
         return res.status(401).json({ success: false, message: 'Invalid webhook signature' })
       }
+    } else if (process.env.NODE_ENV === 'development') {
+      console.warn('[Webhook] JUSPAY_RESPONSE_KEY not set — bypassing signature verification (dev mode only)')
     } else {
-      console.warn('[Webhook] JUSPAY_RESPONSE_KEY not set — skipping signature verification (insecure)')
+      console.error('[Webhook] JUSPAY_RESPONSE_KEY is not configured — rejecting webhook (fail-closed)')
+      return res.status(500).json({ success: false, message: 'Webhook signature verification not configured' })
     }
 
     // Extract order_id from webhook payload

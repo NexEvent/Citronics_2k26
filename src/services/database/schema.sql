@@ -124,7 +124,8 @@ CREATE TABLE bookings (
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX idx_bookings_unique_confirmed ON bookings (user_id, event_id) WHERE status = 'confirmed';
+-- Removed: unique constraint on (user_id, event_id) for confirmed bookings
+-- Users are allowed to purchase additional tickets for the same event
 CREATE INDEX idx_bookings_user_id            ON bookings(user_id);
 CREATE INDEX idx_bookings_event_id_status    ON bookings(event_id, status);
 CREATE INDEX idx_bookings_status_expires_at  ON bookings(status, expires_at);

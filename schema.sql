@@ -73,6 +73,7 @@ CREATE TABLE events (
     venue VARCHAR(255),
     max_tickets INTEGER NOT NULL CHECK (max_tickets > 0),
     ticket_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00 CHECK (ticket_price >= 0),
+    registered INTEGER NOT NULL DEFAULT 0 CHECK (registered >= 0),
     department_id BIGINT,
     created_by BIGINT,
     status event_status NOT NULL DEFAULT 'draft',
@@ -105,8 +106,6 @@ CREATE TABLE bookings (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
-
-CREATE UNIQUE INDEX idx_bookings_unique_confirmed ON bookings (user_id, event_id) WHERE status = 'confirmed';
 
 CREATE INDEX idx_bookings_user_id ON bookings(user_id);
 CREATE INDEX idx_bookings_event_id_status ON bookings(event_id, status);

@@ -1,0 +1,7 @@
+// Admin UI component barrel — import from 'src/components/admin'
+export { default as AdminKpiCard }      from './AdminKpiCard'
+export { default as AdminStatusChip }   from './AdminStatusChip'
+export { default as AdminConfirmDialog } from './AdminConfirmDialog'
+export { default as AdminEventDialog }  from './AdminEventDialog'
+export { default as AdminUserDialog }   from './AdminUserDialog'
+export { default as CustomDataGrid } from './CustomDataGrid'

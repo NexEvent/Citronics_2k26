@@ -7,7 +7,7 @@
 -- ============================================================================
 
 -- ── Enums ──────────────────────────────────────────────────────────────────────
-CREATE TYPE user_role        AS ENUM ('student', 'admin', 'organizer');
+CREATE TYPE user_role        AS ENUM ('student', 'admin', 'owner', 'organizer');
 CREATE TYPE booking_status   AS ENUM ('pending', 'confirmed', 'cancelled');
 CREATE TYPE payment_status   AS ENUM ('pending', 'success', 'failed', 'refunded');
 CREATE TYPE event_status     AS ENUM ('draft', 'published', 'active', 'cancelled', 'completed');

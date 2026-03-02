@@ -7,7 +7,7 @@ import { dbOneOrNone, dbAny } from 'src/lib/database'
  * Naming convention:
  *   getStats()               → single-row KPI summary (dbOneOrNone)
  *   getUpcomingEvents()      → list queries (dbAny)
- *   getRecentRegistrations() → list queries (dbAny)
+ *   getRecentBookings()      → list queries (dbAny)
  */
 const dashboardService = {
   /**
@@ -27,7 +27,7 @@ const dashboardService = {
 
   /**
    * Next 5 upcoming published events, earliest first.
-   * Includes venue name and current registration count.
+   * Includes venue and current booking count.
    */
   async getUpcomingEvents() {
     return dbAny(`
@@ -50,9 +50,9 @@ const dashboardService = {
   },
 
   /**
-   * 10 most recent registrations with attendee + event context.
+   * 10 most recent confirmed bookings with attendee + event context.
    */
-  async getRecentRegistrations() {
+  async getRecentBookings() {
     return dbAny(`
       SELECT
         b.id,

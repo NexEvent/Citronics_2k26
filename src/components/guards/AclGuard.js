@@ -39,9 +39,19 @@ const AclGuard = ({ children, aclAbilities, guestGuard = false, authGuard = true
       !guestGuard &&
       router.route === '/'
     ) {
-      router.replace('/dashboard')
+      const role = session.user.role
+      if (['owner', 'admin', 'executive'].includes(role)) {
+        router.replace('/admin/dashboard')
+      } else {
+        router.replace('/dashboard')
+      }
     }
   }, [session?.user, guestGuard, router])
+
+  // Reset auth state during redirect to prevent protected-content flash
+  if (router.isTransitioning) {
+    return <Spinner />
+  }
 
   // Wait for session to load and ability to be built before making any decisions
   if (status === 'loading' || (session?.user && !ability)) {

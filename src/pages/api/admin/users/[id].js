@@ -132,8 +132,8 @@ export default async function handler(req, res) {
         })
       }
 
-      // Cannot delete yourself
-      if (userId === user.id) {
+      // Cannot delete yourself (handle type conversion for userId from session)
+      if (userId === parseInt(user.id, 10) || userId === user.id) {
         return res.status(403).json({ success: false, message: 'Cannot delete your own account' })
       }
 

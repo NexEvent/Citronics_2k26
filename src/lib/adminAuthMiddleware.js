@@ -94,10 +94,11 @@ export async function adminAuthMiddleware(req, res) {
  * 
  * @param {string} permission - Permission to check (canCreate, canUpdate, canDelete, etc.)
  * @param {object} req - Next.js API request object
+ * @param {object} res - Next.js API response object (REQUIRED)
  * @returns {object} - Auth result with permission check
  */
-export async function requirePermission(permission, req) {
-  const authResult = await adminAuthMiddleware(req)
+export async function requirePermission(permission, req, res) {
+  const authResult = await adminAuthMiddleware(req, res)
 
   if (!authResult.authenticated) {
     return authResult

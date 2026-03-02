@@ -159,7 +159,7 @@ const AdminLoginPage = () => {
             </Typography>
           </Box>
 
-          {/* Role Info */}
+          {/* Role Info
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 2.5, flexWrap: 'wrap' }}>
             {roleInfo.map(role => (
               <Chip
@@ -172,7 +172,7 @@ const AdminLoginPage = () => {
                 sx={{ fontSize: '0.75rem' }}
               />
             ))}
-          </Box>
+          </Box> */}
 
           {/* Error Alert */}
           <Collapse in={!!error}>

@@ -20,6 +20,15 @@ function generateReferralCode() {
 /**
  * Get a unique referral code (retries if collision)
  */
+/**
+ * Normalize role to PascalCase so CASL switch-cases always match.
+ * DB stores lowercase ('student') — ACL config uses 'Student', 'Admin', etc.
+ */
+function normalizeRole(role) {
+  if (!role) return 'Student'
+  return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()
+}
+
 async function getUniqueReferralCode() {
   for (let attempt = 0; attempt < 10; attempt++) {
     const code = generateReferralCode()
@@ -47,20 +56,32 @@ const nextAuthConfig = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email: { label: 'Email or Phone', type: 'text' },
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
         try {
           const { email, password } = credentials
+          const identifier = (email || '').trim()
 
-          // Fetch user from new schema
-          const user = await dbOneOrNone(
-            `SELECT id, name, email, phone, password_hash, role, verified
-             FROM   users
-             WHERE  LOWER(email) = LOWER($1)`,
-            [email]
-          )
+          // Detect if the identifier is a 10-digit phone number
+          const cleanedPhone = identifier.replace(/[\s\-+()]/g, '').slice(-10)
+          const isPhone = /^\d{10}$/.test(cleanedPhone)
+
+          // Look up user by phone or email
+          const user = isPhone
+            ? await dbOneOrNone(
+                `SELECT id, name, email, phone, password_hash, role, verified
+                 FROM   users
+                 WHERE  phone = $1`,
+                [cleanedPhone]
+              )
+            : await dbOneOrNone(
+                `SELECT id, name, email, phone, password_hash, role, verified
+                 FROM   users
+                 WHERE  LOWER(email) = LOWER($1)`,
+                [identifier]
+              )
 
           if (!user) throw new Error('Invalid email or password')
           if (!user.password_hash) throw new Error('This account uses Google sign-in. Please use the Google button.')
@@ -83,7 +104,7 @@ const nextAuthConfig = {
             name: user.name,
             email: user.email,
             phone: user.phone,
-            role: user.role,
+            role: normalizeRole(user.role),
             verified: user.verified,
             college: studentInfo?.college || null,
             city: studentInfo?.city || null,
@@ -99,7 +120,7 @@ const nextAuthConfig = {
 
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60 // 24 hours
+    maxAge: 48 * 60 * 60 // 48 hours
   },
 
   callbacks: {
@@ -178,7 +199,7 @@ const nextAuthConfig = {
             token.name = dbUser.name
             token.email = dbUser.email
             token.phone = dbUser.phone || null
-            token.role = dbUser.role
+            token.role = normalizeRole(dbUser.role)
             token.verified = dbUser.verified
             token.college = dbUser.college || null
             token.city = dbUser.city || null
@@ -190,7 +211,7 @@ const nextAuthConfig = {
           token.name = user.name
           token.email = user.email
           token.phone = user.phone
-          token.role = user.role
+          token.role = normalizeRole(user.role)
           token.verified = user.verified
           token.college = user.college
           token.city = user.city

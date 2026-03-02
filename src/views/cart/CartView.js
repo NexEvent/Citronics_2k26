@@ -22,7 +22,8 @@ import {
   clearCart,
   validateCart
 } from 'src/store/slices/cartSlice'
-import { setCheckoutItems, openStudentDialog } from 'src/store/slices/checkoutSlice'
+import { useSession } from 'next-auth/react'
+import { setCheckoutItems, setExistingUser, openStudentDialog } from 'src/store/slices/checkoutSlice'
 
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
 
@@ -309,6 +310,7 @@ export default function CartView() {
   const c = useAppPalette()
   const router = useRouter()
   const dispatch = useDispatch()
+  const { data: session } = useSession()
   const accent = c.primary
 
   const items = useSelector(selectCartItems)
@@ -534,7 +536,12 @@ export default function CartView() {
                 items: currentItems.map(i => ({ eventId: i.eventId, quantity: i.quantity })),
                 source: 'cart'
               }))
-              dispatch(openStudentDialog())
+              if (session?.user?.id) {
+                dispatch(setExistingUser({ userId: session.user.id }))
+                router.push('/checkout')
+              } else {
+                dispatch(openStudentDialog())
+              }
             }}
             sx={{
               mt: 3,

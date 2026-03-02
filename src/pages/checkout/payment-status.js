@@ -18,6 +18,13 @@ import axios from 'axios'
 
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
 
+function getTicketStatusInfo(checkInAt, bookingStatus, c) {
+  if (checkInAt) return { label: 'Used', color: c.textSecondary, bgColor: alpha(c.textSecondary, 0.1) }
+  if (bookingStatus === 'confirmed') return { label: 'Valid', color: c.success, bgColor: alpha(c.success, 0.1) }
+  if (bookingStatus === 'cancelled') return { label: 'Cancelled', color: c.error, bgColor: alpha(c.error, 0.1) }
+  return { label: 'Pending', color: '#F59E0B', bgColor: 'rgba(245,158,11,0.1)' }
+}
+
 function formatCurrency(amount) {
   return `₹${parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
 }
@@ -241,14 +248,20 @@ function PaymentStatusView() {
                     {ticket.eventTitle}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Chip
-                      label='Valid'
-                      size='small'
-                      sx={{ fontWeight: 600, fontSize: '0.65rem', height: 20, bgcolor: alpha(c.success, 0.1), color: c.success }}
-                    />
+                    {(() => {
+                      const s = getTicketStatusInfo(ticket.checkInAt, ticket.bookingStatus, c)
+                      return (
+                        <Chip
+                          label={s.label}
+                          size='small'
+                          sx={{ fontWeight: 600, fontSize: '0.65rem', height: 20, bgcolor: s.bgColor, color: s.color }}
+                        />
+                      )
+                    })()}
                     <Tooltip title='Download PDF'>
                       <IconButton
                         size='small'
+                        aria-label={`Download ticket ${ticket.ticketId}`}
                         onClick={() => handleDownloadTicket(ticket)}
                         disabled={downloadingId === ticket.ticketId}
                         sx={{ color: c.primary, p: 0.5 }}

@@ -43,8 +43,10 @@ function fmtTime(iso) {
 function VerifyView() {
   const c = useAppPalette()
   const router = useRouter()
-  const { code } = router.query
-  const { data: session } = useSession()
+  // Normalize: router.query values can be arrays when the same param appears multiple times
+  const rawCode = router.query.code
+  const code = Array.isArray(rawCode) ? rawCode[0] : rawCode
+  const { data: session, status: sessionStatus } = useSession()
 
   const [loading, setLoading] = useState(true)
   const [ticket, setTicket] = useState(null)
@@ -69,7 +71,11 @@ function VerifyView() {
         setError(data.message || 'Verification failed')
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to verify ticket')
+      if (err.response?.status === 401) {
+        setError('__unauthenticated__')
+      } else {
+        setError(err.response?.data?.message || 'Failed to verify ticket')
+      }
     } finally {
       setLoading(false)
     }
@@ -114,6 +120,26 @@ function VerifyView() {
       <Container maxWidth='sm' sx={{ py: { xs: 10, md: 16 }, textAlign: 'center' }}>
         <CircularProgress size={48} sx={{ color: c.primary, mb: 3 }} />
         <Typography variant='h6' sx={{ fontWeight: 700, color: c.textPrimary }}>Verifying Ticket...</Typography>
+      </Container>
+    )
+  }
+
+  // 401 — prompt sign-in
+  if (error === '__unauthenticated__') {
+    return (
+      <Container maxWidth='sm' sx={{ py: { xs: 8, md: 14 }, textAlign: 'center' }}>
+        <Icon icon='tabler:lock' fontSize={56} style={{ color: c.primary, marginBottom: 16 }} />
+        <Typography variant='h5' sx={{ fontWeight: 700, color: c.textPrimary, mb: 1 }}>Sign in to verify</Typography>
+        <Typography variant='body1' sx={{ color: c.textSecondary, mb: 4 }}>
+          You need to be signed in to verify this ticket.
+        </Typography>
+        <Button
+          variant='contained'
+          onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent(router.asPath)}`)}
+          sx={{ borderRadius: '10px', fontWeight: 700, textTransform: 'none', px: 4, py: 1.5, bgcolor: c.primary }}
+        >
+          Sign In
+        </Button>
       </Container>
     )
   }

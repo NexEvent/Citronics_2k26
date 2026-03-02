@@ -26,10 +26,24 @@ export default async function handler(req, res) {
       return res.status(401).json({ success: false, message: 'Authentication required' })
     }
 
-    const { qrCode, checkIn } = req.body
+    // Safe body parsing
+    let body = req.body
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body) } catch {
+        return res.status(400).json({ success: false, message: 'Invalid request body' })
+      }
+    }
+    if (!body || typeof body !== 'object') {
+      return res.status(400).json({ success: false, message: 'Request body required' })
+    }
+
+    const { qrCode, checkIn } = body
 
     if (!qrCode || typeof qrCode !== 'string') {
       return res.status(400).json({ success: false, message: 'qrCode is required' })
+    }
+    if ('checkIn' in body && typeof checkIn !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'checkIn must be a boolean' })
     }
 
     // Sanitize — QR codes are UUIDs
@@ -46,11 +60,17 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, message: 'Ticket not found or invalid' })
     }
 
+    // Ownership: non-staff can only look up their own tickets
+    const STAFF_ROLES = ['admin', 'organizer', 'owner', 'head']
+    const userRole = (session.user.role || '').toLowerCase()
+    const isStaff = STAFF_ROLES.includes(userRole)
+    if (!isStaff && ticket.userId !== session.user.id) {
+      return res.status(403).json({ success: false, message: 'You are not authorised to view this ticket' })
+    }
+
     // Check-in (staff only)
-    if (checkIn) {
-      const STAFF_ROLES = ['admin', 'organizer', 'owner', 'head']
-      const role = (session.user.role || '').toLowerCase()
-      if (!STAFF_ROLES.includes(role)) {
+    if (checkIn === true) {
+      if (!isStaff) {
         return res.status(403).json({ success: false, message: 'Only staff can check in tickets' })
       }
 

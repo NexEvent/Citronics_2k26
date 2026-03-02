@@ -136,6 +136,7 @@ function TicketCard({ ticket, onDownload, downloading }) {
               <span>
                 <IconButton
                   size='small'
+                  aria-label={`Download ticket${ticket.ticketId ? ` ${ticket.ticketId}` : ticket.eventTitle ? ` for ${ticket.eventTitle}` : ''}`}
                   onClick={() => onDownload(ticket)}
                   disabled={downloading}
                   sx={{

@@ -31,22 +31,6 @@ const AclGuard = ({ children, aclAbilities, guestGuard = false, authGuard = true
   // Only redirect staff/admin roles to dashboard from home — students stay on home page
   const STAFF_ROLES = ['owner', 'admin', 'head', 'Owner', 'Admin', 'Head']
 
-  // Build ability synchronously from session — always in sync, no stale state
-  const ability = useMemo(() => {
-    if (!session?.user) return null
-    const meta = {
-      eventIds: session.user.eventIds ?? [],
-      userId: session.user.id
-    }
-    const role = session.user.role
-      ? session.user.role.charAt(0).toUpperCase() + session.user.role.slice(1).toLowerCase()
-      : 'Student'
-    return buildAbilityFor(role, meta)
-  }, [session])
-
-  // Only redirect staff/admin roles to dashboard from home — students stay on home page
-  const STAFF_ROLES = ['owner', 'admin', 'head', 'Owner', 'Admin', 'Head']
-
   useEffect(() => {
     if (
       session?.user &&

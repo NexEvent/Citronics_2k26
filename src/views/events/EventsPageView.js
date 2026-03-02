@@ -92,8 +92,13 @@ function EventCard({ event, index }) {
     { label: 'Date', value: dateParsed.full },
     { label: 'Time', value: time },
     event.venue && { label: 'Venue', value: event.venue },
-    event.prize && { label: 'Prize', value: event.prize }
-  ].filter(Boolean)
+    event.prize && {
+      label: 'Prize',
+      value: typeof event.prize === 'object' && event.prize.total != null
+        ? `₹${Number(event.prize.total).toLocaleString('en-IN')}`
+        : typeof event.prize === 'string' ? event.prize : null
+    }
+  ].filter(item => item && item.value != null)
 
   return (
     <MotionBox

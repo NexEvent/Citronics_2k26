@@ -7,6 +7,8 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import Chip from '@mui/material/Chip'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import Icon from 'src/components/Icon'
@@ -15,6 +17,13 @@ import PublicFooter from 'src/views/home/PublicFooter'
 import axios from 'axios'
 
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
+
+function getTicketStatusInfo(checkInAt, bookingStatus, c) {
+  if (checkInAt) return { label: 'Used', color: c.textSecondary, bgColor: alpha(c.textSecondary, 0.1) }
+  if (bookingStatus === 'confirmed') return { label: 'Valid', color: c.success, bgColor: alpha(c.success, 0.1) }
+  if (bookingStatus === 'cancelled') return { label: 'Cancelled', color: c.error, bgColor: alpha(c.error, 0.1) }
+  return { label: 'Pending', color: '#F59E0B', bgColor: 'rgba(245,158,11,0.1)' }
+}
 
 function formatCurrency(amount) {
   return `₹${parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
@@ -46,6 +55,32 @@ function PaymentStatusView() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [retryCount, setRetryCount] = useState(0)
+  const [downloadingId, setDownloadingId] = useState(null)
+  const [downloadingAll, setDownloadingAll] = useState(false)
+
+  const handleDownloadTicket = async (ticket) => {
+    setDownloadingId(ticket.ticketId)
+    try {
+      const { generateTicketPDF } = await import('src/lib/generateTicketPDF')
+      await generateTicketPDF(ticket)
+    } catch (err) {
+      console.error('PDF gen failed:', err)
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  const handleDownloadAll = async (tickets) => {
+    setDownloadingAll(true)
+    try {
+      const { generateAllTicketsPDF } = await import('src/lib/generateTicketPDF')
+      await generateAllTicketsPDF(tickets)
+    } catch (err) {
+      console.error('PDF gen failed:', err)
+    } finally {
+      setDownloadingAll(false)
+    }
+  }
 
   // Verify payment on mount
   const verifyPayment = useCallback(async () => {
@@ -177,11 +212,25 @@ function PaymentStatusView() {
 
         {/* Tickets */}
         {result.tickets && result.tickets.length > 0 && (
-          <Box sx={{ borderRadius: '16px', border: `1.5px solid ${alpha(c.primary, 0.15)}`, p: 3, mb: 4, textAlign: 'left' }}>
-            <Typography variant='subtitle2' sx={{ fontWeight: 700, color: c.textPrimary, mb: 2 }}>
-              <Icon icon='tabler:ticket' fontSize={16} style={{ verticalAlign: -3, marginRight: 6 }} />
-              Your Tickets ({result.tickets.length})
-            </Typography>
+          <Box sx={{ borderRadius: '16px', border: `1.5px solid ${alpha(c.primary, 0.15)}`, p: 3, mb: 3, textAlign: 'left' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant='subtitle2' sx={{ fontWeight: 700, color: c.textPrimary }}>
+                <Icon icon='tabler:ticket' fontSize={16} style={{ verticalAlign: -3, marginRight: 6 }} />
+                Your Tickets ({result.tickets.length})
+              </Typography>
+              {result.tickets.length > 1 && (
+                <Button
+                  size='small'
+                  variant='text'
+                  onClick={() => handleDownloadAll(result.tickets)}
+                  disabled={downloadingAll}
+                  startIcon={downloadingAll ? <CircularProgress size={14} /> : <Icon icon='tabler:download' fontSize={14} />}
+                  sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', color: c.primary }}
+                >
+                  Download All
+                </Button>
+              )}
+            </Box>
 
             {result.tickets.map((ticket, idx) => (
               <Box
@@ -198,11 +247,31 @@ function PaymentStatusView() {
                   <Typography variant='body2' sx={{ fontWeight: 700, color: c.textPrimary, fontSize: '0.88rem' }}>
                     {ticket.eventTitle}
                   </Typography>
-                  <Chip
-                    label='Valid'
-                    size='small'
-                    sx={{ fontWeight: 600, fontSize: '0.65rem', height: 20, bgcolor: alpha(c.success, 0.1), color: c.success }}
-                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {(() => {
+                      const s = getTicketStatusInfo(ticket.checkInAt, ticket.bookingStatus, c)
+                      return (
+                        <Chip
+                          label={s.label}
+                          size='small'
+                          sx={{ fontWeight: 600, fontSize: '0.65rem', height: 20, bgcolor: s.bgColor, color: s.color }}
+                        />
+                      )
+                    })()}
+                    <Tooltip title='Download PDF'>
+                      <IconButton
+                        size='small'
+                        aria-label={`Download ticket ${ticket.ticketId}`}
+                        onClick={() => handleDownloadTicket(ticket)}
+                        disabled={downloadingId === ticket.ticketId}
+                        sx={{ color: c.primary, p: 0.5 }}
+                      >
+                        {downloadingId === ticket.ticketId
+                          ? <CircularProgress size={14} />
+                          : <Icon icon='tabler:download' fontSize={16} />}
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </Box>
 
                 {ticket.venue && (
@@ -222,7 +291,7 @@ function PaymentStatusView() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, pt: 1, borderTop: `1px dashed ${alpha(c.divider, 0.3)}` }}>
                   <Icon icon='tabler:qrcode' fontSize={14} style={{ color: c.textDisabled }} />
                   <Typography variant='caption' sx={{ color: c.textDisabled, fontFamily: 'monospace', fontSize: '0.7rem' }}>
-                    {ticket.qrCode}
+                    {ticket.qrCode ? ticket.qrCode.slice(0, 8) + '···' + ticket.qrCode.slice(-4) : ''}
                   </Typography>
                 </Box>
               </Box>
@@ -234,18 +303,19 @@ function PaymentStatusView() {
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, justifyContent: 'center' }}>
           <Button
             variant='contained'
-            onClick={() => router.push('/events')}
-            startIcon={<Icon icon='tabler:calendar-event' />}
+            onClick={() => router.push('/tickets')}
+            startIcon={<Icon icon='tabler:ticket' />}
             sx={{ borderRadius: '10px', fontWeight: 700, textTransform: 'none', px: 4, py: 1.5, bgcolor: c.primary }}
           >
-            Browse More Events
+            View My Tickets
           </Button>
           <Button
             variant='outlined'
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/events')}
+            startIcon={<Icon icon='tabler:calendar-event' />}
             sx={{ borderRadius: '10px', fontWeight: 600, textTransform: 'none', px: 4, py: 1.5, borderColor: alpha(c.primary, 0.3), color: c.primary }}
           >
-            Go Home
+            Browse More Events
           </Button>
         </Box>
       </Container>

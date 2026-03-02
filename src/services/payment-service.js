@@ -235,11 +235,14 @@ const paymentService = {
     // Already processed — return current status (idempotent)
     if (payment.status === 'success') {
       const rawTickets = await dbAny(`
-        SELECT t.id, t.qr_code, t.created_at, b.event_id,
-               e.name AS event_title, e.venue, e.start_time, e.end_time
+        SELECT t.id, t.qr_code, t.created_at, t.check_in_at,
+               b.event_id, b.status AS booking_status, b.price_at_booking,
+               e.name AS event_title, e.venue, e.start_time, e.end_time,
+               u.name AS attendee_name, u.email AS attendee_email
         FROM tickets t
         JOIN bookings b ON b.id = t.booking_id
         JOIN events e ON e.id = b.event_id
+        JOIN users u ON u.id = b.user_id
         WHERE t.booking_id IN (
           SELECT id FROM bookings WHERE id = $1
           UNION
@@ -251,16 +254,22 @@ const paymentService = {
         )
       `, [payment.booking_id, payment.raw_payload || null])
 
-      // Map to camelCase to match _confirmPaymentAndGenerateTickets output
+      // Map to camelCase — full ticket object for PDF generation
       const tickets = rawTickets.map(t => ({
         ticketId: t.id,
         qrCode: t.qr_code,
         issuedAt: t.created_at,
+        checkInAt: t.check_in_at,
         eventId: t.event_id,
         eventTitle: t.event_title,
         venue: t.venue,
         startTime: t.start_time,
-        endTime: t.end_time
+        endTime: t.end_time,
+        bookingStatus: t.booking_status,
+        priceAtBooking: t.price_at_booking ? parseFloat(t.price_at_booking) : 0,
+        attendeeName: t.attendee_name,
+        attendeeEmail: t.attendee_email,
+        orderId: juspayOrderId
       }))
 
       return {
@@ -334,7 +343,8 @@ const paymentService = {
           payment.booking_id,
           payment.raw_payload,
           transactionId,
-          gatewayStatus
+          gatewayStatus,
+          juspayOrderId
         )
         return {
           status: 'success',
@@ -443,13 +453,24 @@ const paymentService = {
         b.total_amount,
         b.status AS booking_status,
         e.name AS event_title,
+        e.description AS event_description,
         e.venue,
         e.start_time,
         e.end_time,
-        e.images
+        e.images,
+        u.name AS attendee_name,
+        u.email AS attendee_email,
+        u.phone AS attendee_phone,
+        p.juspay_order_id AS order_id,
+        p.transaction_id
       FROM tickets t
       JOIN bookings b ON b.id = t.booking_id
       JOIN events e ON e.id = b.event_id
+      JOIN users u ON u.id = b.user_id
+      LEFT JOIN payments p ON (
+        p.booking_id = b.id
+        OR (p.raw_payload IS NOT NULL AND (p.raw_payload->'bookingIds') @> to_jsonb(b.id))
+      ) AND p.status = 'success'
       WHERE b.user_id = $1
       ORDER BY t.created_at DESC
     `, [userId])
@@ -466,11 +487,103 @@ const paymentService = {
       totalAmount: parseFloat(r.total_amount),
       bookingStatus: r.booking_status,
       eventTitle: r.event_title,
+      eventDescription: r.event_description,
       venue: r.venue,
       startTime: r.start_time,
       endTime: r.end_time,
-      images: r.images
+      images: r.images,
+      attendeeName: r.attendee_name,
+      attendeeEmail: r.attendee_email,
+      attendeePhone: r.attendee_phone,
+      orderId: r.order_id,
+      transactionId: r.transaction_id
     }))
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  4b. VERIFY TICKET (QR code scan)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Verify a ticket by QR code UUID and return its details.
+   * Used by staff to verify tickets at the event entrance.
+   */
+  async verifyTicket(qrCode) {
+    const row = await dbOneOrNone(`
+      SELECT
+        t.id AS ticket_id,
+        t.qr_code,
+        t.check_in_at,
+        t.created_at AS issued_at,
+        b.id AS booking_id,
+        b.event_id,
+        b.user_id,
+        b.quantity,
+        b.status AS booking_status,
+        e.name AS event_title,
+        e.venue,
+        e.start_time,
+        e.end_time,
+        u.name AS attendee_name,
+        u.email AS attendee_email
+      FROM tickets t
+      JOIN bookings b ON b.id = t.booking_id
+      JOIN events e ON e.id = b.event_id
+      JOIN users u ON u.id = b.user_id
+      WHERE t.qr_code = $1
+    `, [qrCode])
+
+    if (!row) return null
+
+    return {
+      ticketId: row.ticket_id,
+      qrCode: row.qr_code,
+      userId: row.user_id,
+      checkedIn: !!row.check_in_at,
+      checkInAt: row.check_in_at,
+      issuedAt: row.issued_at,
+      bookingId: row.booking_id,
+      eventId: row.event_id,
+      bookingStatus: row.booking_status,
+      eventTitle: row.event_title,
+      venue: row.venue,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      attendeeName: row.attendee_name,
+      attendeeEmail: row.attendee_email
+    }
+  },
+
+  /**
+   * Check in a ticket by QR code. Marks check_in_at and check_in_by.
+   */
+  async checkInTicket(qrCode, staffUserId) {
+    return dbTx(async t => {
+      // Lock the row so concurrent check-ins fail atomically
+      const ticket = await t.oneOrNone(`
+        SELECT t.id, t.check_in_at, b.status AS booking_status
+        FROM tickets t
+        JOIN bookings b ON b.id = t.booking_id
+        WHERE t.qr_code = $1
+        FOR UPDATE OF t
+      `, [qrCode])
+
+      if (!ticket) throw new Error('Ticket not found')
+      if (ticket.booking_status !== 'confirmed') throw new Error('Booking is not confirmed')
+      if (ticket.check_in_at) throw new Error('Ticket already checked in')
+
+      // Conditional UPDATE — zero rows means another worker won the race
+      const updated = await t.oneOrNone(`
+        UPDATE tickets
+        SET check_in_at = CURRENT_TIMESTAMP, check_in_by = $1, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2 AND check_in_at IS NULL
+        RETURNING id
+      `, [staffUserId, ticket.id])
+
+      if (!updated) throw new Error('Ticket already checked in')
+
+      return { ticketId: ticket.id, checkedIn: true }
+    })
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -526,7 +639,7 @@ const paymentService = {
  * Confirm payment, update bookings to 'confirmed', generate tickets.
  * All in a single transaction.
  */
-async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, rawPayload, transactionId, gatewayResponse) {
+async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, rawPayload, transactionId, gatewayResponse, orderId) {
   return dbTx(async t => {
     // Determine all booking IDs for this payment
     let bookingIds = [primaryBookingId]
@@ -582,10 +695,12 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
 
       // Get booking details for ticket generation
       const booking = await t.oneOrNone(`
-        SELECT b.id, b.event_id, b.quantity, b.user_id,
-               e.name AS event_title, e.venue, e.start_time, e.end_time
+        SELECT b.id, b.event_id, b.quantity, b.user_id, b.price_at_booking,
+               e.name AS event_title, e.venue, e.start_time, e.end_time,
+               u.name AS attendee_name, u.email AS attendee_email
         FROM bookings b
         JOIN events e ON e.id = b.event_id
+        JOIN users u ON u.id = b.user_id
         WHERE b.id = $1
       `, [bookingId])
 
@@ -604,11 +719,17 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
           ticketId: ticket.id,
           qrCode: ticket.qr_code,
           issuedAt: ticket.created_at,
+          checkInAt: null,
           eventId: booking.event_id,
           eventTitle: booking.event_title,
           venue: booking.venue,
           startTime: booking.start_time,
-          endTime: booking.end_time
+          endTime: booking.end_time,
+          bookingStatus: 'confirmed',
+          priceAtBooking: booking.price_at_booking ? parseFloat(booking.price_at_booking) : 0,
+          attendeeName: booking.attendee_name,
+          attendeeEmail: booking.attendee_email,
+          orderId: orderId || null
         })
       }
     }

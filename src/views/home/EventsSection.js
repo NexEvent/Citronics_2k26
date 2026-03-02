@@ -145,7 +145,7 @@ function EventCard({ event, index }) {
           {[
             { icon: 'tabler:calendar', text: `${event.date} • ${event.time}` },
             { icon: 'tabler:map-pin', text: event.venue },
-            { icon: 'tabler:trophy', text: `Prize: ${event.prize}` }
+            { icon: 'tabler:trophy', text: `Prize: ${typeof event.prize === 'object' && event.prize?.total != null ? `₹${Number(event.prize.total).toLocaleString('en-IN')}` : event.prize || '—'}` }
           ].map(({ icon, text }) => (
             <Box key={icon} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Icon icon={icon} fontSize={14} style={{ color: c.textDisabled }} />

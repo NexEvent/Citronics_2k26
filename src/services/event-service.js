@@ -100,6 +100,11 @@ const eventService = {
         e.status,
         e.images,
         e.ticket_price,
+        e.brief,
+        e.team_size,
+        e.rules,
+        e.rounds,
+        e.document_url,
         d.id            AS "departmentId",
         d.name          AS "departmentName"
       FROM events e
@@ -167,6 +172,11 @@ const eventService = {
         e.status,
         e.images,
         e.ticket_price,
+        e.brief,
+        e.team_size,
+        e.rules,
+        e.rounds,
+        e.document_url,
         e.created_at,
         d.id            AS "departmentId",
         d.name          AS "departmentName"

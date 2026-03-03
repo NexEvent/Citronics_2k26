@@ -198,7 +198,7 @@ const eventService = {
         document_url: detailDocumentUrl || '',
         brief: detailBrief || '',
         rules: detailRules || [],
-        rounds: detailRounds || 0,
+        rounds: detailRounds || null,
         team_size: detailTeamSize || null,
         evaluation_criteria: detailEvaluationCriteria || []
       }

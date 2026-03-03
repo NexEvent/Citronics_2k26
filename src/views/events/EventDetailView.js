@@ -609,77 +609,100 @@ export default function EventDetailView() {
                   Rounds
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {details.rounds.map((round, i) => (
-                    <Box
-                      key={i}
-                      sx={{
-                        borderRadius: '12px',
-                        border: '1px solid',
-                        borderColor: c.dividerA30,
-                        overflow: 'hidden'
-                      }}
-                    >
+                  {details.rounds.map((rawRound, i) => {
+                    // Each round may be a JSON string or plain text
+                    let parsed = null
+                    try { parsed = typeof rawRound === 'string' ? JSON.parse(rawRound) : rawRound } catch { /* plain text */ }
+                    const roundTitle = parsed?.title || `Round ${i + 1}`
+                    const roundPoints = Array.isArray(parsed?.points) ? parsed.points : []
+
+                    return (
                       <Box
-                        onClick={() => setOpenRoundIdx(openRoundIdx === i ? null : i)}
+                        key={i}
                         sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          px: 2.5,
-                          py: 1.75,
-                          cursor: 'pointer',
-                          '&:hover': { bgcolor: alpha(color, 0.04) },
-                          transition: 'background 0.2s ease'
+                          borderRadius: '12px',
+                          border: '1px solid',
+                          borderColor: c.dividerA30,
+                          overflow: 'hidden'
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Box
-                            sx={{
-                              width: 28,
-                              height: 28,
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              bgcolor: alpha(color, 0.1),
-                              color,
-                              fontSize: '0.78rem',
-                              fontWeight: 800
-                            }}
-                          >
-                            {i + 1}
+                        <Box
+                          onClick={() => setOpenRoundIdx(openRoundIdx === i ? null : i)}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            px: 2.5,
+                            py: 1.75,
+                            cursor: 'pointer',
+                            '&:hover': { bgcolor: alpha(color, 0.04) },
+                            transition: 'background 0.2s ease'
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Box
+                              sx={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                bgcolor: alpha(color, 0.1),
+                                color,
+                                fontSize: '0.78rem',
+                                fontWeight: 800
+                              }}
+                            >
+                              {i + 1}
+                            </Box>
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.9rem' }}
+                            >
+                              {roundTitle}
+                            </Typography>
                           </Box>
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.9rem' }}
-                          >
-                            Round {i + 1}
-                          </Typography>
+                          <IconButton size='small' sx={{ color: 'text.secondary' }}>
+                            <Icon
+                              icon={openRoundIdx === i ? 'tabler:chevron-up' : 'tabler:chevron-down'}
+                              fontSize={18}
+                            />
+                          </IconButton>
                         </Box>
-                        <IconButton size='small' sx={{ color: 'text.secondary' }}>
-                          <Icon
-                            icon={openRoundIdx === i ? 'tabler:chevron-up' : 'tabler:chevron-down'}
-                            fontSize={18}
-                          />
-                        </IconButton>
+                        <Collapse in={openRoundIdx === i}>
+                          <Box sx={{ px: 2.5, pb: 2, pt: 0 }}>
+                            {roundPoints.length > 0 ? (
+                              <Box component='ul' sx={{ pl: 2, m: 0 }}>
+                                {roundPoints.map((point, j) => (
+                                  <Box
+                                    component='li'
+                                    key={j}
+                                    sx={{
+                                      color: 'text.secondary',
+                                      fontSize: '0.9rem',
+                                      lineHeight: 1.75,
+                                      mb: 0.5,
+                                      '&::marker': { color, fontWeight: 700 }
+                                    }}
+                                  >
+                                    {point}
+                                  </Box>
+                                ))}
+                              </Box>
+                            ) : (
+                              <Typography
+                                variant='body2'
+                                sx={{ color: 'text.secondary', fontSize: '0.9rem', lineHeight: 1.75, whiteSpace: 'pre-line' }}
+                              >
+                                {parsed ? 'Details coming soon.' : rawRound}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Collapse>
                       </Box>
-                      <Collapse in={openRoundIdx === i}>
-                        <Box sx={{ px: 2.5, pb: 2, pt: 0 }}>
-                          <Typography
-                            variant='body2'
-                            sx={{
-                              color: 'text.secondary',
-                              fontSize: '0.9rem',
-                              lineHeight: 1.75,
-                              whiteSpace: 'pre-line'
-                            }}
-                          >
-                            {round}
-                          </Typography>
-                        </Box>
-                      </Collapse>
-                    </Box>
-                  ))}
+                    )
+                  })}
                 </Box>
               </Box>
             )}

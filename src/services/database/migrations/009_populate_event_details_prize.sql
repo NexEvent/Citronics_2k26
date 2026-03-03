@@ -20,36 +20,45 @@ ON CONFLICT (event_id) DO NOTHING;
 -- Result: {'Total Prize Pool: ₹5,000', '1st Prize: ₹2,500', '2nd Prize: ₹1,500', '3rd Prize: ₹1,000'}
 -- Entries with value 0 are excluded.
 UPDATE event_details ed
-SET prize = (
-  SELECT array_remove(
-    ARRAY[
-      'Total Prize Pool: ₹' || trim(split_part(split_part(e.prize, 'Total up to ', 2), ':', 1)),
-      CASE
-        WHEN trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 1), ' ', 2)) != '0'
-        THEN '1st Prize: ₹' || trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 1), ' ', 2))
-        ELSE NULL
-      END,
-      CASE
-        WHEN trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 2), ' ', 3)) != '0'
-        THEN '2nd Prize: ₹' || trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 2), ' ', 3))
-        ELSE NULL
-      END,
-      CASE
-        WHEN trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 3), ' ', 3)) != '0'
-        THEN '3rd Prize: ₹' || trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 3), ' ', 3))
-        ELSE NULL
-      END
-    ],
-    NULL
-  )
+SET prize = sub.prize_arr
+FROM (
+  SELECT
+    e.id AS event_id,
+    array_remove(
+      ARRAY[
+        CASE
+          WHEN trim(split_part(split_part(e.prize, 'Total up to ', 2), ':', 1)) ~ '^[0-9,]+$'
+               AND trim(split_part(split_part(e.prize, 'Total up to ', 2), ':', 1)) != ''
+          THEN 'Total Prize Pool: ₹' || trim(split_part(split_part(e.prize, 'Total up to ', 2), ':', 1))
+          ELSE NULL
+        END,
+        CASE
+          WHEN split_part(e.prize, ': ', 2) != ''
+               AND trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 1), ' ', 2)) ~ '^[0-9]+$'
+               AND trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 1), ' ', 2)) != '0'
+          THEN '1st Prize: ₹' || trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 1), ' ', 2))
+          ELSE NULL
+        END,
+        CASE
+          WHEN split_part(split_part(e.prize, ': ', 2), ',', 2) != ''
+               AND trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 2), ' ', 3)) ~ '^[0-9]+$'
+               AND trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 2), ' ', 3)) != '0'
+          THEN '2nd Prize: ₹' || trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 2), ' ', 3))
+          ELSE NULL
+        END,
+        CASE
+          WHEN split_part(split_part(e.prize, ': ', 2), ',', 3) != ''
+               AND trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 3), ' ', 3)) ~ '^[0-9]+$'
+               AND trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 3), ' ', 3)) != '0'
+          THEN '3rd Prize: ₹' || trim(split_part(split_part(split_part(e.prize, ': ', 2), ',', 3), ' ', 3))
+          ELSE NULL
+        END
+      ],
+      NULL
+    ) AS prize_arr
   FROM events e
-  WHERE e.id = ed.event_id
-    AND e.prize IS NOT NULL
+  WHERE e.prize IS NOT NULL
     AND e.prize != ''
-)
-WHERE EXISTS (
-  SELECT 1 FROM events e
-  WHERE e.id = ed.event_id
-    AND e.prize IS NOT NULL
-    AND e.prize != ''
-);
+    AND e.prize LIKE 'Total up to %'
+) sub
+WHERE sub.event_id = ed.event_id;

@@ -554,5 +554,3 @@ ON CONFLICT (event_id) DO UPDATE SET
   team_size = EXCLUDED.team_size,
   rules = EXCLUDED.rules,
   rounds = EXCLUDED.rounds;
-
-

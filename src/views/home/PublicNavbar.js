@@ -2,10 +2,10 @@
 import Navbar from 'src/components/Navbar'
 
 const NAV_LINKS = [
-
-  { label: 'About', href: '#about' },
+  { label: 'About', href: '/#about' },
   { label: 'Events', href: '/events' },
-  { label: 'Schedule', href: '#schedule' }
+  { label: 'Schedule', href: '/#schedule' },
+  { label: 'My Tickets', href: '/tickets' }
 ]
 
 /**

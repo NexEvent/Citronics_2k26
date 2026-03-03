@@ -52,6 +52,24 @@ function formatEventTime(iso) {
 }
 
 /**
+ * Extracts the total prize pool from the prize string.
+ * Input:  "Total up to 5000: 1st 2500, 2nd 1500, 3rd 1000"
+ * Output: "₹5,000"
+ * Falls back to the raw string if it doesn't match the expected format.
+ * @param {string|null} prize - Prize string from events table
+ * @returns {string|null}
+ */
+function formatPrizeTotal(prize) {
+  if (!prize) return null
+  const match = prize.match(/Total up to\s+([\d,]+)/i)
+  if (match) {
+    const num = parseInt(match[1].replace(/,/g, ''), 10)
+    return '₹' + num.toLocaleString('en-IN')
+  }
+  return prize
+}
+
+/**
  * Extracts the first image URL from an event object.
  * Handles both plain string URLs and `{ url }` image objects.
  * @param {object} event - Event data object
@@ -92,7 +110,7 @@ function EventCard({ event, index }) {
     { label: 'Date', value: dateParsed.full },
     { label: 'Time', value: time },
     event.venue && { label: 'Venue', value: event.venue },
-    event.prize && { label: 'Prize', value: event.prize }
+    event.prize && { label: 'Prize Pool', value: formatPrizeTotal(event.prize) }
   ].filter(Boolean)
 
   return (

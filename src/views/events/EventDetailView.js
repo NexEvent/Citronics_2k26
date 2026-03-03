@@ -10,6 +10,8 @@ import Divider from '@mui/material/Divider'
 import LinearProgress from '@mui/material/LinearProgress'
 import Skeleton from '@mui/material/Skeleton'
 import useMediaQuery from '@mui/material/useMediaQuery'
+import Collapse from '@mui/material/Collapse'
+import IconButton from '@mui/material/IconButton'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import { motion } from 'framer-motion'
@@ -46,6 +48,10 @@ function formatTime(iso) {
 }
 
 function getEventImage(event) {
+  // Prefer event_details.image_url (Cloudinary) over legacy images array
+  if (event?.details?.image_url) {
+    return event.details.image_url
+  }
   if (event?.images && Array.isArray(event.images) && event.images.length > 0) {
     const img = event.images[0]
     return typeof img === 'string' ? img : img?.url || null
@@ -189,6 +195,7 @@ export default function EventDetailView() {
   const { currentEvent: event, currentEventLoading: loading, currentEventError } = useSelector(state => state.events)
   const timeLeft = useCountdown(event?.start_time)
   const isMobile = useMediaQuery(c.theme.breakpoints.down('md'))
+  const [openRoundIdx, setOpenRoundIdx] = useState(null)
 
   useEffect(() => {
     if (id) dispatch(fetchEventById(id))
@@ -224,6 +231,7 @@ export default function EventDetailView() {
   const spotsLeft = event.seats - (event.registered || 0)
   const imageUrl = getEventImage(event)
   const isOver = event.start_time ? new Date(event.start_time).getTime() <= Date.now() : false
+  const details = event.details || {}
 
   return (
     <Box
@@ -420,7 +428,7 @@ export default function EventDetailView() {
                 })
               }
               if (event.venue) rows.push({ label: 'Venue', value: event.venue })
-              if (event.prize) rows.push({ label: 'Prize Pool', value: event.prize })
+              if (details.team_size) rows.push({ label: 'Team Size', value: `${details.team_size} member${details.team_size !== 1 ? 's' : ''}` })
               if (event.ticket_price > 0) rows.push({ label: 'Entry Fee', value: `₹${parseFloat(event.ticket_price).toLocaleString('en-IN')}` })
 
               if (rows.length === 0) return null
@@ -476,47 +484,7 @@ export default function EventDetailView() {
               )
             })()}
 
-            {/* ── Registration fill ── */}
-            {event.seats > 0 && (
-              <InfoSection label='Registration'>
-                <Box sx={{ mt: 0.5 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}>
-                    <Typography variant='body2' sx={{ fontWeight: 700, color: 'text.primary' }}>
-                      {event.registered || 0} / {event.seats} registered
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      sx={{ fontWeight: 800, color: almostFull ? c.error : color }}
-                    >
-                      {fillPct}%
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant='determinate'
-                    value={fillPct}
-                    sx={{
-                      height: 6,
-                      borderRadius: 4,
-                      bgcolor: c.dividerA30,
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 4,
-                        background: almostFull
-                          ? `linear-gradient(90deg, ${c.warning}, ${c.error})`
-                          : `linear-gradient(90deg, ${color}, ${alpha(color, 0.55)})`
-                      }
-                    }}
-                  />
-                  {almostFull && (
-                    <Typography
-                      variant='caption'
-                      sx={{ color: c.error, fontWeight: 700, mt: 0.75, display: 'block' }}
-                    >
-                      {spotsLeft <= 0 ? 'Sold Out!' : `Only ${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left!`}
-                    </Typography>
-                  )}
-                </Box>
-              </InfoSection>
-            )}
+           
 
             {/* ── Description ── */}
             {event.description && (
@@ -538,6 +506,181 @@ export default function EventDetailView() {
                 >
                   {event.description}
                 </Typography>
+              </Box>
+            )}
+
+            {/* ── Brief ── */}
+            {details.brief && (
+              <Box sx={{ mt: 3 }}>
+                <Typography
+                  variant='overline'
+                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
+                >
+                  Brief
+                </Typography>
+                <Typography
+                  variant='body1'
+                  sx={{
+                    color: 'text.secondary',
+                    lineHeight: 1.85,
+                    fontSize: '0.95rem',
+                    whiteSpace: 'pre-line'
+                  }}
+                >
+                  {details.brief}
+                </Typography>
+              </Box>
+            )}
+
+            {/* ── Prizes ── */}
+            {details.prize && details.prize.length > 0 && (
+              <Box sx={{ mt: 3 }}>
+                <Typography
+                  variant='overline'
+                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
+                >
+                  Prizes
+                </Typography>
+                <Box component='ul' sx={{ pl: 2.5, m: 0, listStyle: 'none' }}>
+                  {details.prize.map((p, i) => (
+                    <Box
+                      component='li'
+                      key={i}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1.5,
+                        mb: 1.25
+                      }}
+                    >
+                      <Icon
+                        icon='tabler:trophy'
+                        fontSize={18}
+                        style={{ color, marginTop: 3, flexShrink: 0 }}
+                      />
+                      <Typography
+                        variant='body1'
+                        sx={{ color: 'text.secondary', fontSize: '0.95rem', lineHeight: 1.6 }}
+                      >
+                        {p}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* ── Rules ── */}
+            {details.rules && details.rules.length > 0 && (
+              <Box sx={{ mt: 3 }}>
+                <Typography
+                  variant='overline'
+                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
+                >
+                  Rules
+                </Typography>
+                <Box component='ol' sx={{ pl: 2.5, m: 0 }}>
+                  {details.rules.map((rule, i) => (
+                    <Box
+                      component='li'
+                      key={i}
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: '0.95rem',
+                        lineHeight: 1.75,
+                        mb: 0.75,
+                        '&::marker': { color, fontWeight: 700 }
+                      }}
+                    >
+                      {rule}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* ── Rounds ── */}
+            {details.rounds && details.rounds.length > 0 && (
+              <Box sx={{ mt: 3 }}>
+                <Typography
+                  variant='overline'
+                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
+                >
+                  Rounds
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {details.rounds.map((round, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        borderRadius: '12px',
+                        border: '1px solid',
+                        borderColor: c.dividerA30,
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <Box
+                        onClick={() => setOpenRoundIdx(openRoundIdx === i ? null : i)}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          px: 2.5,
+                          py: 1.75,
+                          cursor: 'pointer',
+                          '&:hover': { bgcolor: alpha(color, 0.04) },
+                          transition: 'background 0.2s ease'
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              bgcolor: alpha(color, 0.1),
+                              color,
+                              fontSize: '0.78rem',
+                              fontWeight: 800
+                            }}
+                          >
+                            {i + 1}
+                          </Box>
+                          <Typography
+                            variant='body2'
+                            sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.9rem' }}
+                          >
+                            Round {i + 1}
+                          </Typography>
+                        </Box>
+                        <IconButton size='small' sx={{ color: 'text.secondary' }}>
+                          <Icon
+                            icon={openRoundIdx === i ? 'tabler:chevron-up' : 'tabler:chevron-down'}
+                            fontSize={18}
+                          />
+                        </IconButton>
+                      </Box>
+                      <Collapse in={openRoundIdx === i}>
+                        <Box sx={{ px: 2.5, pb: 2, pt: 0 }}>
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              color: 'text.secondary',
+                              fontSize: '0.9rem',
+                              lineHeight: 1.75,
+                              whiteSpace: 'pre-line'
+                            }}
+                          >
+                            {round}
+                          </Typography>
+                        </Box>
+                      </Collapse>
+                    </Box>
+                  ))}
+                </Box>
               </Box>
             )}
 

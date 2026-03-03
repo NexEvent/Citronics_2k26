@@ -81,6 +81,12 @@ export const buildAbilityFor = (role, meta = {}) =>
     detectSubjectType: obj => obj?.type
   })
 
+/**
+ * Lowercase role slugs that grant elevated (cross-user) access in API routes.
+ * Import this instead of defining a local array in every route handler.
+ */
+export const ELEVATED_ROLES = ['admin', 'organizer', 'owner', 'head']
+
 /** Default ACL used by AclGuard for pages that declare no explicit acl obj */
 export const defaultACLObj = {
   action: 'read',

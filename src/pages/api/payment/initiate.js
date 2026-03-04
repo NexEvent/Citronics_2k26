@@ -58,7 +58,9 @@ export default async function handler(req, res) {
     // SECURITY: Use APP_URL / NEXTAUTH_URL as the authoritative origin.
     // Falling back to request headers is unreliable behind reverse proxies
     // (Vercel, Railway, etc.) and can produce http:// or internal hostnames.
-    const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL
+    const rawAppUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || ''
+    // Strip whitespace/newlines — env vars can have accidental trailing chars
+    const appUrl = rawAppUrl.trim().replace(/[\r\n]+/g, '')
     let returnUrl
 
     if (appUrl && !appUrl.includes('localhost')) {

@@ -239,14 +239,14 @@ const adminService = {
    * Create new event
    */
   async createEvent(data) {
-    const { name, description, startTime, endTime, venue, maxTickets, ticketPrice, departmentId, createdBy } = data
+    const { name, description, startTime, endTime, venue, maxTickets, ticketPrice, departmentId, createdBy, managerId } = data
 
     return dbOne(
       `INSERT INTO events (name, description, start_time, end_time, venue, max_tickets,
-                           ticket_price, department_id, created_by, status, visibility)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft', 'public')
+                           ticket_price, department_id, created_by, manager_id, status, visibility)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', 'public')
        RETURNING id, name, status, created_at`,
-      [name, description, startTime, endTime, venue, maxTickets, ticketPrice, departmentId, createdBy]
+      [name, description, startTime, endTime, venue, maxTickets, ticketPrice, departmentId, createdBy, managerId]
     )
   },
 

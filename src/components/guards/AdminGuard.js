@@ -18,6 +18,10 @@ const AdminGuard = ({ children, fallback, requiredAbility = null }) => {
   useEffect(() => {
     if (status === 'loading') return
 
+    // Reset auth state before checks to prevent brief exposure of protected UI
+    setAuthorized(false)
+    setAbility(null)
+
     if (!session) {
       router.push('/admin/login')
 

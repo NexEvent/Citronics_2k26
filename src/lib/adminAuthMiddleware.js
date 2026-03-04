@@ -84,6 +84,7 @@ export async function requirePermission(permission, req, res) {
  * Only Owner can modify users; Admin is read-only.
  */
 export function canActOnUser(actingUser, action, targetUser = null) {
+  if (!actingUser) return false
   const actorRole = actingUser.role?.toLowerCase()
 
   // Only owners can modify users

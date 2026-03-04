@@ -167,10 +167,10 @@ const AdminDashboardView = () => {
         {[
           { title: 'Total Events', value: stats?.totalEvents, icon: 'tabler:calendar-event', color: 'primary' },
           { title: 'Active Events', value: stats?.activeEvents, icon: 'tabler:player-play', color: 'success' },
-          { title: 'Total Users', value: stats?.totalUsers, icon: 'tabler:users', color: 'info' },
+          { title: 'Total Users', value: stats?.totalUsers, icon: 'tabler:users', color: 'info', ownerOnly: true },
           { title: 'Revenue', value: stats?.totalRevenue ?? 0, icon: 'tabler:currency-rupee', color: 'warning', prefix: '₹' }
-        ].map(k => (
-          <Grid item xs={12} sm={3} key={k.title}>
+        ].filter(k => !k.ownerOnly || ownerFlag).map(k => (
+          <Grid item xs={12} sm={ownerFlag ? 3 : 4} key={k.title}>
             <KPICard {...k} loading={loading} onClick={() => router.push(k.color === 'warning' ? '/admin/analytics' : k.color === 'info' ? '/admin/users' : '/admin/events')} />
           </Grid>
         ))}
@@ -216,7 +216,7 @@ const AdminDashboardView = () => {
               }}
               series={[
                 { name: 'Bookings', data: (analyticsData.bookingTrend || []).map(d => d.count) },
-                { name: 'Revenue', data: (analyticsData.revenueTrend || []).map(d => parseFloat(d.revenue || 0)) }
+                { name: 'Revenue', data: (analyticsData.revenueTrend || []).map(d => parseFloat(d.amount || 0)) }
               ]}
             />
           </CardContent>

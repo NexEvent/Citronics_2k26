@@ -5,7 +5,7 @@ const nextConfig = {
   // transpilePackages: ['@mui/material', '@mui/system'],
 
   images: {
-    domains: ['localhost', 'res.cloudinary.com'],
+    domains: ['localhost', 'res.cloudinary.com', 'cdgicitronics.in'],
     formats: ['image/avif', 'image/webp']
   },
 

@@ -82,6 +82,18 @@ function getJuspayInstance() {
   _juspayInstance = new Juspay(config)
 
   console.log(`[Juspay] Initialized — env=${env}, merchant=${merchantId}, base=${baseUrl}`)
+  console.log(`[Juspay] Auth mode: ${publicKey && privateKey ? 'JWE/JWS' : 'Basic (apiKey)'}`)
+
+  // Warn about common misconfigurations
+  if (env === 'sandbox' && process.env.NODE_ENV === 'production') {
+    console.warn(`[Juspay] ⚠️  WARNING: JUSPAY_ENV=sandbox but NODE_ENV=production — are you sure?`)
+  }
+  if (env === 'production' && !publicKey) {
+    console.warn(`[Juspay] ⚠️  WARNING: JUSPAY_ENV=production but JUSPAY_PUBLIC_KEY is not set — JWE/JWS auth disabled`)
+  }
+  if (env === 'production' && !privateKey) {
+    console.warn(`[Juspay] ⚠️  WARNING: JUSPAY_ENV=production but JUSPAY_PRIVATE_KEY is not set — JWE/JWS auth disabled`)
+  }
 
   return _juspayInstance
 }

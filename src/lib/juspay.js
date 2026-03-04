@@ -20,6 +20,15 @@ const { Juspay, APIError } = require('expresscheckout-nodejs')
 const SANDBOX_BASE_URL = 'https://smartgatewayuat.hdfcbank.com'
 const PRODUCTION_BASE_URL = 'https://smartgateway.hdfcbank.com'
 
+// ── Serverless-safe logger ────────────────────────────────────────────────────
+// The Juspay SDK's default logger creates a Winston file transport to `logs/`
+// which crashes on read-only filesystems (Vercel, AWS Lambda, etc.).
+// Setting Juspay.customLogger bypasses the file transport entirely.
+Juspay.customLogger = {
+  info(msg)  { console.log('[Juspay]', typeof msg === 'string' ? msg : JSON.stringify(msg)) },
+  error(msg) { console.error('[Juspay]', typeof msg === 'string' ? msg : JSON.stringify(msg)) }
+}
+
 /**
  * Resolve PEM key from env var.
  * Supports:

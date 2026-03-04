@@ -204,7 +204,12 @@ const paymentService = {
       await _cancelPendingPayment(paymentId)
 
       if (error instanceof APIError) {
-        throw new Error(`Payment gateway error: ${error.message}`)
+        // SDK may return raw HTML (e.g. Cloudflare block page) as the message — never expose that to users
+        const isHtml = typeof error.message === 'string' && error.message.includes('<!DOCTYPE')
+        const safeMsg = isHtml
+          ? 'Payment gateway is currently unavailable. Please try again in a few moments.'
+          : error.message
+        throw new Error(`Payment gateway error: ${safeMsg}`)
       }
       throw new Error('Failed to initialize payment. Please try again.')
     }

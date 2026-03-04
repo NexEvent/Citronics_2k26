@@ -12,12 +12,17 @@
  *   JUSPAY_PAYMENT_PAGE_CLIENT_ID — payment page client id
  *   JUSPAY_RESPONSE_KEY         — response key for webhook signature verification
  *   JUSPAY_ENV                  — 'sandbox' | 'production' (default: sandbox)
+ *   JUSPAY_BASE_URL             — (optional) override the gateway base URL entirely
  */
 
 const crypto = require('crypto')
 const { Juspay, APIError } = require('expresscheckout-nodejs')
 
-const SANDBOX_BASE_URL = 'https://smartgatewayuat.hdfcbank.com'
+// ── HDFC SmartGateway base URLs ───────────────────────────────────────────────
+// HDFC migrated SmartGateway from hdfcbank.com → hdfcuat.bank.in / hdfcbank.in
+// Old (now Cloudflare-blocked):  https://smartgatewayuat.hdfcbank.com
+// New UAT domain:                https://smartgateway.hdfcuat.bank.in
+const SANDBOX_BASE_URL = 'https://smartgateway.hdfcuat.bank.in'
 const PRODUCTION_BASE_URL = 'https://smartgateway.hdfcbank.com'
 
 // ── Serverless-safe logger ────────────────────────────────────────────────────
@@ -77,8 +82,11 @@ function getJuspayInstance() {
 
   const baseUrl = env === 'production' ? PRODUCTION_BASE_URL : SANDBOX_BASE_URL
 
+  // Allow full override via JUSPAY_BASE_URL env var (useful if HDFC changes domains again)
+  const finalBaseUrl = (process.env.JUSPAY_BASE_URL || baseUrl).trim()
+
   // Use JWE/JWS auth when RSA keys are provided, otherwise fall back to Basic Auth (apiKey)
-  const config = { merchantId, baseUrl }
+  const config = { merchantId, baseUrl: finalBaseUrl }
 
   if (publicKey && privateKey) {
     config.jweAuth = { keyId: keyUUID, publicKey, privateKey }
@@ -90,7 +98,7 @@ function getJuspayInstance() {
 
   _juspayInstance = new Juspay(config)
 
-  console.log(`[Juspay] Initialized — env=${env}, merchant=${merchantId}, base=${baseUrl}`)
+  console.log(`[Juspay] Initialized — env=${env}, merchant=${merchantId}, base=${finalBaseUrl}`)
   console.log(`[Juspay] Auth mode: ${publicKey && privateKey ? 'JWE/JWS' : 'Basic (apiKey)'}`)
 
   // Warn about common misconfigurations

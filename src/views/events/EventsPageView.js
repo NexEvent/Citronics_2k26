@@ -17,6 +17,7 @@ import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import { motion, AnimatePresence } from 'framer-motion'
 import Icon from 'src/components/Icon'
+import { BackButton } from 'src/components/customComponent'
 import { fetchEvents, fetchDepartments } from 'src/store/slices/eventsSlice'
 import { addToCart, selectCartItems } from 'src/store/slices/cartSlice'
 import { useSession } from 'next-auth/react'
@@ -485,6 +486,9 @@ export default function EventsPageView() {
   return (
     <Box component='section' aria-label='Events' sx={{ pt: { xs: 6, md: 8 } }}>
       <Container maxWidth='xl'>
+
+        {/* Back navigation */}
+        <BackButton href='/' label='Back to Home' sx={{ mb: 3 }} />
 
         {/* Page Header */}
         <MotionBox

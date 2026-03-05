@@ -1,121 +1,245 @@
-﻿import Box from '@mui/material/Box'
+﻿import { useCallback, useEffect, useState } from 'react'
+import Box from '@mui/material/Box'
+import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAppPalette } from 'src/components/palette'
+import Icon from 'src/components/Icon'
 
 const MotionBox = motion(Box)
 
+/* ── Sponsor data with Iconify icon keys ───────────────────────────────── */
+// colorKey maps to a token in useAppPalette() — no hardcoded hex values
 const SPONSORS = [
-  { name: 'JetBrains', tier: 'Platinum' },
-  { name: 'Postman', tier: 'Gold' },
-  { name: 'GitHub', tier: 'Gold' },
-  { name: 'Cloudinary', tier: 'Silver' },
-  { name: 'Vercel', tier: 'Silver' },
-  { name: 'Figma', tier: 'Bronze' },
-  { name: 'AWS', tier: 'Platinum' },
-  { name: 'MongoDB', tier: 'Gold' },
-  { name: 'Notion', tier: 'Bronze' },
-  { name: 'Razorpay', tier: 'Silver' }
+  { name: 'JetBrains',    icon: 'simple-icons:jetbrains',    colorKey: 'error' },
+  { name: 'AWS',          icon: 'simple-icons:amazonaws',    colorKey: 'warning' },
+  { name: 'GitHub',       icon: 'simple-icons:github',       colorKey: 'primary' },
+  { name: 'Postman',      icon: 'simple-icons:postman',      colorKey: 'warning' },
+  { name: 'MongoDB',      icon: 'simple-icons:mongodb',      colorKey: 'success' },
+  { name: 'Vercel',       icon: 'simple-icons:vercel',       colorKey: 'textSecondary' },
+  { name: 'Cloudinary',   icon: 'simple-icons:cloudinary',   colorKey: 'info' },
+  { name: 'Razorpay',     icon: 'simple-icons:razorpay',     colorKey: 'primaryLight' },
+  { name: 'Figma',        icon: 'simple-icons:figma',        colorKey: 'error' },
+  { name: 'Notion',       icon: 'simple-icons:notion',       colorKey: 'textDisabled' },
+  { name: 'Google Cloud', icon: 'simple-icons:googlecloud',  colorKey: 'info' },
+  { name: 'DigitalOcean', icon: 'simple-icons:digitalocean', colorKey: 'primaryDark' }
 ]
 
-export default function SponsorsSection() {
-  const c = useAppPalette()
+/* ── Helpers ───────────────────────────────────────────────────────────── */
+
+function shuffleArray(arr) {
+  const shuffled = [...arr]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
+function distributeLogos(allLogos, columnCount) {
+  const shuffled = shuffleArray(allLogos)
+  const columns = Array.from({ length: columnCount }, () => [])
+  shuffled.forEach((logo, i) => columns[i % columnCount].push(logo))
+  const maxLen = Math.max(...columns.map(col => col.length))
+  columns.forEach(col => {
+    while (col.length < maxLen) {
+      col.push(shuffled[Math.floor(Math.random() * shuffled.length)])
+    }
+  })
+  return columns
+}
+
+/* ── Single animated logo column ───────────────────────────────────────── */
+
+function LogoColumn({ logos, index, currentTime, c }) {
+  const cycleInterval = 2400
+  const columnDelay = index * 250
+  const adjustedTime = (currentTime + columnDelay) % (cycleInterval * logos.length)
+  const currentIndex = Math.floor(adjustedTime / cycleInterval)
+  const sponsor = logos[currentIndex]
 
   return (
     <Box
       sx={{
-        py: { xs: 8, md: 12 },
+        position: 'relative',
+        height: { xs: 90, md: 120 },
+        width: { xs: 90, md: 120 },
         overflow: 'hidden'
       }}
     >
-      {/* Section header */}
-      <MotionBox
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        sx={{ textAlign: 'center', mb: 6 }}
-      >
-        <Typography variant='overline' sx={{ color: c.textSecondary, letterSpacing: 3, fontWeight: 600 }}>
-          PROUDLY SUPPORTED BY
-        </Typography>
-      </MotionBox>
-
-      {/* Infinite scroll marquee */}
-      <Box sx={{ position: 'relative' }}>
-        {/* Left fade */}
-        <Box
+      <AnimatePresence mode='wait'>
+        <MotionBox
+          key={`${sponsor.name}-${currentIndex}`}
+          initial={{ y: '15%', opacity: 0, filter: 'blur(6px)' }}
+          animate={{
+            y: '0%',
+            opacity: 1,
+            filter: 'blur(0px)',
+            transition: { type: 'spring', stiffness: 280, damping: 22, duration: 0.5 }
+          }}
+          exit={{
+            y: '-20%',
+            opacity: 0,
+            filter: 'blur(5px)',
+            transition: { ease: 'easeIn', duration: 0.25 }
+          }}
           sx={{
             position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 120,
-            background: `linear-gradient(90deg, ${c.bgDefaultA90}, transparent)`,
-            zIndex: 1,
-            pointerEvents: 'none'
-          }}
-        />
-        {/* Right fade */}
-        <Box
-          sx={{
-            position: 'absolute',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: 120,
-            background: `linear-gradient(270deg, ${c.bgDefaultA90}, transparent)`,
-            zIndex: 1,
-            pointerEvents: 'none'
-          }}
-        />
-
-        <Box
-          sx={{
+            inset: 0,
             display: 'flex',
-            gap: 6,
-            animation: 'marquee 30s linear infinite',
-            '@keyframes marquee': {
-              '0%': { transform: 'translateX(0)' },
-              '100%': { transform: 'translateX(-50%)' }
-            },
-            '&:hover': { animationPlayState: 'paused' }
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1
           }}
         >
-          {[...SPONSORS, ...SPONSORS].map((sponsor, i) => (
-            <Box
-              key={`${sponsor.name}-${i}`}
+          <Icon
+            icon={sponsor.icon}
+            fontSize={48}
+            style={{ color: c[sponsor.colorKey] }}
+          />
+          <Typography
+            variant='caption'
+            sx={{
+              color: c.textSecondary,
+              fontWeight: 600,
+              fontSize: { xs: '0.6rem', md: '0.72rem' },
+              textAlign: 'center',
+              lineHeight: 1.2,
+              px: 0.5
+            }}
+          >
+            {sponsor.name}
+          </Typography>
+        </MotionBox>
+      </AnimatePresence>
+    </Box>
+  )
+}
+
+/* ── Tier badge row ────────────────────────────────────────────────────── */
+
+// Tiered sponsor grid removed — only animated logo columns are shown now.
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  SponsorsSection — Citronics 2026
+ * ═════════════════════════════════════════════════════════════════════════ */
+
+export default function SponsorsSection() {
+  const c = useAppPalette()
+  const columnCount = 3
+
+  const [logoSets, setLogoSets] = useState([])
+  const [currentTime, setCurrentTime] = useState(0)
+
+  const updateTime = useCallback(() => setCurrentTime(prev => prev + 100), [])
+
+  useEffect(() => {
+    const id = setInterval(updateTime, 100)
+    return () => clearInterval(id)
+  }, [updateTime])
+
+  useEffect(() => {
+    setLogoSets(distributeLogos(SPONSORS, columnCount))
+  }, [columnCount])
+
+  // No tiered grid — keep only the animated columns
+
+  return (
+    <Box
+      component='section'
+      sx={{
+        py: { xs: 8, md: 14 },
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+    >
+      <Container maxWidth='lg'>
+        {/* ── Header ─────────────────────────────────────────────── */}
+        <MotionBox
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          sx={{ textAlign: 'center', mb: { xs: 5, md: 7 } }}
+        >
+          <Typography
+            variant='overline'
+            sx={{
+              color: c.primary,
+              letterSpacing: 4,
+              fontWeight: 700,
+              mb: 1.5,
+              display: 'block'
+            }}
+          >
+            OUR SPONSORS & PARTNERS
+          </Typography>
+          <Typography
+            variant='h3'
+            sx={{
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              color: c.textPrimary,
+              mb: 1.5,
+              fontSize: { xs: '1.75rem', md: '2.5rem' }
+            }}
+          >
+            Powering Citronics 2026
+          </Typography>
+          <Typography
+            variant='body1'
+            sx={{
+              color: c.textSecondary,
+              maxWidth: 520,
+              mx: 'auto',
+              fontSize: { xs: '0.9rem', md: '1rem' },
+              lineHeight: 1.7
+            }}
+          >
+            Industry leaders and innovators who make this tech fest possible.
+            Interested in sponsoring?{' '}
+            <Typography
+              component='a'
+              href='mailto:sponsors@citronics.in'
               sx={{
-                flex: '0 0 auto',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-                px: 3,
-                py: 1.5,
-                borderRadius: '14px',
-                background: c.bgPaperA40,
-                border: `1px solid ${c.dividerA30}`,
-                backdropFilter: 'blur(8px)',
-                cursor: 'default',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  border: `1px solid ${c.primaryA20}`,
-                  background: c.bgPaperA60
-                }
+                color: c.primary,
+                textDecoration: 'none',
+                fontWeight: 600,
+                '&:hover': { textDecoration: 'underline' }
               }}
             >
-              <Typography variant='h6' sx={{ fontWeight: 700, color: c.textPrimary, whiteSpace: 'nowrap' }}>
-                {sponsor.name}
-              </Typography>
-              {sponsor.tier && (
-                <Typography variant='caption' sx={{ color: c.textDisabled, fontWeight: 500, whiteSpace: 'nowrap' }}>
-                  {sponsor.tier}
-                </Typography>
-              )}
-            </Box>
+              Get in touch
+            </Typography>
+          </Typography>
+        </MotionBox>
+
+        {/* ── Animated logo carousel ─────────────────────────────── */}
+        <MotionBox
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: { xs: 1.5, md: 2.5 },
+            mb: { xs: 3, md: 4 }
+          }}
+        >
+          {logoSets.map((logos, index) => (
+            <LogoColumn
+              key={index}
+              logos={logos}
+              index={index}
+              currentTime={currentTime}
+              c={c}
+            />
           ))}
-        </Box>
-      </Box>
+        </MotionBox>
+
+        {/* Tier list intentionally removed — animation only section */}
+      </Container>
     </Box>
   )
 }

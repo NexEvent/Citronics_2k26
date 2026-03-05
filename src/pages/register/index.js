@@ -24,17 +24,7 @@ import Collapse from '@mui/material/Collapse'
 import { useAppPalette } from 'src/components/palette'
 
 // Icons
-import {
-  IconEye,
-  IconEyeOff,
-  IconUser,
-  IconSchool,
-  IconArrowRight,
-  IconArrowLeft,
-  IconCheck,
-  IconUserPlus,
-  IconBrandGoogle
-} from '@tabler/icons-react'
+import Icon from 'src/components/Icon'
 
 // Layout
 import MinimalLayout from 'src/layouts/MinimalLayout'
@@ -207,7 +197,7 @@ const RegisterPage = () => {
                 boxShadow: `0 4px 14px ${c.primaryA30}`
               }}
             >
-              <IconUserPlus size={26} color={c.primaryContrast} />
+              <Icon icon='tabler:user-plus' fontSize={26} color={c.primaryContrast} />
             </Box>
             <Typography variant='h1' sx={{ fontWeight: 700, fontSize: '1.5rem' }}>
               Join {themeConfig.templateName}
@@ -242,7 +232,7 @@ const RegisterPage = () => {
                         color: completed || active ? 'primary.contrastText' : 'text.disabled'
                       }}
                     >
-                      {completed ? <IconCheck size={16} /> : i + 1}
+                      {completed ? <Icon icon='tabler:check' fontSize={16} /> : i + 1}
                     </Box>
                   )}
                 >
@@ -290,7 +280,7 @@ const RegisterPage = () => {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position='start'>
-                          <IconUser size={18} color={c.textDisabled} />
+                          <Icon icon='tabler:user' fontSize={18} color={c.textDisabled} />
                         </InputAdornment>
                       )
                     }}
@@ -336,7 +326,7 @@ const RegisterPage = () => {
                       endAdornment: (
                         <InputAdornment position='end'>
                           <IconButton size='small' onClick={() => setShowPassword(!showPassword)} edge='end' aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                            {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                            {showPassword ? <Icon icon='tabler:eye-off' fontSize={18} /> : <Icon icon='tabler:eye' fontSize={18} />}
                           </IconButton>
                         </InputAdornment>
                       )
@@ -358,7 +348,7 @@ const RegisterPage = () => {
                       endAdornment: (
                         <InputAdornment position='end'>
                           <IconButton size='small' onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge='end' aria-label={showConfirmPassword ? 'Hide password confirmation' : 'Show password confirmation'}>
-                            {showConfirmPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                            {showConfirmPassword ? <Icon icon='tabler:eye-off' fontSize={18} /> : <Icon icon='tabler:eye' fontSize={18} />}
                           </IconButton>
                         </InputAdornment>
                       )
@@ -370,7 +360,7 @@ const RegisterPage = () => {
                     variant='contained'
                     size='large'
                     onClick={handleNext}
-                    endIcon={<IconArrowRight size={18} />}
+                    endIcon={<Icon icon='tabler:arrow-right' fontSize={18} />}
                     sx={{
                       py: 1.4,
                       borderRadius: '12px',
@@ -402,7 +392,7 @@ const RegisterPage = () => {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position='start'>
-                          <IconSchool size={18} color={c.textDisabled} />
+                          <Icon icon='tabler:school' fontSize={18} color={c.textDisabled} />
                         </InputAdornment>
                       )
                     }}
@@ -447,7 +437,7 @@ const RegisterPage = () => {
                       variant='outlined'
                       size='large'
                       onClick={handleBack}
-                      startIcon={<IconArrowLeft size={18} />}
+                      startIcon={<Icon icon='tabler:arrow-left' fontSize={18} />}
                       disabled={loading}
                       sx={{
                         py: 1.4,
@@ -465,7 +455,7 @@ const RegisterPage = () => {
                       variant='contained'
                       size='large'
                       disabled={loading || success}
-                      endIcon={loading ? null : <IconCheck size={18} />}
+                      endIcon={loading ? null : <Icon icon='tabler:check' fontSize={18} />}
                       sx={{
                         py: 1.4,
                         borderRadius: '12px',
@@ -496,7 +486,7 @@ const RegisterPage = () => {
             size='large'
             disabled={loading || success}
             onClick={() => signIn('google', { callbackUrl: '/' })}
-            startIcon={<IconBrandGoogle size={20} />}
+            startIcon={<Icon icon='tabler:brand-google' fontSize={20} />}
             sx={{
               py: 1.3,
               borderRadius: '12px',

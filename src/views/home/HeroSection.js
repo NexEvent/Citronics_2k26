@@ -527,7 +527,7 @@ export default function HeroSection() {
             <Button
               variant='outlined'
               size='large'
-              href='/about'
+              href='/about/about'
               startIcon={<Icon icon='tabler:info-circle' />}
               sx={{
                 px: 4,

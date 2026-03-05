@@ -36,7 +36,7 @@ import Fab from '@mui/material/Fab'
 import CircularProgress from '@mui/material/CircularProgress'
 import { alpha, useTheme, keyframes } from '@mui/material/styles'
 import { AnimatePresence, motion } from 'framer-motion'
-import { IconMicrophone, IconMicrophoneOff, IconX } from '@tabler/icons-react'
+import Icon from 'src/components/Icon'
 
 // ── Quick-action suggestion chips ────────────────────────────────────────────
 // Shown as tappable capsules in the hero (empty) state.
@@ -319,7 +319,7 @@ const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClo
                       bgcolor: alpha(theme.palette.primary.main, 0.12)
                     }
                   }}>
-                  <IconX size={13} />
+                  <Icon icon='tabler:x' fontSize={13} />
                 </IconButton>
               </Box>
             </Box>
@@ -393,8 +393,8 @@ const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClo
                         {isProcessing
                           ? <CircularProgress size={24} color='inherit' />
                           : isListening
-                          ? <IconMicrophone size={26} />
-                          : <IconMicrophoneOff size={26} />}
+                          ? <Icon icon='tabler:microphone' fontSize={26} />
+                          : <Icon icon='tabler:microphone-off' fontSize={26} />}
                       </Fab>
                     </Box>
 
@@ -509,8 +509,8 @@ const CitroBotPanel = ({ isOpen, isListening, isProcessing, messages = [], onClo
                       {isProcessing
                         ? <CircularProgress size={18} color='inherit' />
                         : isListening
-                        ? <IconMicrophone size={19} />
-                        : <IconMicrophoneOff size={19} />}
+                        ? <Icon icon='tabler:microphone' fontSize={19} />
+                        : <Icon icon='tabler:microphone-off' fontSize={19} />}
                     </Fab>
 
                     <Box sx={{ flex: 1 }}>

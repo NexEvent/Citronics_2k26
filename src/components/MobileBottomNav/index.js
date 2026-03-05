@@ -6,23 +6,18 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { useRouter } from 'next/router'
 import { useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
-import {
-  IconHome,
-  IconCalendarEvent,
-  IconShoppingCart,
-  IconLogin,
-  IconLayoutDashboard
-} from '@tabler/icons-react'
+import Icon from 'src/components/Icon'
 import { selectCartEventCount } from 'src/store/slices/cartSlice'
 import { useAppPalette } from 'src/components/palette'
 
 /* ── Navigation items ──────────────────────────────────────────────────── */
 const NAV_ITEMS = [
-  { label: 'Home', href: '/', icon: IconHome, matchExact: true },
-  { label: 'Events', href: '/events', icon: IconCalendarEvent },
-  { label: 'Cart', href: '/cart', icon: IconShoppingCart, showBadge: true },
-  { label: 'Login', href: '/login', icon: IconLogin, guestOnly: true },
-  { label: 'Dashboard', href: '/dashboard', icon: IconLayoutDashboard, authOnly: true }
+  { label: 'Home', href: '/', icon: 'tabler:home', matchExact: true },
+  { label: 'Events', href: '/events', icon: 'tabler:calendar-event' },
+  { label: 'About', href: '/about/about', icon: 'tabler:info-circle' },
+  { label: 'Cart', href: '/cart', icon: 'tabler:shopping-cart', showBadge: true },
+  { label: 'Login', href: '/login', icon: 'tabler:login', guestOnly: true },
+  { label: 'Dashboard', href: '/dashboard', icon: 'tabler:layout-dashboard', authOnly: true }
 ]
 
 /**
@@ -99,7 +94,6 @@ const MobileBottomNav = () => {
     >
       {items.map(item => {
         const active = isActive(item.href, item.matchExact, item.isAnchor)
-        const IconComp = item.icon
 
         return (
           <Box
@@ -148,9 +142,9 @@ const MobileBottomNav = () => {
           >
             {/* Icon with optional badge */}
             <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconComp
-                size={22}
-                stroke={active ? 2.2 : 1.6}
+              <Icon
+                icon={item.icon}
+                fontSize={22}
                 color={active ? c.primary : c.isDark ? alpha(c.white, 0.55) : alpha(c.black, 0.45)}
               />
               {/* Cart badge */}

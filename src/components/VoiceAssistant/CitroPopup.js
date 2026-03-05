@@ -13,7 +13,7 @@ import Fab from '@mui/material/Fab'
 import CircularProgress from '@mui/material/CircularProgress'
 import { alpha, useTheme, keyframes } from '@mui/material/styles'
 import { AnimatePresence, motion } from 'framer-motion'
-import { IconMicrophone, IconMicrophoneOff, IconX } from '@tabler/icons-react'
+import Icon from 'src/components/Icon'
 
 // ── Rotating hint phrases ─────────────────────────────────────────────────────
 const FEATURES = [
@@ -136,7 +136,7 @@ const CitroPopup = ({ isOpen, isListening, isProcessing, messages = [], onClose,
                 </Box>
               </Box>
               <IconButton size='small' onClick={onClose} sx={{ p: 0.35 }}>
-                <IconX size={14} />
+                <Icon icon='tabler:x' fontSize={14} />
               </IconButton>
             </Box>
 
@@ -213,8 +213,8 @@ const CitroPopup = ({ isOpen, isListening, isProcessing, messages = [], onClose,
                 {isProcessing
                   ? <CircularProgress size={22} color='inherit' />
                   : isListening
-                  ? <IconMicrophone size={22} />
-                  : <IconMicrophoneOff size={22} />}
+                  ? <Icon icon='tabler:microphone' fontSize={22} />
+                  : <Icon icon='tabler:microphone-off' fontSize={22} />}
               </Fab>
 
               {/* Status label */}

@@ -20,7 +20,7 @@ import Slide from '@mui/material/Slide'
 import Fade from '@mui/material/Fade'
 import Chip from '@mui/material/Chip'
 import { alpha, useTheme, keyframes } from '@mui/material/styles'
-import { IconX, IconMessageCircle } from '@tabler/icons-react'
+import Icon from 'src/components/Icon'
 
 // ── Typing dots animation ─────────────────────────────────────────────────────
 const bounce = keyframes`
@@ -98,7 +98,7 @@ const SubtitlePanel = ({ isOpen, isProcessing, messages, onClose }) => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconMessageCircle size={18} color={theme.palette.primary.main} />
+            <Icon icon='tabler:message-circle' fontSize={18} color={theme.palette.primary.main} />
             <Typography variant='subtitle2' fontWeight={600} color='primary'>
               Citro
             </Typography>
@@ -111,7 +111,7 @@ const SubtitlePanel = ({ isOpen, isProcessing, messages, onClose }) => {
             />
           </Box>
           <IconButton size='small' onClick={onClose} aria-label='Close Citro panel'>
-            <IconX size={16} />
+            <Icon icon='tabler:x' fontSize={16} />
           </IconButton>
         </Box>
 

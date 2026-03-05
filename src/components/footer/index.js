@@ -13,21 +13,23 @@ import themeConfig from 'src/configs/themeConfig'
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const LINK_COLUMN_1 = [
-  { label: 'Contact Us', href: '/contact' },
-  { label: 'Ticketing Terms & Conditions', href: '/terms-ticketing' },
-  { label: 'Privacy Policy', href: '/privacy' }
+  { label: 'Contact Us', href: '#' },
+  { label: 'Ticketing Terms & Conditions', href: '#' },
+  { label: 'Privacy Policy', href: '#' }
 ]
 
 const LINK_COLUMN_2 = [
-  { label: 'Social Media Disclaimer', href: '/social-disclaimer' },
-  { label: 'Terms of Use', href: '/terms' },
-  { label: 'Accessibility Statement', href: '/accessibility' }
+ { label: 'Core Team', href: '/team/team' },
+  { label: 'Gallery', href: '/gallery/gallery' },
+  { label: 'Terms of Use', href: '#' },
+
+
 ]
 
 const SOCIAL_LINKS = [
-  { icon: 'tabler:brand-facebook', href: '#', label: 'Facebook', tooltip: 'Facebook' },
-  { icon: 'tabler:brand-x', href: '#', label: 'X (Twitter)', tooltip: 'X (Twitter)' },
-  { icon: 'tabler:brand-instagram', href: '#', label: 'Instagram', tooltip: 'Instagram' },
+  { icon: 'tabler:brand-facebook', href: 'https://www.facebook.com/socialcdgi', label: 'Facebook', tooltip: 'Facebook' },
+ 
+  { icon: 'tabler:brand-instagram', href: 'https://www.instagram.com/cdgi_citronics/', label: 'Instagram', tooltip: 'Instagram' },
   {
     icon: 'tabler:brand-github',
     href: 'https://github.com/NexEvent/Citronics_2k26',

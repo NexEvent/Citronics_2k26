@@ -13,6 +13,7 @@ import Tab from '@mui/material/Tab'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import Icon from 'src/components/Icon'
+import { BackButton } from 'src/components/customComponent'
 import PublicNavbar from 'src/views/home/PublicNavbar'
 import PublicFooter from 'src/views/home/PublicFooter'
 import axios from 'axios'
@@ -294,6 +295,9 @@ function MyTicketsView() {
 
   return (
     <Container maxWidth='md' sx={{ py: { xs: 4, md: 8 } }}>
+      {/* Back navigation */}
+      <BackButton href='/' label='Back to Home' sx={{ mb: 3 }} />
+
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
         <Box>

@@ -388,17 +388,7 @@ export default function StatsSection() {
             <DepartmentsVisual />
           </BentoCard>
 
-          {/* Card 3 — Workshops (tall 2×2) */}
-          <BentoCard
-            index={2}
-            gridColumn={{ xs: '1', md: 'span 2' }}
-            gridRow={{ xs: 'auto', md: 'span 2' }}
-            title='Workshops'
-            description='Hands-on learning sessions with industry professionals and cutting-edge tech.'
-            icon='tabler:tools'
-          >
-            <WorkshopsVisual />
-          </BentoCard>
+       
 
           {/* Card 4 — Participants (standard 2×1) */}
           <BentoCard

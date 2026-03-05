@@ -16,7 +16,6 @@ import Collapse from '@mui/material/Collapse'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { Classic } from '@theme-toggles/react'
 import '@theme-toggles/react/css/Classic.css'
-import { IconMenu2, IconX, IconBell, IconShoppingCart } from '@tabler/icons-react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
@@ -279,7 +278,7 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
                     '&:hover': { color: c.white, bgcolor: c.whiteA10 }
                   }}
                 >
-                  <IconBell size={24} />
+                  <Icon icon='tabler:bell' fontSize={24} />
                 </IconButton>
               </Tooltip>
 
@@ -296,7 +295,7 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
                     '&:hover': { color: c.white, bgcolor: c.whiteA10 }
                   }}
                 >
-                  <IconShoppingCart size={24} />
+                  <Icon icon='tabler:shopping-cart' fontSize={24} />
                   {cartEventCount > 0 && (
                     <Box
                       component='span'
@@ -434,7 +433,7 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
                   }}
                   aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 >
-                  {mobileMenuOpen ? <IconX size={20} /> : <IconMenu2 size={20} />}
+                  {mobileMenuOpen ? <Icon icon='tabler:x' fontSize={20} /> : <Icon icon='tabler:menu-2' fontSize={20} />}
                 </IconButton>
               )}
             </Box>
@@ -498,7 +497,7 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
               {themeConfig.templateName?.toUpperCase() || 'CITRONICS'}
             </Typography>
             <IconButton size='small' onClick={() => setDrawerOpen(false)} aria-label='Close drawer' sx={{ color: glass.textDimmer }}>
-              <IconX size={18} />
+              <Icon icon='tabler:x' fontSize={18} />
             </IconButton>
           </Box>
           <Divider sx={{ borderColor: c.whiteA10, mb: 1 }} />

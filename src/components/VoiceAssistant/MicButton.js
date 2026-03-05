@@ -14,7 +14,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Zoom from '@mui/material/Zoom'
 import Box from '@mui/material/Box'
 import { alpha, useTheme, keyframes } from '@mui/material/styles'
-import { IconMicrophone, IconMicrophoneOff } from '@tabler/icons-react'
+import Icon from 'src/components/Icon'
 
 // ── Pulse animation for the listening ring ────────────────────────────────────
 const pulseRing = keyframes`
@@ -141,9 +141,9 @@ const MicButton = forwardRef(({ isListening, isProcessing, onClick, disabled = f
             {isProcessing ? (
               <CircularProgress size={24} color='inherit' />
             ) : isListening ? (
-              <IconMicrophone size={24} />
+              <Icon icon='tabler:microphone' fontSize={24} />
             ) : (
-              <IconMicrophoneOff size={24} />
+              <Icon icon='tabler:microphone-off' fontSize={24} />
             )}
           </Fab>
         </span>

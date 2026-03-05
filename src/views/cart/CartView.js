@@ -12,6 +12,7 @@ import Skeleton from '@mui/material/Skeleton'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import Icon from 'src/components/Icon'
+import { BackButton } from 'src/components/customComponent'
 import { store } from 'src/store'
 import {
   selectCartItems,
@@ -236,11 +237,7 @@ function CartItem({ item, accent }) {
               onIncrease={() => dispatch(updateQuantity({ eventId: item.eventId, quantity: item.quantity + 1 }))}
               accent={accent}
             />
-            {typeof item.maxAvailable === 'number' && (
-              <Typography variant='caption' sx={{ color: item.quantity >= item.maxAvailable ? c.error : c.textDisabled, fontWeight: 600 }}>
-                {item.maxAvailable <= 0 ? 'Sold out' : `${item.maxAvailable} available`}
-              </Typography>
-            )}
+            {/* availability label removed per UX request */}
           </Box>
           <Typography
             sx={{
@@ -354,6 +351,9 @@ export default function CartView() {
 
   return (
     <Container maxWidth='lg' sx={{ py: { xs: 4, md: 8 } }}>
+      {/* Back navigation */}
+      <BackButton href='/events' label='Back to Events' sx={{ mb: 2 }} />
+
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: { xs: 3, md: 5 } }}>
         <Box>

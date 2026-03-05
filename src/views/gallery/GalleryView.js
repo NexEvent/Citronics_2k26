@@ -71,6 +71,9 @@ function Lightbox({ image, onClose }) {
 
   return (
     <MotionBox
+      role='dialog'
+      aria-modal='true'
+      aria-label={image.title}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -124,6 +127,8 @@ function Lightbox({ image, onClose }) {
 
         {/* Close button */}
         <Box
+          component='button'
+          aria-label='Close lightbox'
           onClick={onClose}
           sx={{
             position: 'absolute',
@@ -133,12 +138,14 @@ function Lightbox({ image, onClose }) {
             height: 36,
             borderRadius: '50%',
             bgcolor: alpha(c.white, 0.15),
+            border: 'none',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            '&:hover': { bgcolor: alpha(c.white, 0.25) }
+            '&:hover': { bgcolor: alpha(c.white, 0.25) },
+            '&:focus-visible': { outline: `2px solid ${c.white}`, outlineOffset: 2 }
           }}
         >
           <Icon icon='tabler:x' fontSize={18} style={{ color: c.white }} />
@@ -158,11 +165,15 @@ function GalleryCard({ image, index, onClick }) {
   return (
     <MotionBox
       layout
+      tabIndex={0}
+      role='button'
+      aria-label={`View ${image.title}`}
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.92 }}
       transition={{ duration: 0.4, delay: index * 0.03, ease: [0.22, 1, 0.36, 1] }}
       onClick={() => onClick(image)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(image) } }}
       sx={{
         position: 'relative',
         borderRadius: '16px',
@@ -170,6 +181,7 @@ function GalleryCard({ image, index, onClick }) {
         cursor: 'zoom-in',
         breakInside: 'avoid',
         mb: 2,
+        '&:focus-visible': { outline: `2px solid ${c.primary}`, outlineOffset: 2 },
         '&:hover .gallery-overlay': { opacity: 1 },
         '&:hover img': { transform: 'scale(1.05)' }
       }}

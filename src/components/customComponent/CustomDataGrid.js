@@ -229,25 +229,36 @@ const CustomDataGrid = ({
   }, [filteredRows, sortField, sortDir, paginationMode])
 
   const totalRows = paginationMode === 'server' ? (rowCount || rows.length) : sortedRows.length
-  const totalPages = Math.ceil(totalRows / paginationModel.pageSize)
+  const totalPages = Math.max(1, Math.ceil(totalRows / paginationModel.pageSize))
+
+  // Clamp page when filtering narrows results
+  const safePage = Math.min(paginationModel.page, Math.max(0, totalPages - 1))
+  if (safePage !== paginationModel.page && paginationMode !== 'server') {
+    onPaginationModelChange?.({ ...paginationModel, page: safePage })
+  }
+
   const pagedRows = paginationMode === 'server'
     ? sortedRows
     : sortedRows.slice(
-        paginationModel.page * paginationModel.pageSize,
-        (paginationModel.page + 1) * paginationModel.pageSize
+        safePage * paginationModel.pageSize,
+        (safePage + 1) * paginationModel.pageSize
       )
 
   /* ── Mobile View ── */
   if (isMobile) {
-    const mobilePage = Math.ceil(filteredRows.length / paginationModel.pageSize)
-    const mobilePagedRows = filteredRows.slice(
-      paginationModel.page * paginationModel.pageSize,
-      (paginationModel.page + 1) * paginationModel.pageSize
-    )
+    const mobileTotal = paginationMode === 'server' ? (rowCount || rows.length) : filteredRows.length
+    const mobileTotalPages = Math.max(1, Math.ceil(mobileTotal / paginationModel.pageSize))
+    const mobileSafePage = Math.min(paginationModel.page, Math.max(0, mobileTotalPages - 1))
+    const mobilePagedRows = paginationMode === 'server'
+      ? filteredRows
+      : filteredRows.slice(
+          mobileSafePage * paginationModel.pageSize,
+          (mobileSafePage + 1) * paginationModel.pageSize
+        )
 
     return (
       <Box>
-        {showToolbar && <MobileSearchBar value={search} onChange={setSearch} />}
+        {showToolbar && paginationMode !== 'server' && <MobileSearchBar value={search} onChange={setSearch} />}
         <Box sx={{ px: 2, pb: 2 }}>
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => (
@@ -277,7 +288,7 @@ const CustomDataGrid = ({
           {!loading && mobilePagedRows.length > 0 && (
             <Stack spacing={1.5} alignItems='center' sx={{ mt: 2 }}>
               <Pagination
-                count={mobilePage}
+                count={mobileTotalPages}
                 page={paginationModel.page + 1}
                 onChange={(_, p) => onPaginationModelChange?.({ ...paginationModel, page: p - 1 })}
                 color='primary'
@@ -311,7 +322,7 @@ const CustomDataGrid = ({
   /* ── Desktop View ── */
   return (
     <Box sx={sx}>
-      {showToolbar && <TableToolbar search={search} onSearch={setSearch} />}
+      {showToolbar && paginationMode !== 'server' && <TableToolbar search={search} onSearch={setSearch} />}
       <TableContainer>
         <Table size='medium' sx={{ '& td, & th': { fontSize: '0.875rem' } }}>
           <TableHead>
@@ -337,7 +348,7 @@ const CustomDataGrid = ({
                     borderBottom: `1px solid ${theme.palette.divider}`
                   }}
                 >
-                  {col.sortable !== false && col.field !== 'actions' ? (
+                  {col.sortable !== false && col.field !== 'actions' && paginationMode !== 'server' ? (
                     <TableSortLabel
                       active={sortField === col.field}
                       direction={sortField === col.field ? sortDir : 'asc'}

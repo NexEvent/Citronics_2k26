@@ -39,7 +39,7 @@ function shuffleArray(arr) {
 function distributeLogos(allLogos, columnCount) {
   const shuffled = shuffleArray(allLogos)
   const columns = Array.from({ length: columnCount }, () => [])
-  shuffled.forEach((logo, i) => columns[i % columnCount].push(logo))
+  shuffled.forEach((logo, i) => { columns[i % columnCount].push(logo) })
   const maxLen = Math.max(...columns.map(col => col.length))
   columns.forEach(col => {
     while (col.length < maxLen) {

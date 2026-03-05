@@ -16,9 +16,9 @@ export default function BackButton({ href = '/', label = 'Back', onBeforeNavigat
   const router = useRouter()
   const c = useAppPalette()
 
-  const handleClick = () => {
-    if (onBeforeNavigate) onBeforeNavigate()
-    router.push(href)
+  const handleClick = async () => {
+    if (onBeforeNavigate) await Promise.resolve(onBeforeNavigate())
+    await router.push(href)
   }
 
   return (

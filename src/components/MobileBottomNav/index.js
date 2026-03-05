@@ -14,7 +14,7 @@ import { useAppPalette } from 'src/components/palette'
 const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: 'tabler:home', matchExact: true },
   { label: 'Events', href: '/events', icon: 'tabler:calendar-event' },
-  { label: 'About', href: '/about/about', icon: 'tabler:info-circle' },
+  { label: 'About', href: '/about', icon: 'tabler:info-circle' },
   { label: 'Cart', href: '/cart', icon: 'tabler:shopping-cart', showBadge: true },
   { label: 'Login', href: '/login', icon: 'tabler:login', guestOnly: true },
   { label: 'Dashboard', href: '/dashboard', icon: 'tabler:layout-dashboard', authOnly: true }

@@ -3,16 +3,14 @@ import { AbilityBuilder, Ability } from '@casl/ability'
 export const AppAbility = Ability
 
 /**
- * Citronics — four roles:
+ * Citronics — two admin roles + student:
  *
- *  Owner   — superadmin; manages everything including user management (Admins & Heads)
- *  Admin   — site maintainer; manages all events, transactions, analytics, categories
- *  Head    — event organiser assigned to one or more events; limited to their own events
+ *  Owner   — superadmin; full CRUD on everything, can manage users
+ *  Admin   — read-only access to dashboard, events, payments, analytics (NO users page)
  *  Student — end-user / ticket buyer; books tickets & views own registrations
  *
- * @param {'Owner'|'Admin'|'Head'|'Student'} role
- * @param {object} [meta]               Extra data encoded in the JWT
- * @param {number[]} [meta.eventIds]    Event IDs the Head is assigned to
+ * @param {'Owner'|'Admin'|'Student'} role
+ * @param {object} [meta]
  */
 const defineRulesFor = (role, meta = {}) => {
   const { can, cannot, rules } = new AbilityBuilder(AppAbility)
@@ -25,45 +23,28 @@ const defineRulesFor = (role, meta = {}) => {
 
     // ── Admin ─────────────────────────────────────────────────────────────────
     case 'Admin':
-      can('manage', 'all') // same operational power as Owner…
-      cannot('manage', 'owner-settings') // …except Owner-level system settings
-      cannot('delete', 'user', { role: 'Owner' }) // cannot remove Owner accounts
-      break
-
-    // ── Head ──────────────────────────────────────────────────────────────────
-    case 'Head': {
-      const eventIds = meta?.eventIds ?? []
       can('read', 'dashboard')
+      can('read', 'event')
+      can('read', 'analytics')
+      can('read', 'payment')
       can('read', 'profile')
       can('update', 'profile')
-
-      // Their assigned events only
-      can('read', 'event', { id: { $in: eventIds } })
-      can('update', 'event', { id: { $in: eventIds } }) // basic details
-
-      // Read-only view of registrations for their events
-      can('read', 'registration', { eventId: { $in: eventIds } })
-
-      // Can view attendee list for their events
-      can('read', 'attendee', { eventId: { $in: eventIds } })
+      // Admin CANNOT create/update/delete events, users, etc.
       break
-    }
 
     // ── Student ───────────────────────────────────────────────────────────────
     case 'Student':
       can('read', 'dashboard')
       can('read', 'profile')
       can('update', 'profile')
-
-      can('read', 'event') // browse all published events
-      can('create', 'registration') // book a ticket
-      can('read', 'registration', { userId: meta?.userId }) // own bookings only
-      can('update', 'registration', { userId: meta?.userId }) // e.g. cancel
-      can('read', 'ticket', { userId: meta?.userId }) // own tickets
+      can('read', 'event')
+      can('create', 'registration')
+      can('read', 'registration', { userId: meta?.userId })
+      can('update', 'registration', { userId: meta?.userId })
+      can('read', 'ticket', { userId: meta?.userId })
       break
 
     default:
-      // Unauthenticated / unknown role — read public events only
       can('read', 'event')
       break
   }
@@ -73,19 +54,49 @@ const defineRulesFor = (role, meta = {}) => {
 
 /**
  * Build a CASL Ability instance for a session user.
- * @param {'Owner'|'Admin'|'Head'|'Student'} role
- * @param {object} [meta]  Extra JWT payload (eventIds for Head, userId for Student)
+ * @param {'Owner'|'Admin'|'Student'} role
+ * @param {object} [meta]
  */
 export const buildAbilityFor = (role, meta = {}) =>
   new AppAbility(defineRulesFor(role, meta), {
     detectSubjectType: obj => obj?.type
   })
 
+// ── Helper functions used across the app ──────────────────────────────────
+
+/**
+ * Check if role is an admin-level role (can access /admin portal)
+ * @param {string} role
+ * @returns {boolean}
+ */
+export const isAdminRole = (role) => {
+  const r = role?.toLowerCase?.() ?? ''
+
+  return r === 'owner' || r === 'admin'
+}
+
+/**
+ * Check if role is Owner (full CRUD)
+ * @param {string} role
+ * @returns {boolean}
+ */
+export const isOwner = (role) => {
+  const r = role?.toLowerCase?.() ?? ''
+
+  return r === 'owner'
+}
+
+/**
+ * Check if role can modify (create/update/delete) — only Owner
+ * @param {string} role
+ * @returns {boolean}
+ */
+export const canModify = (role) => isOwner(role)
+
 /**
  * Lowercase role slugs that grant elevated (cross-user) access in API routes.
- * Import this instead of defining a local array in every route handler.
  */
-export const ELEVATED_ROLES = ['admin', 'organizer', 'owner', 'head']
+export const ELEVATED_ROLES = ['admin', 'owner']
 
 /** Default ACL used by AclGuard for pages that declare no explicit acl obj */
 export const defaultACLObj = {

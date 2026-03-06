@@ -12,7 +12,7 @@ import Skeleton from '@mui/material/Skeleton'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import Icon from 'src/components/Icon'
-import { BackButton } from 'src/components/customComponent'
+import BackButton from 'src/components/customComponent/BackButton'
 import { store } from 'src/store'
 import {
   selectCartItems,

@@ -6,6 +6,7 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import PublicNavbar from 'src/views/home/PublicNavbar'
 import HeroSection from 'src/views/home/HeroSection'
+import { HomeSEO } from 'src/components/SEO'
 //import AboutSection from 'src/views/home/AboutSection'
 
 import StatsSection from 'src/views/home/StatsSection'
@@ -58,6 +59,7 @@ const Home = () => {
 
   return (
     <Box sx={{ overflowX: 'hidden', pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 } }}>
+      <HomeSEO />
       <PublicNavbar />
       <HeroSection />
      

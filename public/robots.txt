@@ -1,0 +1,30 @@
+# robots.txt — Citronics 2026 (cdgicitronics.in)
+# Generated for optimal Google / Bing / Edge crawling
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /events
+Allow: /events/
+Allow: /gallery
+Allow: /team
+Allow: /register
+
+# Exclude auth, transactional, and private pages from indexation
+Disallow: /login
+Disallow: /cart
+Disallow: /checkout
+Disallow: /dashboard
+Disallow: /tickets
+Disallow: /api/
+Disallow: /401
+Disallow: /404
+Disallow: /500
+Disallow: /_next/
+
+# Exclude admin routes
+Disallow: /admin
+Disallow: /admin/
+
+# Sitemap location
+Sitemap: https://cdgicitronics.in/sitemap.xml

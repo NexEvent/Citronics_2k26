@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     if (!owner) {
       return res.status(404).json({ success: false, message: 'Payment not found' })
     }
-    if (owner.userId !== parseInt(session.user.id, 10)) {
+    if (String(owner.userId) !== String(session.user.id)) {
       console.warn(`[POST /api/payment/verify] User ${session.user.id} tried to verify order owned by ${owner.userId}`)
       return res.status(403).json({ success: false, message: 'You do not have access to this payment' })
     }

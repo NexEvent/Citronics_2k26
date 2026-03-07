@@ -129,7 +129,7 @@ const paymentService = {
       }
 
       const grandTotalFinal = parseFloat(total.toFixed(2))
-      const orderId = `CIT-${Date.now()}-${crypto.randomBytes(12).toString('hex').toUpperCase()}`
+      const orderId = `CIT-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`
       const idempKey = uuidv4()
 
       // Create payment record linked to the FIRST booking (primary)

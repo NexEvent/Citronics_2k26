@@ -18,10 +18,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ── Authentication (soft) ───────────────────────────────────────────
+    // ── Authentication ─────────────────────────────────────────────────
     const session = await getServerSession(req, res, nextAuthConfig)
     if (!session?.user?.id) {
-      console.warn('[GET /api/payment/status] No session — proceeding with orderId auth')
+      return res.status(401).json({ success: false, message: 'Authentication required' })
     }
 
     const { orderId } = req.query
@@ -30,7 +30,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'orderId query param is required' })
     }
 
-    const status = await paymentService.getPaymentStatus(orderId)
+    // SECURITY: Sanitize orderId
+    const sanitizedOrderId = orderId.replace(/[^a-zA-Z0-9\-_]/g, '')
+    if (sanitizedOrderId !== orderId || orderId.length > 80) {
+      return res.status(400).json({ success: false, message: 'Invalid orderId format' })
+    }
+
+    // SECURITY: Verify the payment belongs to the authenticated user
+    const owner = await paymentService.getPaymentOwner(sanitizedOrderId)
+    if (!owner) {
+      return res.status(404).json({ success: false, message: 'Payment not found' })
+    }
+    if (owner.userId !== parseInt(session.user.id, 10)) {
+      return res.status(403).json({ success: false, message: 'You do not have access to this payment' })
+    }
+
+    const status = await paymentService.getPaymentStatus(sanitizedOrderId)
 
     if (!status) {
       return res.status(404).json({ success: false, message: 'Payment not found' })

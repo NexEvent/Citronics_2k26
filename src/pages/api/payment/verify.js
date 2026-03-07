@@ -1,6 +1,9 @@
 import { getServerSession } from 'next-auth/next'
 import nextAuthConfig from 'src/lib/nextAuthConfig'
 import paymentService from 'src/services/payment-service'
+import rateLimit from 'src/lib/rateLimit'
+
+const limiter = rateLimit({ windowMs: 60_000, max: 10 })
 
 /**
  * POST /api/payment/verify
@@ -21,13 +24,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ── Authentication (soft) ───────────────────────────────────────────
-    // orderId is an unguessable CIT-{timestamp}-{random} token, so it's
-    // already a form of authentication. Session is checked but not required
-    // to avoid blocking payment verification after redirect.
+    // ── Rate limiting ────────────────────────────────────────────────
+    const { ok } = limiter.check(req)
+    if (!ok) {
+      return res.status(429).json({ success: false, message: 'Too many requests. Please wait a moment.' })
+    }
+
+    // ── Authentication ─────────────────────────────────────────────────
     const session = await getServerSession(req, res, nextAuthConfig)
     if (!session?.user?.id) {
-      console.warn('[POST /api/payment/verify] No session — proceeding with orderId auth')
+      return res.status(401).json({ success: false, message: 'Authentication required' })
     }
 
     const { orderId } = req.body
@@ -36,10 +42,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'orderId is required' })
     }
 
-    // SECURITY: Validate orderId format (CIT-{timestamp}-{alphanumeric})
+    // SECURITY: Validate orderId format (CIT-{timestamp}-{hex})
     const sanitizedOrderId = orderId.replace(/[^a-zA-Z0-9\-_]/g, '')
-    if (sanitizedOrderId !== orderId || orderId.length > 50) {
+    if (sanitizedOrderId !== orderId || orderId.length > 80) {
       return res.status(400).json({ success: false, message: 'Invalid orderId format' })
+    }
+
+    // SECURITY: Verify the payment belongs to the authenticated user
+    const owner = await paymentService.getPaymentOwner(sanitizedOrderId)
+    if (!owner) {
+      return res.status(404).json({ success: false, message: 'Payment not found' })
+    }
+    if (owner.userId !== parseInt(session.user.id, 10)) {
+      console.warn(`[POST /api/payment/verify] User ${session.user.id} tried to verify order owned by ${owner.userId}`)
+      return res.status(403).json({ success: false, message: 'You do not have access to this payment' })
     }
 
     // Verify payment directly with Juspay and process accordingly

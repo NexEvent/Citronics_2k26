@@ -13,7 +13,8 @@ import paymentService from 'src/services/payment-service'
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.setHeader('Allow', ['GET', 'POST'])
-    return res.status(405).json({ success: false, message: 'Method not allowed' })
+    res.status(405).json({ success: false, message: 'Method not allowed' })
+    return
   }
 
   try {
@@ -21,14 +22,16 @@ export default async function handler(req, res) {
     const rawOrderId = req.query?.order_id || req.query?.orderId || req.body?.order_id || req.body?.orderId
 
     if (!rawOrderId) {
-      return res.redirect(302, '/checkout?payment=error&reason=missing_order')
+      res.redirect(302, '/checkout?payment=error&reason=missing_order')
+      return
     }
 
     // SECURITY: Sanitize orderId to prevent header injection / XSS in redirect
     // Our order IDs follow pattern: CIT-{timestamp}-{alphanumeric}
     const orderId = String(rawOrderId).replace(/[^a-zA-Z0-9\-_]/g, '')
-    if (!orderId || orderId.length > 50) {
-      return res.redirect(302, '/checkout?payment=error&reason=invalid_order')
+    if (!orderId || orderId.length > 80) {
+      res.redirect(302, '/checkout?payment=error&reason=invalid_order')
+      return
     }
 
     // Verify payment with Juspay (server-side — the source of truth)
@@ -36,22 +39,23 @@ export default async function handler(req, res) {
 
     switch (result.status) {
       case 'success':
-        // Payment confirmed — redirect to success page with order ID
-        return res.redirect(302, `/checkout/payment-status?orderId=${orderId}&status=success`)
+        res.redirect(302, `/checkout/payment-status?orderId=${orderId}&status=success`)
+        return
 
       case 'pending':
-        // Still processing — redirect to pending page
-        return res.redirect(302, `/checkout/payment-status?orderId=${orderId}&status=pending`)
+        res.redirect(302, `/checkout/payment-status?orderId=${orderId}&status=pending`)
+        return
 
       case 'failed':
-        // Payment failed — redirect with failure
-        return res.redirect(302, `/checkout/payment-status?orderId=${orderId}&status=failed`)
+        res.redirect(302, `/checkout/payment-status?orderId=${orderId}&status=failed`)
+        return
 
       default:
-        return res.redirect(302, `/checkout/payment-status?orderId=${orderId}&status=unknown`)
+        res.redirect(302, `/checkout/payment-status?orderId=${orderId}&status=unknown`)
+        return
     }
   } catch (error) {
     console.error('[GET /api/payment/callback]', error)
-    return res.redirect(302, '/checkout?payment=error&reason=verification_failed')
+    res.redirect(302, '/checkout?payment=error&reason=verification_failed')
   }
 }

@@ -1,118 +1,182 @@
 /**
- * Juspay (HDFC SmartGateway) SDK Initialization — Citronics
+ * HDFC SmartGateway — Direct HTTPS Integration (No SDK)
  *
- * Singleton instance of the expresscheckout-nodejs SDK.
- * Uses JWE/JWS authentication with RSA keys.
+ * Replaces the expresscheckout-nodejs SDK with direct HTTPS calls,
+ * matching the PaymentHandler approach from previous year.
+ * SDK backup is in src/_backup_juspay_sdk/
  *
  * Environment variables required:
- *   JUSPAY_MERCHANT_ID          — merchant id from HDFC dashboard
- *   JUSPAY_KEY_UUID             — JWE key UUID (API_KEY from HDFC config)
- *   JUSPAY_PUBLIC_KEY           — bank's RSA public key (PEM string or base64)
- *   JUSPAY_PRIVATE_KEY          — your RSA private key (PEM string or base64)
- *   JUSPAY_PAYMENT_PAGE_CLIENT_ID — payment page client id
- *   JUSPAY_RESPONSE_KEY         — response key for webhook signature verification
- *   JUSPAY_ENV                  — 'sandbox' | 'production' (default: sandbox)
- *   JUSPAY_BASE_URL             — (optional) override the gateway base URL entirely
+ *   JUSPAY_MERCHANT_ID             — merchant id (e.g. SG2129)
+ *   JUSPAY_KEY_UUID                — API key for Basic Auth
+ *   JUSPAY_PAYMENT_PAGE_CLIENT_ID  — payment page client id
+ *   JUSPAY_RESPONSE_KEY            — response key for webhook HMAC verification
+ *   JUSPAY_ENV                     — 'sandbox' | 'production' (default: sandbox)
+ *   JUSPAY_BASE_URL                — (optional) override the gateway base URL
  */
 
 const crypto = require('crypto')
-const { Juspay, APIError } = require('expresscheckout-nodejs')
+const https = require('https')
 
 // ── HDFC SmartGateway base URLs ───────────────────────────────────────────────
-// HDFC migrated SmartGateway from hdfcbank.com → hdfcuat.bank.in / hdfcbank.in
-// Old (now Cloudflare-blocked):  https://smartgatewayuat.hdfcbank.com
-// New UAT domain:                https://smartgateway.hdfcuat.bank.in
 const SANDBOX_BASE_URL = 'https://smartgateway.hdfcuat.bank.in'
 const PRODUCTION_BASE_URL = 'https://smartgateway.hdfcbank.com'
 
-// ── Serverless-safe logger ────────────────────────────────────────────────────
-// The Juspay SDK's default logger creates a Winston file transport to `logs/`
-// which crashes on read-only filesystems (Vercel, AWS Lambda, etc.).
-// Setting Juspay.customLogger bypasses the file transport entirely.
-Juspay.customLogger = {
-  info(msg)  { console.log('[Juspay]', typeof msg === 'string' ? msg : JSON.stringify(msg)) },
-  error(msg) { console.error('[Juspay]', typeof msg === 'string' ? msg : JSON.stringify(msg)) }
+// ── APIError (matches the interface payment-service.js expects) ───────────────
+class APIError extends Error {
+  constructor(httpResponseCode, status, errorCode, errorMessage) {
+    super(errorMessage || errorCode || 'Something went wrong')
+    this.httpResponseCode = httpResponseCode
+    this.status = status
+    this.errorCode = errorCode
+    this.errorMessage = errorMessage
+  }
 }
 
-/**
- * Resolve PEM key from env var.
- * Supports:
- *  - Direct PEM string (starts with -----BEGIN)
- *  - Base64-encoded PEM
- *  - Newline-escaped string (\\n → \n)
- */
-function resolveKey(envValue) {
-  if (!envValue) return null
-  // Already a PEM
-  if (envValue.startsWith('-----BEGIN')) {
-    return envValue
-  }
-  // Replace escaped newlines
-  const unescaped = envValue.replace(/\\n/g, '\n')
-  if (unescaped.startsWith('-----BEGIN')) {
-    return unescaped
-  }
-  // Try base64 decode
-  try {
-    const decoded = Buffer.from(envValue, 'base64').toString('utf8')
-    if (decoded.startsWith('-----BEGIN')) return decoded
-  } catch (_) {}
-  // Return as-is (hope for the best)
-  return envValue
+// ── Resolve base URL from env ─────────────────────────────────────────────────
+function resolveBaseUrl() {
+  const env = process.env.JUSPAY_ENV || 'sandbox'
+  const base = env === 'production' ? PRODUCTION_BASE_URL : SANDBOX_BASE_URL
+  return (process.env.JUSPAY_BASE_URL || base).trim()
 }
 
-// ── Singleton ─────────────────────────────────────────────────────────────────
+// ── Direct HTTPS call (mirrors PaymentHandler.makeServiceCall) ────────────────
+function makeServiceCall({ apiTag, path, method, body }) {
+  return new Promise((resolve, reject) => {
+    const apiKey = process.env.JUSPAY_KEY_UUID
+    const merchantId = process.env.JUSPAY_MERCHANT_ID
 
-let _juspayInstance = null
+    if (!apiKey) return reject(new Error('JUSPAY_KEY_UUID is not configured'))
+
+    const isPost = method === 'POST' || method === 'PUT'
+
+    // Old PaymentHandler defaults to form-urlencoded, but orderSession
+    // overrides to application/json — HDFC /session requires JSON.
+    const headers = {
+      'Content-Type': isPost ? 'application/json' : 'application/x-www-form-urlencoded',
+      'User-Agent': 'NODEJS_KIT/1.0.0',
+      'version': '2024-06-24',
+      'x-merchantid': merchantId,
+      'Authorization': 'Basic ' + Buffer.from(apiKey).toString('base64'),
+    }
+
+    let payload = ''
+    if (body && typeof body === 'object') {
+      if (isPost) {
+        // POST /session expects JSON body
+        payload = JSON.stringify(body)
+      } else {
+        payload = Object.keys(body)
+          .filter(k => body[k] !== undefined && body[k] !== null)
+          .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(String(body[k])))
+          .join('&')
+      }
+    }
+
+    const fullUrl = new URL(path, resolveBaseUrl())
+
+    if (isPost) {
+      headers['Content-Length'] = String(Buffer.byteLength(payload))
+    }
+
+    console.log(`[Payment] ${apiTag} ${method} ${fullUrl.pathname}`)
+
+    const req = https.request(
+      {
+        hostname: fullUrl.hostname,
+        port: fullUrl.port || 443,
+        path: fullUrl.pathname + fullUrl.search,
+        method,
+        headers,
+      },
+      (res) => {
+        res.setEncoding('utf-8')
+        let responseBody = ''
+        res.on('data', chunk => { responseBody += chunk })
+        res.once('end', () => {
+          console.log(`[Payment] ${apiTag} response ${res.statusCode}`)
+          let parsed
+          try {
+            parsed = JSON.parse(responseBody)
+          } catch {
+            return reject(
+              new APIError(res.statusCode, 'INVALID_RESPONSE', 'INVALID_RESPONSE',
+                responseBody || 'Failed to parse response JSON')
+            )
+          }
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            return resolve(parsed)
+          }
+          return reject(
+            new APIError(res.statusCode, parsed.status, parsed.error_code, parsed.error_message)
+          )
+        })
+      }
+    )
+
+    req.setTimeout(30000, () => {
+      req.destroy(new APIError(-1, 'REQUEST_TIMEOUT', 'REQUEST_TIMEOUT', 'Request timed out'))
+    })
+
+    req.on('error', (err) => {
+      if (err instanceof APIError) return reject(err)
+      return reject(new APIError(-1, 'CONNECTION_ERROR', 'CONNECTION_ERROR', err.message))
+    })
+
+    if (isPost) {
+      req.write(payload)
+    }
+    req.end()
+  })
+}
+
+// ── Singleton instance (same interface as old Juspay SDK) ─────────────────────
+let _instance = null
 
 function getJuspayInstance() {
-  if (_juspayInstance) return _juspayInstance
+  if (_instance) return _instance
 
   const merchantId = process.env.JUSPAY_MERCHANT_ID
-  const keyUUID = process.env.JUSPAY_KEY_UUID
-  const publicKey = resolveKey(process.env.JUSPAY_PUBLIC_KEY)
-  const privateKey = resolveKey(process.env.JUSPAY_PRIVATE_KEY)
+  const apiKey = process.env.JUSPAY_KEY_UUID
   const env = process.env.JUSPAY_ENV || 'sandbox'
 
-  if (!merchantId || !keyUUID) {
+  if (!merchantId || !apiKey) {
     throw new Error(
-      'Juspay SDK not configured. Set JUSPAY_MERCHANT_ID and JUSPAY_KEY_UUID env vars.'
+      'Payment gateway not configured. Set JUSPAY_MERCHANT_ID and JUSPAY_KEY_UUID env vars.'
     )
   }
 
-  const baseUrl = env === 'production' ? PRODUCTION_BASE_URL : SANDBOX_BASE_URL
+  console.log(`[Payment] Direct HTTPS — env=${env}, merchant=${merchantId}, base=${resolveBaseUrl()}`)
 
-  // Allow full override via JUSPAY_BASE_URL env var (useful if HDFC changes domains again)
-  const finalBaseUrl = (process.env.JUSPAY_BASE_URL || baseUrl).trim()
+  _instance = {
+    order: {
+      /**
+       * Create an order session — POST /session
+       * Same payload shape as the Juspay SDK's juspay.order.create()
+       */
+      async create(payload) {
+        return makeServiceCall({
+          apiTag: 'ORDER_SESSION',
+          path: '/session',
+          method: 'POST',
+          body: payload,
+        })
+      },
 
-  // Use JWE/JWS auth when RSA keys are provided, otherwise fall back to Basic Auth (apiKey)
-  const config = { merchantId, baseUrl: finalBaseUrl }
-
-  if (publicKey && privateKey) {
-    config.jweAuth = { keyId: keyUUID, publicKey, privateKey }
-    console.log(`[Juspay] Using JWE/JWS authentication`)
-  } else {
-    config.apiKey = keyUUID
-    console.log(`[Juspay] Using Basic (apiKey) authentication — set JUSPAY_PUBLIC_KEY & JUSPAY_PRIVATE_KEY for JWE/JWS`)
+      /**
+       * Get order status — GET /orders/{orderId}
+       * Same return shape as the Juspay SDK's juspay.order.status()
+       */
+      async status(orderId) {
+        return makeServiceCall({
+          apiTag: 'ORDER_STATUS',
+          path: `/orders/${encodeURIComponent(orderId)}`,
+          method: 'GET',
+        })
+      },
+    },
   }
 
-  _juspayInstance = new Juspay(config)
-
-  console.log(`[Juspay] Initialized — env=${env}, merchant=${merchantId}, base=${finalBaseUrl}`)
-  console.log(`[Juspay] Auth mode: ${publicKey && privateKey ? 'JWE/JWS' : 'Basic (apiKey)'}`)
-
-  // Warn about common misconfigurations
-  if (env === 'sandbox' && process.env.NODE_ENV === 'production') {
-    console.warn(`[Juspay] ⚠️  WARNING: JUSPAY_ENV=sandbox but NODE_ENV=production — are you sure?`)
-  }
-  if (env === 'production' && !publicKey) {
-    console.warn(`[Juspay] ⚠️  WARNING: JUSPAY_ENV=production but JUSPAY_PUBLIC_KEY is not set — JWE/JWS auth disabled`)
-  }
-  if (env === 'production' && !privateKey) {
-    console.warn(`[Juspay] ⚠️  WARNING: JUSPAY_ENV=production but JUSPAY_PRIVATE_KEY is not set — JWE/JWS auth disabled`)
-  }
-
-  return _juspayInstance
+  return _instance
 }
 
 function getPaymentPageClientId() {
@@ -124,11 +188,7 @@ function getJuspayEnv() {
 }
 
 /**
- * Verify a webhook signature from Juspay using HMAC-SHA256.
- *
- * Juspay signs the webhook body with the RESPONSE_KEY.
- * We compute HMAC-SHA256(body, responseKey) and compare against the
- * signature sent in the `x-juspay-signature` (or `x-signature`) header.
+ * Verify a webhook signature using HMAC-SHA256.
  *
  * @param {string} rawBody - raw request body (JSON string)
  * @param {string} signature - signature from request header
@@ -137,7 +197,7 @@ function getJuspayEnv() {
 function verifyWebhookSignature(rawBody, signature) {
   const responseKey = process.env.JUSPAY_RESPONSE_KEY
   if (!responseKey) {
-    console.warn('[Juspay] JUSPAY_RESPONSE_KEY not set — cannot verify webhook signature')
+    console.warn('[Payment] JUSPAY_RESPONSE_KEY not set — cannot verify webhook signature')
     return false
   }
   if (!rawBody || !signature) return false
@@ -154,7 +214,7 @@ function verifyWebhookSignature(rawBody, signature) {
       Buffer.from(signature, 'hex')
     )
   } catch (err) {
-    console.error('[Juspay] Webhook signature verification error:', err.message)
+    console.error('[Payment] Webhook signature verification error:', err.message)
     return false
   }
 }

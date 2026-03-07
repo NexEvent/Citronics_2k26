@@ -1,6 +1,9 @@
 import { getServerSession } from 'next-auth/next'
 import nextAuthConfig from 'src/lib/nextAuthConfig'
 import paymentService from 'src/services/payment-service'
+import rateLimit from 'src/lib/rateLimit'
+
+const limiter = rateLimit({ windowMs: 60_000, max: 5 })
 
 /**
  * POST /api/payment/initiate
@@ -20,6 +23,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    // ── Rate limiting ────────────────────────────────────────────────
+    const { ok } = limiter.check(req)
+    if (!ok) {
+      return res.status(429).json({ success: false, message: 'Too many requests. Please wait a moment.' })
+    }
+
     // ── Authentication ──────────────────────────────────────────────────
     const session = await getServerSession(req, res, nextAuthConfig)
     const userId = session?.user?.id

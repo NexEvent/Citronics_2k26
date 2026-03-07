@@ -65,10 +65,9 @@ export default async function handler(req, res) {
         console.warn('[Webhook] Invalid signature — rejecting')
         return res.status(401).json({ success: false, message: 'Invalid webhook signature' })
       }
-    } else if (process.env.NODE_ENV === 'development') {
-      console.warn('[Webhook] JUSPAY_RESPONSE_KEY not set — bypassing signature verification (dev mode only)')
     } else {
-      console.error('[Webhook] JUSPAY_RESPONSE_KEY is not configured — rejecting webhook (fail-closed)')
+      // FAIL-CLOSED: no response key = reject all webhooks
+      console.error('[Webhook] JUSPAY_RESPONSE_KEY is not configured — rejecting webhook')
       return res.status(500).json({ success: false, message: 'Webhook signature verification not configured' })
     }
 
@@ -84,7 +83,7 @@ export default async function handler(req, res) {
 
     // Sanitize order ID
     const orderId = String(rawOrderId).replace(/[^a-zA-Z0-9\-_]/g, '')
-    if (!orderId || orderId.length > 50) {
+    if (!orderId || orderId.length > 80) {
       console.warn('[Webhook] Invalid order_id format:', rawOrderId)
       return res.status(200).json({ success: true, message: 'Invalid order_id, ignoring' })
     }

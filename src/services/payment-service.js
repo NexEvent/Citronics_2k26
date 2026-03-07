@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
+import crypto from 'crypto'
 import { dbOne, dbOneOrNone, dbAny, dbNone, dbTx } from 'src/lib/database'
 import { enqueueTicketEmails } from 'src/services/email-service'
 
@@ -128,7 +129,7 @@ const paymentService = {
       }
 
       const grandTotalFinal = parseFloat(total.toFixed(2))
-      const orderId = `CIT-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      const orderId = `CIT-${Date.now()}-${crypto.randomBytes(12).toString('hex').toUpperCase()}`
       const idempKey = uuidv4()
 
       // Create payment record linked to the FIRST booking (primary)
@@ -315,7 +316,7 @@ const paymentService = {
     const gatewayAmount = parseFloat(gatewayStatus.amount)
     const expectedAmount = parseFloat(payment.amount)
 
-    if (orderStatus === 'CHARGED' && gatewayAmount !== expectedAmount) {
+    if (orderStatus === 'CHARGED' && Math.abs(gatewayAmount - expectedAmount) > 0.01) {
       console.error(
         `[PaymentService] AMOUNT MISMATCH! orderId=${juspayOrderId} expected=${expectedAmount} gateway=${gatewayAmount}`
       )

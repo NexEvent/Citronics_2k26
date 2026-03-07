@@ -14,6 +14,7 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Collapse from '@mui/material/Collapse'
 import useMediaQuery from '@mui/material/useMediaQuery'
+import { alpha } from '@mui/material/styles'
 import { Classic } from '@theme-toggles/react'
 import '@theme-toggles/react/css/Classic.css'
 import { useRouter } from 'next/router'
@@ -85,6 +86,143 @@ const AnimatedNavLink = ({ href, children, active, onClick }) => {
       </Typography>
     </Box>
   </Box>
+  )
+}
+
+/* ── Nav link with dropdown for subcategories ───────────────────────────── */
+const NavDropdownLink = ({ link, active, onNavigate, router }) => {
+  const c = useAppPalette()
+  const [open, setOpen] = useState(false)
+  const timeoutRef = useRef(null)
+
+  const handleEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    setOpen(true)
+  }
+
+  const handleLeave = () => {
+    timeoutRef.current = setTimeout(() => setOpen(false), 150)
+  }
+
+  useEffect(() => () => clearTimeout(timeoutRef.current), [])
+
+  return (
+    <Box
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+      sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+    >
+      {/* Trigger link */}
+      <Box
+        component='a'
+        href={link.href}
+        onClick={e => onNavigate(e, link.href)}
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.5,
+          textDecoration: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        <Typography
+          component='span'
+          sx={{
+            display: 'flex', alignItems: 'center', gap: 0.5,
+            fontSize: '0.95rem', fontWeight: active ? 600 : 400,
+            color: c.white, whiteSpace: 'nowrap'
+          }}
+        >
+          {link.label}
+          <Icon
+            icon='tabler:chevron-down'
+            fontSize={14}
+            style={{
+              opacity: 0.7,
+              transition: 'transform 0.2s',
+              transform: open ? 'rotate(180deg)' : 'rotate(0deg)'
+            }}
+          />
+        </Typography>
+      </Box>
+
+      {/* Dropdown panel */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '100%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          pt: 1.5,
+          zIndex: 50,
+          pointerEvents: open ? 'auto' : 'none'
+        }}
+      >
+        <Box
+          sx={{
+            minWidth: 210,
+            borderRadius: 3,
+            bgcolor: glass.bgSolid,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: `1px solid ${c.whiteA10}`,
+            boxShadow: `0 12px 40px rgba(0,0,0,0.45), 0 0 0 0.5px ${c.whiteA6} inset`,
+            py: 1,
+            opacity: open ? 1 : 0,
+            transform: open ? 'translateY(0)' : 'translateY(-8px)',
+            transition: 'opacity 0.2s ease, transform 0.2s ease',
+            overflow: 'hidden'
+          }}
+        >
+          {link.children.map((child, i) => {
+            const isActive = router.pathname === child.href
+
+            return (
+              <Box
+                key={child.href}
+                component='a'
+                href={child.href}
+                onClick={e => {
+                  setOpen(false)
+                  onNavigate(e, child.href)
+                }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  px: 2,
+                  py: 1.1,
+                  mx: 0.75,
+                  borderRadius: 2,
+                  textDecoration: 'none',
+                  color: isActive ? c.white : glass.textSubtle,
+                  bgcolor: isActive ? c.whiteA10 : 'transparent',
+                  transition: 'all 0.18s ease',
+                  '&:hover': {
+                    color: c.white,
+                    bgcolor: c.whiteA10
+                  }
+                }}
+              >
+                {child.icon && (
+                  <Icon icon={child.icon} fontSize={17} style={{ opacity: 0.85, flexShrink: 0 }} />
+                )}
+                <Typography
+                  variant='body2'
+                  sx={{
+                    fontWeight: isActive ? 600 : 500,
+                    fontSize: '0.855rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {child.label}
+                </Typography>
+              </Box>
+            )
+          })}
+        </Box>
+      </Box>
+    </Box>
   )
 }
 
@@ -228,16 +366,26 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
             {/* Desktop nav links */}
             {!isMobile && navLinks?.length > 0 && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: { md: 4.5 }, flexGrow: 1 }}>
-                {navLinks.map(link => (
-                  <AnimatedNavLink
-                    key={link.href}
-                    href={link.href}
-                    active={activeSection === link.href?.replace('#', '')}
-                    onClick={e => handleAnchorClick(e, link.href)}
-                  >
-                    {link.label}
-                  </AnimatedNavLink>
-                ))}
+                {navLinks.map(link =>
+                  link.children ? (
+                    <NavDropdownLink
+                      key={link.href}
+                      link={link}
+                      active={link.children.some(ch => router.pathname === ch.href)}
+                      onNavigate={handleAnchorClick}
+                      router={router}
+                    />
+                  ) : (
+                    <AnimatedNavLink
+                      key={link.href}
+                      href={link.href}
+                      active={activeSection === link.href?.replace('#', '')}
+                      onClick={e => handleAnchorClick(e, link.href)}
+                    >
+                      {link.label}
+                    </AnimatedNavLink>
+                  )
+                )}
               </Box>
             )}
 
@@ -267,20 +415,7 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
                 </Box>
               </Tooltip>
 
-              {/* Notifications */}
-              <Tooltip title='Notifications'>
-                <IconButton
-                  size='medium'
-                  aria-label='Notifications'
-                  sx={{
-                    color: glass.textNav,
-                    transition: 'color 0.2s, background-color 0.2s',
-                    '&:hover': { color: c.white, bgcolor: c.whiteA10 }
-                  }}
-                >
-                  <Icon icon='tabler:bell' fontSize={24} />
-                </IconButton>
-              </Tooltip>
+           
 
               {/* Cart */}
               <Tooltip title='Cart'>
@@ -448,27 +583,71 @@ const Navbar = ({ navLinks, activeSection, onNavClick }) => {
                 {/* Nav links */}
                 {navLinks?.length > 0 && (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, mb: 1.5 }}>
-                    {navLinks.map(link => (
-                      <Box
-                        key={link.href}
-                        component='a'
-                        href={link.href}
-                        onClick={e => handleAnchorClick(e, link.href)}
-                        sx={{
-                          px: 1.5, py: 1,
-                          borderRadius: '10px',
-                          textDecoration: 'none',
-                          fontSize: '0.875rem',
-                          fontWeight: activeSection === link.href?.replace('#', '') ? 700 : 500,
-                          color: c.white,
-                          bgcolor: activeSection === link.href?.replace('#', '') ? c.whiteA15 : 'transparent',
-                          transition: 'all 0.2s',
-                          '&:hover': { color: c.white, bgcolor: c.whiteA10 }
-                        }}
-                      >
-                        {link.label}
-                      </Box>
-                    ))}
+                    {navLinks.map(link =>
+                      link.children ? (
+                        <Box key={link.href}>
+                          <Typography
+                            variant='caption'
+                            sx={{
+                              px: 1.5, pt: 1, pb: 0.5,
+                              display: 'block',
+                              color: glass.textSubtle,
+                              fontWeight: 700,
+                              fontSize: '0.7rem',
+                              letterSpacing: 1.2,
+                              textTransform: 'uppercase'
+                            }}
+                          >
+                            {link.label}
+                          </Typography>
+                          {link.children.map(child => (
+                            <Box
+                              key={child.href}
+                              component='a'
+                              href={child.href}
+                              onClick={e => handleAnchorClick(e, child.href)}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                px: 1.5, pl: 2.5, py: 1,
+                                borderRadius: '10px',
+                                textDecoration: 'none',
+                                fontSize: '0.875rem',
+                                fontWeight: router.pathname === child.href ? 700 : 500,
+                                color: c.white,
+                                bgcolor: router.pathname === child.href ? c.whiteA15 : 'transparent',
+                                transition: 'all 0.2s',
+                                '&:hover': { color: c.white, bgcolor: c.whiteA10 }
+                              }}
+                            >
+                              {child.icon && <Icon icon={child.icon} fontSize={16} style={{ opacity: 0.75 }} />}
+                              {child.label}
+                            </Box>
+                          ))}
+                        </Box>
+                      ) : (
+                        <Box
+                          key={link.href}
+                          component='a'
+                          href={link.href}
+                          onClick={e => handleAnchorClick(e, link.href)}
+                          sx={{
+                            px: 1.5, py: 1,
+                            borderRadius: '10px',
+                            textDecoration: 'none',
+                            fontSize: '0.875rem',
+                            fontWeight: activeSection === link.href?.replace('#', '') ? 700 : 500,
+                            color: c.white,
+                            bgcolor: activeSection === link.href?.replace('#', '') ? c.whiteA15 : 'transparent',
+                            transition: 'all 0.2s',
+                            '&:hover': { color: c.white, bgcolor: c.whiteA10 }
+                          }}
+                        >
+                          {link.label}
+                        </Box>
+                      )
+                    )}
                   </Box>
                 )}
               </Box>

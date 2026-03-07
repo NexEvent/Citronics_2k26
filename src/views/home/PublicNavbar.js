@@ -3,7 +3,16 @@ import { useSession } from 'next-auth/react'
 import Navbar from 'src/components/Navbar'
 
 const BASE_NAV_LINKS = [
-  { label: 'About', href: '/about' },
+  {
+    label: 'About',
+    href: '/about',
+    children: [
+      { label: 'About Us', href: '/about', icon: 'tabler:info-circle' },
+      { label: 'Gallery', href: '/gallery', icon: 'tabler:photo' },
+      { label: 'Core Team', href: '/team', icon: 'tabler:users-group' },
+      { label: 'Privacy Policy', href: '/privacy-policy', icon: 'tabler:shield-check' }
+    ]
+  },
   { label: 'Events', href: '/events' },
   { label: 'My Tickets', href: '/tickets', requiresAuth: true }
 ]

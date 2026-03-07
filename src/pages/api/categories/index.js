@@ -1,8 +1,10 @@
 import eventService from 'src/services/event-service'
 
 /**
- * /api/categories → DEPRECATED — use /api/departments instead.
- * Kept as a redirect / alias to departments endpoint.
+ * /api/categories
+ * GET — All event categories ordered by name.
+ *
+ * Public endpoint — no authentication required.
  */
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -11,9 +13,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const departments = await eventService.getAllDepartments()
+    const categories = await eventService.getAllCategories()
 
-    return res.status(200).json({ success: true, data: departments })
+    return res.status(200).json({ success: true, data: categories })
   } catch (error) {
     console.error('[/api/categories]', error)
     return res.status(500).json({ success: false, message: 'Internal server error' })

@@ -67,6 +67,21 @@ export const fetchDepartments = createAsyncThunk(
   }
 )
 
+/**
+ * Fetch all categories.
+ */
+export const fetchCategories = createAsyncThunk(
+  'events/fetchCategories',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get('/api/categories')
+      return data.data
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch categories')
+    }
+  }
+)
+
 // ── Slice ─────────────────────────────────────────────────────────────────────
 
 const initialState = {
@@ -85,6 +100,11 @@ const initialState = {
   departmentsLoading: false,
   departmentsLoaded: false,
 
+  // Categories
+  categories: [],
+  categoriesLoading: false,
+  categoriesLoaded: false,
+
   // Single event detail
   currentEvent: null,
   currentEventLoading: false,
@@ -93,7 +113,8 @@ const initialState = {
   homeError: null,
   eventsError: null,
   currentEventError: null,
-  departmentsError: null
+  departmentsError: null,
+  categoriesError: null
 }
 
 const eventsSlice = createSlice({
@@ -105,6 +126,7 @@ const eventsSlice = createSlice({
       state.eventsError = null
       state.currentEventError = null
       state.departmentsError = null
+      state.categoriesError = null
     },
     clearCurrentEvent: state => {
       state.currentEvent = null
@@ -180,6 +202,22 @@ const eventsSlice = createSlice({
         state.departmentsLoading = false
         state.departmentsLoaded = true   // don't retry on error either
         state.departmentsError = action.payload
+      })
+
+      // ── fetchCategories ──
+      .addCase(fetchCategories.pending, state => {
+        state.categoriesLoading = true
+        state.categoriesError = null
+      })
+      .addCase(fetchCategories.fulfilled, (state, action) => {
+        state.categoriesLoading = false
+        state.categoriesLoaded = true
+        state.categories = action.payload || []
+      })
+      .addCase(fetchCategories.rejected, (state, action) => {
+        state.categoriesLoading = false
+        state.categoriesLoaded = true
+        state.categoriesError = action.payload
       })
   }
 })

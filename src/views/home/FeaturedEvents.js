@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import { alpha } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { useDispatch, useSelector } from 'react-redux'
+import Icon from 'src/components/Icon'
 import { useAppPalette } from 'src/components/palette'
 import { addToCart, selectCartItems } from 'src/store/slices/cartSlice'
 
@@ -96,11 +97,11 @@ function getImage(event) {
       <Box
         sx={{
           position: 'relative',
-          mx: 2.5,
-          mt: 2.5,
+          mx: { xs: 1.5, md: 2.5 },
+          mt: { xs: 1.5, md: 2.5 },
           borderRadius: '15px',
           overflow: 'hidden',
-          aspectRatio: '4 / 3',
+          aspectRatio: { xs: '16 / 10', md: '4 / 3' },
           bgcolor: c.isDark
             ? alpha(c.bgPaper, 0.15)
             : alpha(c.grey[200], 0.6)
@@ -260,9 +261,9 @@ function getImage(event) {
         <Box
           sx={{
             display: 'flex',
-            gap: 1,
-            px: 2.5,
-            pt: 1.5
+            gap: 0.75,
+            px: 1.5,
+            pt: 1
           }}
         >
           <Button
@@ -277,11 +278,11 @@ function getImage(event) {
               bgcolor: accent,
               color: c.isDark ? c.black : c.white,
               fontWeight: 700,
-              fontSize: '0.72rem',
+              fontSize: '0.65rem',
               letterSpacing: 0.5,
               textTransform: 'uppercase',
-              py: 0.85,
-              borderRadius: '8px',
+              py: 0.6,
+              borderRadius: '6px',
               '&:hover': { bgcolor: alpha(accent, 0.85) }
             }}
           >
@@ -309,11 +310,11 @@ function getImage(event) {
               borderColor: alpha(accent, 0.5),
               color: accent,
               fontWeight: 700,
-              fontSize: '0.72rem',
+              fontSize: '0.65rem',
               letterSpacing: 0.5,
               textTransform: 'uppercase',
-              py: 0.85,
-              borderRadius: '8px',
+              py: 0.6,
+              borderRadius: '6px',
               '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.08) }
             }}
           >
@@ -323,15 +324,15 @@ function getImage(event) {
       )}
 
       {/* ── Event info below image ────────────────────────────────────── */}
-      <Box sx={{ px: 2.5, pt: 2, pb: 2.5 }}>
+      <Box sx={{ px: { xs: 1.5, md: 2.5 }, pt: { xs: 1.25, md: 2 }, pb: { xs: 1.5, md: 2.5 } }}>
         <Typography
           variant='h6'
           sx={{
             fontWeight: 700,
             color: c.textPrimary,
-            mb: 1.5,
+            mb: { xs: 0.75, md: 1.5 },
             lineHeight: 1.25,
-            fontSize: { xs: '1rem', md: '1.05rem' }
+            fontSize: { xs: '0.85rem', md: '1.05rem' }
           }}
         >
           {event.title}
@@ -344,9 +345,9 @@ function getImage(event) {
             width: '100%',
             borderCollapse: 'collapse',
             '& td': {
-              py: 0.5,
+              py: { xs: 0.35, md: 0.5 },
               verticalAlign: 'top',
-              fontSize: '0.82rem',
+              fontSize: { xs: '0.78rem', md: '0.82rem' },
               lineHeight: 1.5
             }
           }}
@@ -384,114 +385,310 @@ function getImage(event) {
   )
 }
 
-/* ── Main Section ───────────────────────────────────────────────────────── */
-export default function FeaturedEvents({ events = [] }) {
+/* ── Slide variants ─────────────────────────────────────────────────────── */
+const slideVariants = {
+  enter: direction => ({
+    x: direction > 0 ? 300 : -300,
+    opacity: 0
+  }),
+  center: {
+    x: 0,
+    opacity: 1
+  },
+  exit: direction => ({
+    x: direction > 0 ? -300 : 300,
+    opacity: 0
+  })
+}
+
+/* ── Pagination Dot ─────────────────────────────────────────────────────── */
+function PaginationDot({ active, accent, onClick }) {
+  const c = useAppPalette()
+
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        width: active ? 28 : 10,
+        height: 10,
+        borderRadius: '100px',
+        bgcolor: active ? accent : alpha(c.textDisabled, 0.25),
+        transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: 'pointer',
+        '&:hover': {
+          bgcolor: active ? accent : alpha(c.textDisabled, 0.45)
+        }
+      }}
+    />
+  )
+}
+
+/* ── Main Section — Category Event Showcase ─────────────────────────────── */
+export default function FeaturedEvents({ categoryEvents = [] }) {
   const c = useAppPalette()
   const router = useRouter()
   const accent = c.primary
 
-  const display = events.slice(0, 3)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [direction, setDirection] = useState(1)
+  const pausedRef = useRef(false)
 
-  if (display.length === 0) return null
+  const totalCategories = categoryEvents.length
+
+  // Always-running interval — reads pausedRef each tick so it never gets "stuck"
+  useEffect(() => {
+    if (totalCategories <= 1) return
+    const id = setInterval(() => {
+      if (pausedRef.current) return
+      setDirection(1)
+      setActiveIndex(prev => (prev + 1) % totalCategories)
+    }, 1800)
+    return () => clearInterval(id)
+  }, [totalCategories])
+
+  const goTo = useCallback(idx => {
+    setDirection(idx > activeIndex ? 1 : -1)
+    setActiveIndex(idx)
+  }, [activeIndex])
+
+  const goNext = useCallback(() => {
+    setDirection(1)
+    setActiveIndex(prev => (prev + 1) % totalCategories)
+  }, [totalCategories])
+
+  const goPrev = useCallback(() => {
+    setDirection(-1)
+    setActiveIndex(prev => (prev - 1 + totalCategories) % totalCategories)
+  }, [totalCategories])
+
+  if (totalCategories === 0) return null
+
+  const current = categoryEvents[activeIndex]
 
   return (
     <Box
       component='section'
-      aria-label='This Week Events'
+      aria-label='Event Showcase by Category'
       sx={{ py: { xs: 8, md: 12 } }}
+      onMouseEnter={() => { pausedRef.current = true }}
+      onMouseLeave={() => { pausedRef.current = false }}
     >
       <Container maxWidth='xl'>
-        {/* ── Header row ────────────────────────────────────────────── */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            mb: { xs: 4, md: 5 }
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Count badge */}
-            <Box
-              sx={{
-                width: 36,
-                height: 40,
-                borderRadius: '50%',
-                border: `2px solid ${accent}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: '0.85rem',
-                  color: accent,
-                  lineHeight: 1
-                }}
-              >
-                {display.length}
-              </Typography>
-            </Box>
-
-            <Typography
-              variant='h4'
-              sx={{
-                fontWeight: 800,
-                color: c.textPrimary,
-                fontSize: { xs: '1.5rem', md: '2rem' },
-                letterSpacing: '-0.02em'
-              }}
-            >
-              FEATURED
-            </Typography>
-          </Box>
-
-          <Button
-            variant='outlined'
-            onClick={() => router.push('/events')}
+        {/* ── Header ─────────────────────────────────────────────────── */}
+        <Box sx={{ mb: { xs: 3, md: 5 } }}>
+          {/* Top row: badge + category name + arrows (desktop) + View All (desktop) */}
+          <Box
             sx={{
-              borderColor: alpha(accent, 0.4),
-              color: accent,
-              fontWeight: 700,
-              fontSize: '0.75rem',
-              letterSpacing: 1.5,
-              textTransform: 'uppercase',
-              px: 3,
-              py: 0.8,
-              borderRadius: '8px',
-              '&:hover': {
-                borderColor: accent,
-                bgcolor: alpha(accent, 0.06)
-              }
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1
             }}
           >
-            View All
-          </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, md: 2 }, minWidth: 0, flex: 1 }}>
+              {/* Category count badge */}
+              <Box
+                sx={{
+                  flexShrink: 0,
+                  width: { xs: 30, md: 36 },
+                  height: { xs: 34, md: 40 },
+                  borderRadius: '50%',
+                  border: `2px solid ${accent}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Typography sx={{ fontWeight: 800, fontSize: { xs: '0.75rem', md: '0.85rem' }, color: accent, lineHeight: 1 }}>
+                  {current.events.length}
+                </Typography>
+              </Box>
+
+              {/* Dynamic category heading */}
+              <Box sx={{ overflow: 'hidden', position: 'relative', minHeight: { xs: 32, md: 42 }, flex: 1 }}>
+                <AnimatePresence mode='wait' custom={direction}>
+                  <MotionBox
+                    key={current.categoryId}
+                    custom={direction}
+                    initial={{ y: direction > 0 ? 20 : -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: direction > 0 ? -20 : 20, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <Typography
+                      variant='h4'
+                      sx={{
+                        fontWeight: 800,
+                        color: c.textPrimary,
+                        fontSize: { xs: '1.2rem', md: '2rem' },
+                        letterSpacing: '-0.02em',
+                        textTransform: 'uppercase',
+                        whiteSpace: { xs: 'normal', md: 'nowrap' },
+                        lineHeight: 1.2,
+                        textAlign: { xs: 'center', md: 'left' }
+                      }}
+                    >
+                      {current.categoryName}
+                    </Typography>
+                  </MotionBox>
+                </AnimatePresence>
+              </Box>
+            </Box>
+
+            {/* Desktop: arrows + View All */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
+              {totalCategories > 1 && (
+                <Box sx={{ display: 'flex', gap: 0.75 }}>
+                  <Box
+                    onClick={goPrev}
+                    sx={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      border: `1.5px solid ${alpha(accent, 0.35)}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', color: accent,
+                      transition: 'all 0.2s',
+                      '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.08) }
+                    }}
+                  >
+                    <Icon icon='tabler:chevron-left' fontSize={18} />
+                  </Box>
+                  <Box
+                    onClick={goNext}
+                    sx={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      border: `1.5px solid ${alpha(accent, 0.35)}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', color: accent,
+                      transition: 'all 0.2s',
+                      '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.08) }
+                    }}
+                  >
+                    <Icon icon='tabler:chevron-right' fontSize={18} />
+                  </Box>
+                </Box>
+              )}
+              <Button
+                variant='outlined'
+                onClick={() => router.push('/events')}
+                sx={{
+                  borderColor: alpha(accent, 0.4), color: accent,
+                  fontWeight: 700, fontSize: '0.75rem', letterSpacing: 1.5,
+                  textTransform: 'uppercase', px: 3, py: 0.8, borderRadius: '8px',
+                  '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) }
+                }}
+              >
+                View All
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Mobile: arrows + View All below category name */}
+          <Box
+            sx={{
+              display: { xs: 'flex', md: 'none' },
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mt: 1.5
+            }}
+          >
+            {totalCategories > 1 && (
+              <Box sx={{ display: 'flex', gap: 0.75 }}>
+                <Box
+                  onClick={goPrev}
+                  sx={{
+                    width: 30, height: 30, borderRadius: '50%',
+                    border: `1.5px solid ${alpha(accent, 0.35)}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', color: accent
+                  }}
+                >
+                  <Icon icon='tabler:chevron-left' fontSize={15} />
+                </Box>
+                <Box
+                  onClick={goNext}
+                  sx={{
+                    width: 30, height: 30, borderRadius: '50%',
+                    border: `1.5px solid ${alpha(accent, 0.35)}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', color: accent
+                  }}
+                >
+                  <Icon icon='tabler:chevron-right' fontSize={15} />
+                </Box>
+              </Box>
+            )}
+            <Button
+              variant='outlined'
+              size='small'
+              onClick={() => router.push('/events')}
+              sx={{
+                borderColor: alpha(accent, 0.4), color: accent,
+                fontWeight: 700, fontSize: '0.65rem', letterSpacing: 1,
+                textTransform: 'uppercase', px: 1.5, py: 0.4, borderRadius: '6px',
+                '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.06) }
+              }}
+            >
+              View All
+            </Button>
+          </Box>
         </Box>
 
-        {/* ── Cards grid ────────────────────────────────────────────── */}
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)'
-            },
-            gap: { xs: 2.5, md: 3 }
-          }}
-        >
-          {display.map((event, i) => (
-            <SiloCard
-              key={event.id || i}
-              event={event}
-              index={i}
-              accent={accent}
-            />
-          ))}
+        {/* ── Cards carousel ─────────────────────────────────────────── */}
+        <Box sx={{ position: 'relative', overflow: 'hidden', minHeight: { xs: 340, md: 480 } }}>
+          <AnimatePresence mode='wait' custom={direction}>
+            <MotionBox
+              key={current.categoryId}
+              custom={direction}
+              variants={slideVariants}
+              initial='enter'
+              animate='center'
+              exit='exit'
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, 1fr)',
+                  md: 'repeat(3, 1fr)'
+                },
+                gap: { xs: 1.5, md: 3 },
+                maxWidth: { xs: 320, sm: '100%' },
+                mx: 'auto'
+              }}
+            >
+              {current.events.map((event, i) => (
+                <SiloCard
+                  key={event.id}
+                  event={event}
+                  index={i}
+                  accent={accent}
+                />
+              ))}
+            </MotionBox>
+          </AnimatePresence>
         </Box>
+
+        {/* ── Pagination dots ────────────────────────────────────────── */}
+        {totalCategories > 1 && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              mt: { xs: 4, md: 5 }
+            }}
+          >
+            {categoryEvents.map((cat, i) => (
+              <PaginationDot
+                key={cat.categoryId}
+                active={i === activeIndex}
+                accent={accent}
+                onClick={() => goTo(i)}
+              />
+            ))}
+          </Box>
+        )}
       </Container>
     </Box>
   )

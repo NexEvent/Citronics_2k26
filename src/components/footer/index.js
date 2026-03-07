@@ -14,21 +14,21 @@ import themeConfig from 'src/configs/themeConfig'
 
 const LINK_COLUMN_1 = [
   { label: 'Contact Us', href: '#' },
-  { label: 'Ticketing Terms & Conditions', href: '#' },
-  { label: 'Privacy Policy', href: '#' }
+
+  { label: 'Privacy Policy', href: '/privacy-policy' }
 ]
 
 const LINK_COLUMN_2 = [
- { label: 'Core Team', href: '#' },
-  { label: 'Gallery', href: '#' },
-  { label: 'Terms of Use', href: '#' },
+ { label: 'Core Team', href: '/team' },
+  { label: 'Gallery', href: '/gallery' },
+ 
 
 
 ]
 
 const SOCIAL_LINKS = [
   { icon: 'tabler:brand-facebook', href: 'https://www.facebook.com/socialcdgi', label: 'Facebook', tooltip: 'Facebook' },
- 
+  { icon: 'tabler:brand-linkedin', href: 'https://www.linkedin.com/school/chameli-devi-group-of-institutions/posts/?feedView=all', label: 'LinkedIn', tooltip: 'LinkedIn' },
   { icon: 'tabler:brand-instagram', href: 'https://www.instagram.com/cdgi_citronics/', label: 'Instagram', tooltip: 'Instagram' },
   {
     icon: 'tabler:brand-github',
@@ -137,7 +137,7 @@ export default function Footer() {
             <Typography
               variant='body1'
               component='a'
-              href='tel:+919876543210'
+              href='tel:+918109285689'
               sx={{
                 fontWeight: 600,
                 color: c.primary,
@@ -149,7 +149,7 @@ export default function Footer() {
                 '&:hover': { opacity: 0.8 }
               }}
             >
-              +91 98765 43210
+              +91 8109285689
             </Typography>
           </Grid>
 

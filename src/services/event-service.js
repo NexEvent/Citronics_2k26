@@ -36,20 +36,86 @@ const eventService = {
     `, [id])
   },
 
+  // ── Categories ─────────────────────────────────────────────────────────────
+
+  /**
+   * All categories ordered by name.
+   * Used for filter dropdowns on events page.
+   */
+  async getAllCategories() {
+    return dbAny(`
+      SELECT id, name
+      FROM categories
+      ORDER BY name ASC
+    `)
+  },
+
+  /**
+   * Events grouped by category for homepage showcase.
+   * Returns up to 3 published events per category.
+   */
+  async getEventsByCategory() {
+    const rows = await dbAny(`
+      SELECT
+        e.id,
+        e.name          AS title,
+        e.tagline,
+        e.start_time,
+        e.venue,
+        e.max_tickets   AS seats,
+        e.registered,
+        e.prize,
+        e.tags,
+        e.featured,
+        e.images,
+        e.ticket_price,
+        e.date,
+        d.id            AS "departmentId",
+        d.name          AS "departmentName",
+        cat.id          AS "categoryId",
+        cat.name        AS "categoryName"
+      FROM (
+        SELECT *,
+          ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY start_time ASC) AS rn
+        FROM events
+        WHERE status = 'published'
+          AND visibility = 'public'
+          AND category_id IS NOT NULL
+      ) e
+      LEFT JOIN departments d ON d.id = e.department_id
+      LEFT JOIN categories cat ON cat.id = e.category_id
+      WHERE e.rn <= 3
+      ORDER BY cat.name ASC, e.start_time ASC
+    `)
+
+    // Group into { categoryId, categoryName, events[] }
+    const map = new Map()
+    for (const row of rows) {
+      const key = row.categoryId
+      if (!map.has(key)) {
+        map.set(key, { categoryId: key, categoryName: row.categoryName, events: [] })
+      }
+      map.get(key).events.push(row)
+    }
+
+    return Array.from(map.values())
+  },
+
   // ── Events ─────────────────────────────────────────────────────────────────
 
   /**
-   * Published events with department info.
-   * Supports optional filtering by department ID.
+   * Published events with department and category info.
+   * Supports optional filtering by department ID or category ID.
    *
    * @param {object} opts
    * @param {number} [opts.departmentId] - Filter by department ID (omit for all)
+   * @param {number} [opts.categoryId]   - Filter by category ID (omit for all)
    * @param {string} [opts.search]       - Search in name, tagline, venue
    * @param {string} [opts.sort]         - 'newest' | 'oldest' | 'popular'
    * @param {number} [opts.limit]        - Max results (default 50)
    * @param {number} [opts.offset]       - Offset for pagination (default 0)
    */
-  async getPublishedEvents({ departmentId, search, sort = 'newest', limit = 50, offset = 0 } = {}) {
+  async getPublishedEvents({ departmentId, categoryId, search, sort = 'newest', limit = 50, offset = 0 } = {}) {
     const conditions = [`e.status = 'published'`, `e.visibility = 'public'`]
     const params = []
     let paramIndex = 1
@@ -58,6 +124,13 @@ const eventService = {
     if (departmentId) {
       conditions.push(`d.id = $${paramIndex}`)
       params.push(departmentId)
+      paramIndex++
+    }
+
+    // Category filter
+    if (categoryId) {
+      conditions.push(`cat.id = $${paramIndex}`)
+      params.push(categoryId)
       paramIndex++
     }
 
@@ -100,10 +173,14 @@ const eventService = {
         e.status,
         e.images,
         e.ticket_price,
+        e.date,
         d.id            AS "departmentId",
-        d.name          AS "departmentName"
+        d.name          AS "departmentName",
+        cat.id          AS "categoryId",
+        cat.name        AS "categoryName"
       FROM events e
       LEFT JOIN departments d ON d.id = e.department_id
+      LEFT JOIN categories cat ON cat.id = e.category_id
       WHERE ${where}
       ORDER BY e.featured DESC, ${orderBy}
       ${limitClause}
@@ -113,7 +190,7 @@ const eventService = {
   /**
    * Count of published events (for pagination).
    */
-  async countPublishedEvents({ departmentId, search } = {}) {
+  async countPublishedEvents({ departmentId, categoryId, search } = {}) {
     const conditions = [`e.status = 'published'`, `e.visibility = 'public'`]
     const params = []
     let paramIndex = 1
@@ -121,6 +198,12 @@ const eventService = {
     if (departmentId) {
       conditions.push(`d.id = $${paramIndex}`)
       params.push(departmentId)
+      paramIndex++
+    }
+
+    if (categoryId) {
+      conditions.push(`cat.id = $${paramIndex}`)
+      params.push(categoryId)
       paramIndex++
     }
 
@@ -139,6 +222,7 @@ const eventService = {
       SELECT COUNT(*)::int AS total
       FROM events e
       LEFT JOIN departments d ON d.id = e.department_id
+      LEFT JOIN categories cat ON cat.id = e.category_id
       WHERE ${where}
     `, params)
 
@@ -171,6 +255,9 @@ const eventService = {
         e.created_at,
         d.id            AS "departmentId",
         d.name          AS "departmentName",
+        e.date,
+        cat.id          AS "categoryId",
+        cat.name        AS "categoryName",
         ed.prize        AS "detailPrize",
         ed.document_url AS "detailDocumentUrl",
         ed.brief        AS "detailBrief",
@@ -180,6 +267,7 @@ const eventService = {
         ed.evaluation_criteria AS "detailEvaluationCriteria"
       FROM events e
       LEFT JOIN departments d ON d.id = e.department_id
+      LEFT JOIN categories cat ON cat.id = e.category_id
       LEFT JOIN event_details ed ON ed.event_id = e.id
       WHERE e.id = $1
         AND e.status = 'published'
@@ -225,9 +313,13 @@ const eventService = {
         e.images,
         e.ticket_price,
         d.id            AS "departmentId",
-        d.name          AS "departmentName"
+        d.name          AS "departmentName",
+        e.date,
+        cat.id          AS "categoryId",
+        cat.name        AS "categoryName"
       FROM events e
       LEFT JOIN departments d ON d.id = e.department_id
+      LEFT JOIN categories cat ON cat.id = e.category_id
       WHERE e.featured = TRUE
         AND e.status = 'published'
         AND e.visibility = 'public'

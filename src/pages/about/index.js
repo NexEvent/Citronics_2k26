@@ -3,7 +3,6 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
-import Divider from '@mui/material/Divider'
 import { alpha } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import PublicNavbar from 'src/views/home/PublicNavbar'
@@ -18,60 +17,113 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
 }
 
-const HIGHLIGHTS = [
-  {
-    icon: 'tabler:trophy',
-    title: '35+ Competitions',
-    description:
-      'From AI & ML challenges to robotics, coding battles, and management case studies — every domain has its arena.',
-    paletteKey: 'primary'
-  },
-  {
-    icon: 'tabler:users',
-    title: '5000+ Participants',
-    description:
-      'Students from across India converge to compete, collaborate, and connect in one of Central India\'s largest tech fests.',
-    paletteKey: 'success'
-  },
-  {
-    icon: 'tabler:calendar-event',
-    title: '3 Days of Action',
-    description:
-      'Three packed days of competitions, keynotes, workshops, cultural performances, and networking opportunities.',
-    paletteKey: 'info'
-  },
-  {
-    icon: 'tabler:bulb',
-    title: 'Innovation First',
-    description:
-      'Every event is designed to push boundaries — fostering creative thinking, problem-solving, and entrepreneurial spirit.',
-    paletteKey: 'warning'
-  }
-]
+/* ── Reusable Section Heading ─────────────────────────────── */
 
-const TEAM_SECTIONS = [
-  {
-    title: 'Faculty Coordinators',
-    icon: 'tabler:school',
-    color: 'primary',
-    members: [
-      { name: 'Dr. [Faculty Name]', role: 'Faculty in Charge', dept: 'CSE' },
-      { name: 'Prof. [Faculty Name]', role: 'Co-Coordinator', dept: 'IT' }
-    ]
-  },
-  {
-    title: 'Student Core Team',
-    icon: 'tabler:users-group',
-    color: 'success',
-    members: [
-      { name: '[Student Name]', role: 'Event Head', dept: 'Final Year CSE' },
-      { name: '[Student Name]', role: 'Technical Lead', dept: 'Final Year IT' },
-      { name: '[Student Name]', role: 'Operations Lead', dept: 'Third Year CSE' }
-    ]
-  }
-]
+function SectionBadge({ icon, label, color }) {
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 1,
+        px: 2,
+        py: 0.5,
+        borderRadius: '100px',
+        background: alpha(color, 0.08),
+        border: `1px solid ${alpha(color, 0.18)}`,
+        mb: 2.5
+      }}
+    >
+      <Icon icon={icon} fontSize={13} style={{ color }} />
+      <Typography variant='caption' sx={{ color, fontWeight: 700, letterSpacing: 1.5 }}>
+        {label}
+      </Typography>
+    </Box>
+  )
+}
 
-/* ────────────────────────────────────────────────────── */
+/* ── Content Section (text block with heading + paragraphs) ── */
+
+function ContentSection({ badge, title, paragraphs, bulletTitle, bullets, children }) {
+  const c = useAppPalette()
+
+  return (
+    <MotionBox
+      initial='hidden'
+      whileInView='show'
+      viewport={{ once: true, amount: 0.2 }}
+      variants={fadeUp}
+      sx={{ textAlign: 'center' }}
+    >
+      {badge}
+      <Typography
+        variant='h3'
+        sx={{
+          fontWeight: 800,
+          mb: 3,
+          letterSpacing: '-0.5px',
+          lineHeight: 1.2,
+          fontSize: { xs: '1.75rem', md: '2.25rem' }
+        }}
+      >
+        {title}
+      </Typography>
+
+      {paragraphs.map((text, i) => (
+        <Typography
+          key={i}
+          variant='body1'
+          sx={{
+            color: c.textSecondary,
+            lineHeight: 1.85,
+            mb: 2.5,
+            fontSize: { xs: '0.95rem', md: '1.05rem' }
+          }}
+        >
+          {text}
+        </Typography>
+      ))}
+
+      {bulletTitle && (
+        <Typography
+          variant='body1'
+          sx={{
+            color: c.textSecondary,
+            lineHeight: 1.85,
+            mb: 1.5,
+            fontSize: { xs: '0.95rem', md: '1.05rem' }
+          }}
+        >
+          {bulletTitle}
+        </Typography>
+      )}
+
+      {bullets && bullets.length > 0 && (
+        <Box component='ul' sx={{ pl: 2.5, m: 0, mb: 2.5, display: 'inline-block', textAlign: 'left' }}>
+          {bullets.map((item, i) => (
+            <Box
+              component='li'
+              key={i}
+              sx={{
+                color: c.textSecondary,
+                fontSize: { xs: '0.95rem', md: '1.05rem' },
+                lineHeight: 1.85,
+                mb: 0.75,
+                '&::marker': { color: c.primary, fontWeight: 700 }
+              }}
+            >
+              {item}
+            </Box>
+          ))}
+        </Box>
+      )}
+
+      {children}
+    </MotionBox>
+  )
+}
+
+/* ── Stat Card ────────────────────────────────────────────── */
 
 function StatCard({ value, label, icon, colorKey }) {
   const c = useAppPalette()
@@ -131,69 +183,9 @@ function StatCard({ value, label, icon, colorKey }) {
   )
 }
 
-function HightlightCard({ item, index }) {
-  const c = useAppPalette()
-  const color = c.theme.palette[item.paletteKey]?.main || c.primary
-
-  return (
-    <MotionBox
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.55, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      sx={{
-        p: { xs: 3, md: 4 },
-        height: '100%',
-        borderRadius: '24px',
-        background: c.isDark ? alpha(c.bgPaper, 0.5) : alpha(c.bgPaper, 0.7),
-        border: `1px solid ${c.isDark ? alpha(color, 0.18) : alpha(color, 0.12)}`,
-        backdropFilter: 'blur(16px)',
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          border: `1px solid ${alpha(color, 0.35)}`,
-          boxShadow: `0 20px 60px ${alpha(color, 0.1)}`
-        },
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0, left: 0, right: 0,
-          height: 2,
-          background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
-          opacity: 0,
-          transition: 'opacity 0.3s ease'
-        },
-        '&:hover::before': { opacity: 1 }
-      }}
-    >
-      <Box
-        sx={{
-          width: 52,
-          height: 52,
-          borderRadius: '14px',
-          background: alpha(color, 0.1),
-          border: `1px solid ${alpha(color, 0.15)}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mb: 2.5
-        }}
-      >
-        <Icon icon={item.icon} fontSize={26} style={{ color }} />
-      </Box>
-      <Typography variant='h6' sx={{ fontWeight: 700, mb: 1 }}>
-        {item.title}
-      </Typography>
-      <Typography variant='body2' sx={{ color: c.textSecondary, lineHeight: 1.75 }}>
-        {item.description}
-      </Typography>
-    </MotionBox>
-  )
-}
-
-/* ── Main About Page ─────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   Main About Page
+   ════════════════════════════════════════════════════════════ */
 
 export default function AboutPage() {
   const c = useAppPalette()
@@ -223,7 +215,6 @@ export default function AboutPage() {
           }
         }}
       >
-        {/* Glow blob */}
         <Box
           sx={{
             position: 'absolute',
@@ -248,7 +239,6 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            {/* Badge */}
             <Box
               sx={{
                 display: 'inline-flex',
@@ -282,22 +272,23 @@ export default function AboutPage() {
                 backgroundClip: 'text'
               }}
             >
-              About Citronics
+              About CDGI & Citronics
             </Typography>
 
             <Typography
               variant='body1'
               sx={{
                 color: c.textSecondary,
-                maxWidth: 620,
+                maxWidth: 660,
                 mx: 'auto',
                 lineHeight: 1.8,
                 fontSize: { xs: '1rem', md: '1.125rem' },
                 mb: 5
               }}
             >
-              Citronics is the flagship annual techno-management fest of Chameli Devi Group of Institutions, Indore.
-              A convergence of brilliant minds, innovative ideas, and relentless competition — shaping the engineers and leaders of tomorrow.
+              Learn about Chameli Devi Group of Institutions — one of Central India's most prominent educational
+              groups — and CITRONICS, its flagship annual Techno-Management Fest that brings together the brightest
+              minds in technology, management, and innovation.
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -348,11 +339,11 @@ export default function AboutPage() {
       <Container maxWidth='lg' sx={{ mb: { xs: 10, md: 14 } }}>
         <Grid container spacing={3}>
           {[
-            { value: '35+', label: 'Technical Events', icon: 'tabler:code', colorKey: 'primary' },
+            { value: '30+', label: 'Technical Events', icon: 'tabler:code', colorKey: 'primary' },
             { value: '3', label: 'Days of Fest', icon: 'tabler:calendar-event', colorKey: 'info' },
-            { value: '5K+', label: 'Participants', icon: 'tabler:users', colorKey: 'success' },
-            { value: '₹2L+', label: 'Prize Pool', icon: 'tabler:trophy', colorKey: 'warning' }
-          ].map((s, i) => (
+            { value: '2K+', label: 'Participants', icon: 'tabler:users', colorKey: 'success' },
+            { value: '₹4L+', label: 'Prize Pool', icon: 'tabler:trophy', colorKey: 'warning' }
+          ].map(s => (
             <Grid item xs={6} md={3} key={s.label}>
               <StatCard {...s} />
             </Grid>
@@ -360,268 +351,167 @@ export default function AboutPage() {
         </Grid>
       </Container>
 
-      {/* ── What is Citronics ────────────────────────────────────── */}
-      <Box sx={{ py: { xs: 10, md: 14 }, bgcolor: c.isDark ? alpha(c.bgPaper, 0.3) : alpha(c.bgPaper, 0.6) }}>
-        <Container maxWidth='lg'>
-          <Grid container spacing={{ xs: 6, md: 10 }} alignItems='center'>
-            <Grid item xs={12} md={6}>
-              <MotionBox
-                initial='hidden'
-                whileInView='show'
-                viewport={{ once: true }}
-                variants={fadeUp}
-              >
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    px: 2,
-                    py: 0.5,
-                    borderRadius: '100px',
-                    background: alpha(c.primary, 0.08),
-                    border: `1px solid ${alpha(c.primary, 0.15)}`,
-                    mb: 2.5
-                  }}
-                >
-                  <Icon icon='tabler:info-circle' fontSize={13} style={{ color: c.primary }} />
-                  <Typography variant='caption' sx={{ color: c.primary, fontWeight: 700, letterSpacing: 1.5 }}>
-                    OUR STORY
-                  </Typography>
-                </Box>
-
-                <Typography variant='h3' sx={{ fontWeight: 800, mb: 3, letterSpacing: '-0.5px' }}>
-                  More Than a Tech Fest
-                </Typography>
-
-                <Typography variant='body1' sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 3, fontSize: '1.05rem' }}>
-                  Since its inception, Citronics has grown from a small departmental event to one of Central India's most anticipated collegiate festivals.
-                  It brings together students from engineering, management, and design disciplines to compete, collaborate, and create.
-                </Typography>
-
-                <Typography variant='body1' sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 4, fontSize: '1.05rem' }}>
-                  Each year the theme evolves — this year, <strong style={{ color: c.textPrimary }}>
-                  "AI for Sustainable Tomorrow"</strong> guides every event, workshop, and keynote toward responsible innovation.
-                </Typography>
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {[
-                    { icon: 'tabler:map-pin', text: 'Chameli Devi Group of Institutions, Indore, MP' },
-                    { icon: 'tabler:calendar', text: 'March 2026 — 3 days of non-stop innovation' },
-                    { icon: 'tabler:mail', text: 'citronics@cdgi.edu.in' }
-                  ].map(item => (
-                    <Box key={item.text} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                      <Box
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: '10px',
-                          bgcolor: alpha(c.primary, 0.1),
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          mt: 0.25
-                        }}
-                      >
-                        <Icon icon={item.icon} fontSize={16} style={{ color: c.primary }} />
-                      </Box>
-                      <Typography variant='body2' sx={{ color: c.textSecondary, lineHeight: 1.6, pt: 0.5 }}>
-                        {item.text}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </MotionBox>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <MotionBox
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                sx={{
-                  borderRadius: '28px',
-                  overflow: 'hidden',
-                  border: `1px solid ${c.isDark ? alpha(c.primary, 0.12) : alpha(c.primary, 0.08)}`,
-                  boxShadow: `0 24px 80px ${alpha(c.primary, 0.1)}`,
-                  height: { xs: 280, md: 420 },
-                  position: 'relative'
-                }}
-              >
-                <Box
-                  component='img'
-                  src='/imagesB.jpg'
-                  alt='Citronics 2026'
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    filter: c.isDark ? 'brightness(0.7) contrast(1.05)' : 'brightness(0.9)'
-                  }}
-                />
-                {/* overlay pill badge */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: 20,
-                    left: 20,
-                    px: 2.5,
-                    py: 1.25,
-                    borderRadius: '14px',
-                    background: alpha(c.isDark ? '#000' : '#fff', 0.7),
-                    backdropFilter: 'blur(16px)',
-                    border: `1px solid ${alpha(c.primary, 0.2)}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5
-                  }}
-                >
-                  <Icon icon='tabler:sparkles' fontSize={18} style={{ color: c.primary }} />
-                  <Box>
-                    <Typography variant='caption' sx={{ color: c.primary, fontWeight: 700, display: 'block', lineHeight: 1.2 }}>
-                      CITRONICS 2026
-                    </Typography>
-                    <Typography variant='caption' sx={{ color: c.textSecondary, lineHeight: 1.2 }}>
-                      AI for Sustainable Tomorrow
-                    </Typography>
-                  </Box>
-                </Box>
-              </MotionBox>
+      {/* ══════════════════════════════════════════════════════════
+          Section 1 — About CDGI
+          ══════════════════════════════════════════════════════════ */}
+      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: c.isDark ? alpha(c.bgPaper, 0.3) : alpha(c.bgPaper, 0.6) }}>
+        <Container maxWidth='md'>
+          <Grid container justifyContent='center'>
+            <Grid item xs={12}>
+              <ContentSection
+                badge={<SectionBadge icon='tabler:school' label='ABOUT CDGI' color={c.info} />}
+                title='Chameli Devi Group of Institutions'
+                paragraphs={[
+                  'Chameli Devi Group of Institutions (CDGI), Indore, is one of the most prominent educational groups in Central India, dedicated to delivering excellence in technical, professional, management, pharmacy & law education.',
+                  'Established under the esteemed aegis of the Agarwal Group, CDGI has consistently focused on fostering academic excellence, industry engagement, research, innovation, and holistic student development.',
+                  'The group offers a wide spectrum of undergraduate and postgraduate programs across diverse disciplines including Engineering, Management, Professional Courses, Pharmacy, and Law, catering to students from varied academic backgrounds and nurturing them into competent professionals.',
+                  'Recognized for its commitment to quality education, CDGI is accredited with NAAC A+ and hosts NBA-accredited program in UG-CSE, reflecting its dedication to maintaining high academic standards. The institution boasts strong placement records, extensive industry collaborations, and opportunities for global certifications, enabling students to stay aligned with evolving industry requirements.',
+                  'Through strategic partnerships with leading technology giants such as Microsoft and Google, along with active participation in hackathons, research initiatives, innovation challenges, and national-level competitions, CDGI has built a dynamic learning ecosystem that encourages students to think creatively, innovate fearlessly, and emerge as future leaders.',
+                  'By blending academic rigor with practical exposure, CDGI continues to shape talented individuals who are ready to contribute meaningfully to society, industry, and the global technological landscape.'
+                ]}
+              />
             </Grid>
           </Grid>
         </Container>
       </Box>
 
-      {/* ── Why Citronics highlights ─────────────────────────────── */}
-      <Box sx={{ py: { xs: 10, md: 14 } }}>
-        <Container maxWidth='lg'>
-          <MotionBox
-            initial='hidden'
-            whileInView='show'
-            viewport={{ once: true }}
-            variants={fadeUp}
-            sx={{ textAlign: 'center', mb: 8 }}
-          >
-            <Typography variant='h3' sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.5px' }}>
-              Why Participate?
-            </Typography>
-            <Typography variant='body1' sx={{ color: c.textSecondary, maxWidth: 520, mx: 'auto', lineHeight: 1.75 }}>
-              Whether you compete, volunteer, or spectate — Citronics leaves a mark.
-            </Typography>
-          </MotionBox>
-
-          <Grid container spacing={3}>
-            {HIGHLIGHTS.map((item, i) => (
-              <Grid item xs={12} sm={6} md={3} key={item.title}>
-                <HightlightCard item={item} index={i} />
-              </Grid>
-            ))}
+      {/* ══════════════════════════════════════════════════════════
+          Section 2 — About CITRONICS
+          ══════════════════════════════════════════════════════════ */}
+      <Box sx={{ py: { xs: 8, md: 12 } }}>
+        <Container maxWidth='md'>
+          <Grid container justifyContent='center'>
+            <Grid item xs={12}>
+              <ContentSection
+                badge={<SectionBadge icon='tabler:rocket' label='ABOUT CITRONICS' color={c.primary} />}
+                title={"CITRONICS — Central India's Largest Techno-Management Fest"}
+                paragraphs={[
+                  'CITRONICS is one of Central India\'s largest and most vibrant annual Techno-Management Fests, dedicated to bringing together the brightest minds in technology, management, and innovation.',
+                  'Since its inception in 2009, CITRONICS has evolved into a prestigious platform where talented students, innovators, and future leaders from institutions across India come together to showcase their skills, creativity, and technological excellence.',
+                  'Over the years, CITRONICS has grown beyond a conventional college fest to become a national-level platform for innovation, competition, and collaboration. The fest hosts a wide range of technical competitions, management challenges, workshops, expert talks, hackathons, and cultural experiences, creating an environment that encourages learning, networking, and idea exchange.',
+                  'CITRONICS aims to inspire young minds to think beyond conventional boundaries by providing exposure to emerging technologies, entrepreneurial thinking, and industry-driven management practices.',
+                  'By bridging the gap between academia, industry, and innovation, CITRONICS continues to nurture the next generation of technologists, leaders, and changemakers.'
+                ]}
+              />
+            </Grid>
           </Grid>
         </Container>
       </Box>
 
-      {/* ── CDGI Info ────────────────────────────────────────────── */}
-      <Box
-        sx={{
-          py: { xs: 10, md: 14 },
-          bgcolor: c.isDark ? alpha(c.bgPaper, 0.25) : alpha(c.bgPaper, 0.55)
-        }}
-      >
-        <Container maxWidth='lg'>
-          <Grid container spacing={{ xs: 4, md: 8 }} alignItems='center'>
-            <Grid item xs={12} md={5}>
-              <MotionBox initial='hidden' whileInView='show' viewport={{ once: true }} variants={fadeUp}>
+      {/* ══════════════════════════════════════════════════════════
+          Section 3 — About CITRONICS 2K26
+          ══════════════════════════════════════════════════════════ */}
+      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: c.isDark ? alpha(c.bgPaper, 0.3) : alpha(c.bgPaper, 0.6) }}>
+        <Container maxWidth='md'>
+          <Grid container justifyContent='center'>
+            <Grid item xs={12}>
+              <ContentSection
+                badge={<SectionBadge icon='tabler:sparkles' label='CITRONICS 2K26' color={c.warning} />}
+                title='CITRONICS 2K26 — AI for Sustainable Tomorrow'
+                paragraphs={[
+                  'CITRONICS 2K26 is the flagship edition of our institute\'s Techno-Management Fest, designed to integrate technology, management, innovation, and social responsibility on one dynamic platform.',
+                  'This edition aims to inspire students to explore how cutting-edge technologies can address real-world challenges and contribute to a sustainable future.'
+                ]}
+              >
+                {/* Theme highlight */}
                 <Box
                   sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    px: 2,
-                    py: 0.5,
-                    borderRadius: '100px',
-                    background: alpha(c.info, 0.08),
-                    border: `1px solid ${alpha(c.info, 0.15)}`,
-                    mb: 2.5
+                    p: { xs: 2.5, md: 3 },
+                    borderRadius: '18px',
+                    background: c.isDark ? alpha(c.warning, 0.06) : alpha(c.warning, 0.04),
+                    border: `1px solid ${alpha(c.warning, 0.18)}`,
+                    mb: 3
                   }}
                 >
-                  <Icon icon='tabler:school' fontSize={13} style={{ color: c.info }} />
-                  <Typography variant='caption' sx={{ color: c.info, fontWeight: 700, letterSpacing: 1.5 }}>
-                    ABOUT CDGI
+                  <Typography
+                    variant='overline'
+                    sx={{ color: c.warning, fontWeight: 700, letterSpacing: '0.12em', display: 'block', mb: 1 }}
+                  >
+                    Theme
+                  </Typography>
+                  <Typography
+                    variant='h6'
+                    sx={{
+                      fontWeight: 700,
+                      fontStyle: 'italic',
+                      lineHeight: 1.4,
+                      fontSize: { xs: '1rem', md: '1.15rem' }
+                    }}
+                  >
+                    "AI for Sustainable Tomorrow: Where Innovation Meets Sustainable Vision"
                   </Typography>
                 </Box>
 
-                <Typography variant='h4' sx={{ fontWeight: 800, mb: 3, letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-                  Chameli Devi Group of Institutions
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 2.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  This theme highlights the transformative potential of Artificial Intelligence in solving modern urban
+                  and environmental challenges while creating smart, efficient, and sustainable communities.
                 </Typography>
 
-                <Typography variant='body1' sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 3, fontSize: '1rem' }}>
-                  CDGI is one of Madhya Pradesh's premier educational institutions, with a legacy of academic excellence across engineering,
-                  management, pharmacy, and more. The institute fosters innovation through its strong industry connections and student-driven culture.
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 2.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  Through innovative competitions, idea-pitching platforms, technical events, and collaborative initiatives,
+                  participants will explore how AI can be leveraged to develop solutions for real-world sustainability problems.
                 </Typography>
 
-                <Divider sx={{ my: 3, borderColor: c.isDark ? alpha(c.white, 0.08) : alpha(c.primary, 0.1) }} />
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 2.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  A key highlight of CITRONICS 2K26 is our collaboration with the Indore Municipal Corporation, aimed at
+                  spreading awareness about the responsible and impactful use of Artificial Intelligence for sustainable
+                  urban development.
+                </Typography>
 
-                <Box sx={{ display: 'flex', gap: 4 }}>
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 2.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  This partnership encourages participants to propose AI-driven solutions for smart city challenges,
+                  promoting innovative ideas that can contribute to the future development of Indore as a smarter and
+                  greener city.
+                </Typography>
+
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 1.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  CITRONICS 2K26 will provide participants with an exceptional opportunity to:
+                </Typography>
+
+                <Box component='ul' sx={{ pl: 2.5, m: '0 auto 20px', mb: 2.5, display: 'inline-block', textAlign: 'left' }}>
                   {[
-                    { value: '20+', label: 'Years of Excellence' },
-                    { value: '15K+', label: 'Alumni Network' },
-                    { value: 'NAAC', label: 'Accredited' }
-                  ].map(s => (
-                    <Box key={s.label} sx={{ textAlign: 'center' }}>
-                      <Typography sx={{ fontSize: '1.5rem', fontWeight: 800, color: c.primary, lineHeight: 1 }}>
-                        {s.value}
-                      </Typography>
-                      <Typography variant='caption' sx={{ color: c.textSecondary, fontWeight: 500 }}>
-                        {s.label}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </MotionBox>
-            </Grid>
-
-            <Grid item xs={12} md={7}>
-              <Grid container spacing={2}>
-                {[
-                  { icon: 'tabler:building-community', title: 'State-of-the-Art Campus', desc: 'Modern labs, hackathon spaces, and a dedicated innovation hub spread across a sprawling campus in Indore.' },
-                  { icon: 'tabler:certificate', title: 'Industry Partnerships', desc: 'Collaborations with leading tech companies ensure students get real-world exposure and placement opportunities.' },
-                  { icon: 'tabler:chart-line', title: 'Research & Innovation', desc: 'Active research programs and incubation support for student startups, with dedicated mentors and seed funding.' },
-                  { icon: 'tabler:hearts', title: 'Strong Alumni Network', desc: 'Thousands of alumni placed at top MNCs and startups form a vibrant support network for current students.' }
-                ].map((item, i) => (
-                  <Grid item xs={12} sm={6} key={item.title}>
-                    <MotionBox
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: i * 0.08 }}
+                    'Compete with some of the brightest technical minds from across the country',
+                    'Gain exposure to emerging technologies',
+                    'Interact with industry experts',
+                    'Showcase their innovative potential on a national stage'
+                  ].map((item, i) => (
+                    <Box
+                      component='li'
+                      key={i}
                       sx={{
-                        p: 3,
-                        borderRadius: '18px',
-                        border: `1px solid ${c.isDark ? alpha(c.white, 0.06) : alpha(c.primary, 0.08)}`,
-                        background: c.isDark ? alpha(c.bgPaper, 0.4) : alpha(c.bgDefault, 0.6),
-                        backdropFilter: 'blur(12px)',
-                        height: '100%'
+                        color: c.textSecondary,
+                        fontSize: { xs: '0.95rem', md: '1.05rem' },
+                        lineHeight: 1.85,
+                        mb: 0.75,
+                        '&::marker': { color: c.warning, fontWeight: 700 }
                       }}
                     >
-                      <Icon icon={item.icon} fontSize={22} style={{ color: c.info, marginBottom: 8 }} />
-                      <Typography variant='subtitle2' sx={{ fontWeight: 700, mb: 0.75 }}>
-                        {item.title}
-                      </Typography>
-                      <Typography variant='body2' sx={{ color: c.textSecondary, lineHeight: 1.65, fontSize: '0.82rem' }}>
-                        {item.desc}
-                      </Typography>
-                    </MotionBox>
-                  </Grid>
-                ))}
-              </Grid>
+                      {item}
+                    </Box>
+                  ))}
+                </Box>
+              </ContentSection>
             </Grid>
           </Grid>
         </Container>
       </Box>
 
-      {/* ── CTA strip ────────────────────────────────────────────── */}
+      {/* ── CTA Strip ────────────────────────────────────────────── */}
       <Box
         sx={{
           py: { xs: 10, md: 14 },

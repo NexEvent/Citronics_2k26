@@ -4,7 +4,7 @@ import eventService from 'src/services/event-service'
  * /api/home
  * GET — All data needed for the public home page in a single request.
  *
- * Returns: featuredEvents (up to 3), upcomingEvents (up to 10, newest first)
+ * Returns: categoryEvents (events grouped by category, max 3 per category)
  *
  * Public endpoint — no authentication required.
  */
@@ -15,16 +15,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [featuredEvents, upcomingEvents] = await Promise.all([
-      eventService.getFeaturedEvents(3),
-      eventService.getPublishedEvents({ limit: 10, sort: 'newest' })
-    ])
+    const categoryEvents = await eventService.getEventsByCategory()
 
     return res.status(200).json({
       success: true,
       data: {
-        featuredEvents,
-        upcomingEvents
+        categoryEvents
       }
     })
   } catch (error) {

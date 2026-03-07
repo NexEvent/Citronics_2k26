@@ -418,7 +418,8 @@ export default function EventDetailView() {
             {/* ── Info card (single box, stacked rows) ── */}
             {(() => {
               const rows = []
-              if (event.start_time) rows.push({ label: 'Date', value: formatDate(event.start_time) })
+              const displayDate = event.date || (event.start_time ? formatDate(event.start_time) : null)
+              if (displayDate) rows.push({ label: 'Date', value: displayDate })
               if (event.start_time || event.end_time) {
                 rows.push({
                   label: 'Time',

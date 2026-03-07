@@ -18,7 +18,7 @@ import { useAppPalette } from 'src/components/palette'
 import { motion, AnimatePresence } from 'framer-motion'
 import Icon from 'src/components/Icon'
 import BackButton from 'src/components/customComponent/BackButton'
-import { fetchEvents, fetchDepartments } from 'src/store/slices/eventsSlice'
+import { fetchEvents, fetchCategories } from 'src/store/slices/eventsSlice'
 import { addToCart, selectCartItems } from 'src/store/slices/cartSlice'
 import { useSession } from 'next-auth/react'
 import { setCheckoutItems, setExistingUser } from 'src/store/slices/checkoutSlice'
@@ -104,11 +104,11 @@ function EventCard({ event, index }) {
   const imageUrl = getEventImage(event)
   const spotsLeft = event.seats > 0 ? event.seats - (event.registered || 0) : null
   const almostFull = spotsLeft !== null && spotsLeft <= Math.ceil(event.seats * 0.2)
-  const dateParsed = parseEventDate(event.start_time)
+  const displayDate = event.date || parseEventDate(event.start_time).full
   const time = formatEventTime(event.start_time)
 
   const meta = [
-    { label: 'Date', value: dateParsed.full },
+    { label: 'Date', value: displayDate },
     { label: 'Time', value: time },
     event.venue && { label: 'Venue', value: event.venue },
     event.prize && { label: 'Prize Pool', value: formatPrizeTotal(event.prize) }
@@ -410,16 +410,16 @@ function EventCardSkeleton() {
 
 /**
  * Full-page events listing view.
- * Fetches published events from the Redux store with department filter,
+ * Fetches published events from the Redux store with category filter,
  * search, sort, and pagination controls.
  * Rendered at /events.
  */
 export default function EventsPageView() {
   const c = useAppPalette()
   const dispatch = useDispatch()
-  const { events, pagination, eventsLoading, departments, departmentsLoaded, error: eventsError } = useSelector(state => state.events)
+  const { events, pagination, eventsLoading, categories, categoriesLoaded, error: eventsError } = useSelector(state => state.events)
 
-  const [activeDept, setActiveDept] = useState('all')
+  const [activeCategory, setActiveCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortOrder, setSortOrder] = useState('newest')
   const [page, setPage] = useState(1)
@@ -438,7 +438,7 @@ export default function EventsPageView() {
   useEffect(() => {
     const promise = dispatch(
       fetchEvents({
-        departmentId: activeDept === 'all' ? undefined : activeDept,
+        categoryId: activeCategory === 'all' ? undefined : activeCategory,
         search: debouncedSearch,
         sort: sortOrder,
         page,
@@ -446,18 +446,18 @@ export default function EventsPageView() {
       })
     )
     return () => promise.abort()
-  }, [dispatch, activeDept, debouncedSearch, sortOrder, page])
+  }, [dispatch, activeCategory, debouncedSearch, sortOrder, page])
 
-  // Fetch departments once — guarded by departmentsLoaded so an empty result
+  // Fetch categories once — guarded by categoriesLoaded so an empty result
   // from the DB doesn't trigger an infinite re-fetch loop
   useEffect(() => {
-    if (!departmentsLoaded) {
-      dispatch(fetchDepartments())
+    if (!categoriesLoaded) {
+      dispatch(fetchCategories())
     }
-  }, [dispatch, departmentsLoaded])
+  }, [dispatch, categoriesLoaded])
 
-  const handleDeptChange = useCallback(e => {
-    setActiveDept(e.target.value)
+  const handleCategoryChange = useCallback(e => {
+    setActiveCategory(e.target.value)
     setPage(1)
   }, [])
 
@@ -571,15 +571,15 @@ export default function EventsPageView() {
 
           <FormControl size='small' sx={{ minWidth: 170, ...inputSx }}>
             <Select
-              value={activeDept}
-              onChange={handleDeptChange}
+              value={activeCategory}
+              onChange={handleCategoryChange}
               displayEmpty
-              aria-label='Filter by department'
+              aria-label='Filter by category'
               sx={{ '& .MuiSelect-select': { py: 1 } }}
             >
-              <MenuItem value='all'>All Departments</MenuItem>
-              {departments.map(dept => (
-                <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
+              <MenuItem value='all'>All Categories</MenuItem>
+              {categories.map(cat => (
+                <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -623,7 +623,7 @@ export default function EventsPageView() {
                   variant='outlined'
                   size='small'
                   color='primary'
-                  onClick={() => dispatch(fetchEvents({ departmentId: activeDept === 'all' ? undefined : activeDept, search: debouncedSearch, sort: sortOrder, page, limit: EVENTS_PER_PAGE }))}
+                  onClick={() => dispatch(fetchEvents({ categoryId: activeCategory === 'all' ? undefined : activeCategory, search: debouncedSearch, sort: sortOrder, page, limit: EVENTS_PER_PAGE }))}
                   sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
                 >
                   Retry
@@ -631,7 +631,7 @@ export default function EventsPageView() {
               </MotionBox>
             ) : events.length > 0 ? (
               <MotionBox
-                key={`events-${activeDept}-${page}`}
+                key={`events-${activeCategory}-${page}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -651,7 +651,7 @@ export default function EventsPageView() {
               >
                 <Icon icon='tabler:calendar-off' fontSize={44} style={{ color: c.textDisabled }} />
                 <Typography variant='body1' sx={{ color: 'text.secondary', mt: 2, fontWeight: 500 }}>
-                  No events found. Try a different search or department.
+                  No events found. Try a different search or category.
                 </Typography>
               </MotionBox>
             )}

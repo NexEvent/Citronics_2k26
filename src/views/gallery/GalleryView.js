@@ -14,40 +14,9 @@ const MotionBox = motion(Box)
 
 /* ── Mock Data ──────────────────────────────────────────────── */
 
-const CATEGORIES = ['All', 'Events', 'Cultural', 'Workshops', 'Campus', 'Behind the Scenes']
+const CATEGORIES = ['All', 'Events', 'Cultural','Campus', 'Behind the Scenes']
 
-const generateMockImages = () => {
-  const subjects = [
-    { id: 1, url: 'https://picsum.photos/seed/citro1/600/400', category: 'Events', title: 'Hackathon Finals' },
-    { id: 2, url: 'https://picsum.photos/seed/citro2/400/600', category: 'Cultural', title: 'Dance Night' },
-    { id: 3, url: 'https://picsum.photos/seed/citro3/600/450', category: 'Workshops', title: 'AI Workshop' },
-    { id: 4, url: 'https://picsum.photos/seed/citro4/500/500', category: 'Campus', title: 'Main Stage Setup' },
-    { id: 5, url: 'https://picsum.photos/seed/citro5/600/350', category: 'Events', title: 'Coding Challenge' },
-    { id: 6, url: 'https://picsum.photos/seed/citro6/400/550', category: 'Behind the Scenes', title: 'Team Meeting' },
-    { id: 7, url: 'https://picsum.photos/seed/citro7/550/400', category: 'Cultural', title: 'Music Performance' },
-    { id: 8, url: 'https://picsum.photos/seed/citro8/600/400', category: 'Events', title: 'Robotics Arena' },
-    { id: 9, url: 'https://picsum.photos/seed/citro9/400/500', category: 'Workshops', title: 'Web Dev Bootcamp' },
-    { id: 10, url: 'https://picsum.photos/seed/citro10/500/400', category: 'Campus', title: 'Night Decorations' },
-    { id: 11, url: 'https://picsum.photos/seed/citro11/600/450', category: 'Events', title: 'Quiz Competition' },
-    { id: 12, url: 'https://picsum.photos/seed/citro12/450/600', category: 'Cultural', title: 'Drama Play' },
-    { id: 13, url: 'https://picsum.photos/seed/citro13/550/350', category: 'Behind the Scenes', title: 'Volunteer Crew' },
-    { id: 14, url: 'https://picsum.photos/seed/citro14/600/400', category: 'Workshops', title: 'IoT Session' },
-    { id: 15, url: 'https://picsum.photos/seed/citro15/400/500', category: 'Campus', title: 'Entrance Arch' },
-    { id: 16, url: 'https://picsum.photos/seed/citro16/500/400', category: 'Events', title: 'Paper Presentation' },
-    { id: 17, url: 'https://picsum.photos/seed/citro17/600/450', category: 'Cultural', title: 'Fashion Walk' },
-    { id: 18, url: 'https://picsum.photos/seed/citro18/450/550', category: 'Behind the Scenes', title: 'Sound Check' },
-    { id: 19, url: 'https://picsum.photos/seed/citro19/550/400', category: 'Events', title: 'Gaming Tournament' },
-    { id: 20, url: 'https://picsum.photos/seed/citro20/500/500', category: 'Campus', title: 'Aerial View' },
-    { id: 21, url: 'https://picsum.photos/seed/citro21/600/350', category: 'Workshops', title: 'Cybersecurity Lab' },
-    { id: 22, url: 'https://picsum.photos/seed/citro22/400/600', category: 'Cultural', title: 'Band Night' },
-    { id: 23, url: 'https://picsum.photos/seed/citro23/550/450', category: 'Events', title: 'Debate Finals' },
-    { id: 24, url: 'https://picsum.photos/seed/citro24/600/400', category: 'Behind the Scenes', title: 'Stage Setup' }
-  ]
-
-  return subjects
-}
-
-const ALL_IMAGES = generateMockImages()
+const ALL_IMAGES = []
 const BATCH_SIZE = 8
 
 const CATEGORY_COLORS = {

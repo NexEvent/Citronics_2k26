@@ -8,7 +8,7 @@ import PublicNavbar from 'src/views/home/PublicNavbar'
 import HeroSection from 'src/views/home/HeroSection'
 //import AboutSection from 'src/views/home/AboutSection'
 
-import StatsSection from 'src/views/home/StatsSection'
+
 import FeaturedEvents from 'src/views/home/FeaturedEvents'
 //import TestimonialsSection from 'src/views/home/TestimonialsSection'
 //import SponsorsSection from 'src/views/home/SponsorsSection'
@@ -54,7 +54,7 @@ const Home = () => {
     )
   }
 
-  const { featuredEvents = [], upcomingEvents = [] } = homeData || {}
+  const { categoryEvents = [] } = homeData || {}
 
   return (
     <Box sx={{ overflowX: 'hidden', pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 } }}>
@@ -62,8 +62,8 @@ const Home = () => {
       <HeroSection />
      
       {/*<AboutSection />*/}
-      <StatsSection />
-      <FeaturedEvents events={featuredEvents} />
+  
+      <FeaturedEvents categoryEvents={categoryEvents} />
       {/*<TestimonialsSection />
       <SponsorsSection />*/}
       <PublicFooter />

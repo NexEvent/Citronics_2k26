@@ -30,6 +30,9 @@ import { lookupIdentifier, registerUser, verifyUser, setExistingUser } from 'src
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PHONE_RE = /^\d{10}$/
 
+// Stricter regex for triggering lookup — requires domain with 2+ char TLD (e.g. user@gmail.com)
+// Prevents lookup from firing on partial emails like user@g.c while still typing
+
 function validateField(name, value) {
   const v = (value || '').trim()
   switch (name) {
@@ -102,67 +105,55 @@ const LoginPage = () => {
   const [lookingUpPhone, setLookingUpPhone] = useState(false)
   const phoneLookupTimer = useRef(null)
 
-  // ── Email lookup state ──
-  const [emailLookup, setEmailLookup] = useState(null)
-  const [lookingUpEmail, setLookingUpEmail] = useState(false)
-  const emailLookupTimer = useRef(null)
+  // Tracks the last value we actually looked up, to avoid redundant API calls
+  const lastPhoneLookupValue = useRef('')
 
-  const isExistingUser = mode === 'login' || phoneLookup?.exists || emailLookup?.exists
+  // Prevents lookups from firing after form submission (fixes post-registration flash)
+  const submittedRef = useRef(false)
+
+  const isExistingUser = mode === 'login' || phoneLookup?.exists
 
   // ── Live phone lookup (only in register mode) ──
   useEffect(() => {
-    if (mode === 'login') return
-    setPhoneLookup(null)
-    if (phoneLookupTimer.current) clearTimeout(phoneLookupTimer.current)
+    if (mode === 'login' || submittedRef.current) return
 
     const v = form.phone.trim()
-    const isPhone = PHONE_RE.test(v.replace(/[\s\-+()]/g, '').slice(-10))
-    if (!isPhone) return
+    const normalized = v.replace(/[\s\-+()]/g, '').slice(-10)
+    const isPhone = PHONE_RE.test(normalized)
+
+    // Clear lookup + cancel any pending timer when value is no longer a valid phone
+    if (!isPhone) {
+      if (phoneLookupTimer.current) clearTimeout(phoneLookupTimer.current)
+      setLookingUpPhone(false)
+      setPhoneLookup(null)
+      lastPhoneLookupValue.current = ''
+      return
+    }
+
+    // Skip if we already looked up this exact value
+    if (normalized === lastPhoneLookupValue.current) return
+
+    if (phoneLookupTimer.current) clearTimeout(phoneLookupTimer.current)
+    let cancelled = false
 
     phoneLookupTimer.current = setTimeout(async () => {
+      if (submittedRef.current) return
       setLookingUpPhone(true)
       try {
         const result = await dispatch(lookupIdentifier(v))
+        if (cancelled || submittedRef.current) return
+        lastPhoneLookupValue.current = normalized
         if (lookupIdentifier.fulfilled.match(result) && result.payload.exists) {
           setPhoneLookup({ exists: true, name: result.payload.data?.maskedName || '' })
         } else {
           setPhoneLookup({ exists: false })
         }
       } catch { /* ignore */ }
-      setLookingUpPhone(false)
+      if (!cancelled) setLookingUpPhone(false)
     }, 600)
 
-    return () => clearTimeout(phoneLookupTimer.current)
-  }, [form.phone, mode, dispatch])  
-
-  // ── Live email lookup (only in register mode) ──
-  useEffect(() => {
-    if (mode === 'login' || isExistingUser) return
-    setEmailLookup(null)
-    if (emailLookupTimer.current) clearTimeout(emailLookupTimer.current)
-
-    const v = form.email.trim()
-    if (!EMAIL_RE.test(v)) return
-
-    emailLookupTimer.current = setTimeout(async () => {
-      setLookingUpEmail(true)
-      try {
-        const result = await dispatch(lookupIdentifier(v))
-        if (lookupIdentifier.fulfilled.match(result)) {
-          if (result.payload.exists) {
-            // Pre-fill the login identifier field with the email and switch to sign-in view
-            setForm(prev => ({ ...prev, phone: form.email.trim() }))
-            setEmailLookup({ exists: true, name: result.payload.data?.maskedName || '' })
-          } else {
-            setEmailLookup({ exists: false })
-          }
-        }
-      } catch { /* ignore */ }
-      setLookingUpEmail(false)
-    }, 600)
-
-    return () => clearTimeout(emailLookupTimer.current)
-  }, [form.email, mode, isExistingUser, dispatch])  
+    return () => { cancelled = true; clearTimeout(phoneLookupTimer.current) }
+  }, [form.phone, mode, dispatch])
   const handleChange = e => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
@@ -198,7 +189,11 @@ const LoginPage = () => {
 
     setServerError('')
     setLoading(true)
+    submittedRef.current = true
     const identifier = form.phone.trim()
+
+    // Cancel any pending lookup timers immediately
+    if (phoneLookupTimer.current) clearTimeout(phoneLookupTimer.current)
 
     try {
       // ── Existing user path — verify password then sign in ──
@@ -215,9 +210,11 @@ const LoginPage = () => {
             router.push(returnUrl)
           } else {
             setServerError('Login failed. Please try again.')
+            submittedRef.current = false
           }
         } else {
           setServerError(result.payload || 'Incorrect password. Please try again.')
+          submittedRef.current = false
         }
         setLoading(false)
         return
@@ -245,6 +242,7 @@ const LoginPage = () => {
           router.push(returnUrl)
         } else {
           setServerError('Account created but auto-login failed. Please refresh and try again.')
+          submittedRef.current = false
         }
       } else if (registerUser.rejected.match(result)) {
         const payload = result.payload
@@ -252,18 +250,22 @@ const LoginPage = () => {
           setPhoneLookup({ exists: true, name: '' })
           setErrors({})
           setServerError('This phone number is already registered. Enter your password to login.')
+          submittedRef.current = false
           setLoading(false)
           return
         }
         if (payload?.code === 'EMAIL_EXISTS') {
           setErrors(prev => ({ ...prev, email: payload.message || 'This email is already registered.' }))
+          submittedRef.current = false
           setLoading(false)
           return
         }
         setServerError(typeof payload === 'string' ? payload : payload?.message || 'Registration failed')
+        submittedRef.current = false
       }
     } catch (_err) {
       setServerError('An unexpected error occurred. Please try again.')
+      submittedRef.current = false
     }
     setLoading(false)
   }
@@ -334,9 +336,9 @@ const LoginPage = () => {
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               {[
-                { icon: 'tabler:calendar-event', text: '35+ events across 3 days' },
-                { icon: 'tabler:users', text: '5,000+ participants expected' },
-                { icon: 'tabler:trophy', text: '₹2 Lakh+ prize pool' }
+                { icon: 'tabler:calendar-event', text: '30+ events across 3 days' },
+                { icon: 'tabler:users', text: '1,500+ participants expected' },
+                { icon: 'tabler:trophy', text: '₹4 Lakh+ prize pool' }
               ].map(item => (
                 <Box
                   key={item.text}
@@ -478,14 +480,11 @@ const LoginPage = () => {
                         )
                       }}
                     />
-                    {(phoneLookup?.exists || emailLookup?.exists) && (
+                    {phoneLookup?.exists && (
                       <Box sx={{ mt: -0.5, mb: 0.5, px: 1.5, py: 0.75, borderRadius: '8px', bgcolor: alpha(c.success, 0.07), border: `1px solid ${alpha(c.success, 0.18)}` }}>
                         <Typography variant='body2' sx={{ fontSize: '0.76rem', fontWeight: 600, color: c.success, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <Icon icon='tabler:user-check' fontSize={13} />
-                          {emailLookup?.exists
-                            ? `Account found${emailLookup.name ? ` — ${emailLookup.name}` : ''} — switched to sign in.`
-                            : `Account found${phoneLookup.name ? ` — ${phoneLookup.name}` : ''}. Enter your password below.`
-                          }
+                          {`Account found${phoneLookup.name ? ` — ${phoneLookup.name}` : ''}. Enter your password below.`}
                         </Typography>
                       </Box>
                     )}
@@ -580,28 +579,15 @@ const LoginPage = () => {
                       placeholder='you@example.com'
                       value={form.email}
                       onChange={handleChange}
-                      error={!!errors.email || emailLookup?.exists === true}
-                      helperText={errors.email || (emailLookup?.exists ? 'This email is already registered.' : ' ')}
+                      error={!!errors.email}
+                      helperText={errors.email || ' '}
                       disabled={loading}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position='start'>
-                            <Icon icon='tabler:mail' fontSize={17} color={(errors.email || emailLookup?.exists) ? c.error : c.textDisabled} />
+                            <Icon icon='tabler:mail' fontSize={17} color={errors.email ? c.error : c.textDisabled} />
                           </InputAdornment>
-                        ),
-                        endAdornment: lookingUpEmail ? (
-                          <InputAdornment position='end'>
-                            <CircularProgress size={15} sx={{ color: c.textDisabled }} />
-                          </InputAdornment>
-                        ) : emailLookup?.exists ? (
-                          <InputAdornment position='end'>
-                            <Icon icon='tabler:alert-circle' fontSize={17} color={c.error} />
-                          </InputAdornment>
-                        ) : emailLookup?.exists === false ? (
-                          <InputAdornment position='end'>
-                            <Icon icon='tabler:circle-check-filled' fontSize={17} color={c.success} />
-                          </InputAdornment>
-                        ) : undefined
+                        )
                       }}
                     />
                     <CustomTextField
@@ -688,7 +674,7 @@ const LoginPage = () => {
                   <Box
                     component='button'
                     type='button'
-                    onClick={() => { setMode('register'); setPhoneLookup(null); setEmailLookup(null); setErrors({}); setServerError('') }}
+                    onClick={() => { setMode('register'); setPhoneLookup(null); setErrors({}); setServerError(''); setForm({ phone: '', name: '', email: '', password: '', college: '', city: '' }); submittedRef.current = false; lastPhoneLookupValue.current = '' }}
                     sx={{
                       all: 'unset', display: 'inline', cursor: 'pointer',
                       color: 'primary.main', fontWeight: 700, fontSize: 'inherit', fontFamily: 'inherit',
@@ -705,7 +691,7 @@ const LoginPage = () => {
                   <Box
                     component='button'
                     type='button'
-                    onClick={() => { setMode('login'); setEmailLookup(null); setErrors({}); setServerError('') }}
+                    onClick={() => { setMode('login'); setErrors({}); setServerError(''); submittedRef.current = false; lastPhoneLookupValue.current = '' }}
                     sx={{
                       all: 'unset', display: 'inline', cursor: 'pointer',
                       color: 'primary.main', fontWeight: 700, fontSize: 'inherit', fontFamily: 'inherit',

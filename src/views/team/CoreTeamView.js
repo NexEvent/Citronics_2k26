@@ -18,97 +18,9 @@ const fadeUp = {
 
 /* ── Mock Data ──────────────────────────────────────────────── */
 
-const CORE_TEAM = [
-  {
-    name: 'Arjun Mehta',
-    role: 'Event Head',
-    department: 'CSE • Final Year',
-    avatar: 'https://i.pravatar.cc/300?img=11',
-    bio: 'Driving the vision behind Citronics 2026 with a passion for tech leadership.',
-    socials: { linkedin: '#', github: '#', twitter: '#' },
-    colorKey: 'primary'
-  },
-  {
-    name: 'Priya Sharma',
-    role: 'Technical Lead',
-    department: 'IT • Final Year',
-    avatar: 'https://i.pravatar.cc/300?img=5',
-    bio: 'Building the digital backbone of the fest — from web platforms to automation.',
-    socials: { linkedin: '#', github: '#' },
-    colorKey: 'info'
-  },
-  {
-    name: 'Rohan Patel',
-    role: 'Operations Lead',
-    department: 'CSE • Third Year',
-    avatar: 'https://i.pravatar.cc/300?img=12',
-    bio: 'Ensuring every detail runs seamlessly, from logistics to on-ground coordination.',
-    socials: { linkedin: '#', twitter: '#' },
-    colorKey: 'success'
-  },
-  {
-    name: 'Ananya Verma',
-    role: 'Design & Creative Head',
-    department: 'CSE • Third Year',
-    avatar: 'https://i.pravatar.cc/300?img=9',
-    bio: 'Crafting the visual identity and creative direction for the entire fest.',
-    socials: { linkedin: '#', github: '#', twitter: '#' },
-    colorKey: 'warning'
-  },
-  {
-    name: 'Karan Singh',
-    role: 'Sponsorship Lead',
-    department: 'MBA • Second Year',
-    avatar: 'https://i.pravatar.cc/300?img=33',
-    bio: 'Forging strategic partnerships and bringing together industry and academia.',
-    socials: { linkedin: '#' },
-    colorKey: 'error'
-  },
-  {
-    name: 'Sneha Joshi',
-    role: 'Marketing & PR Head',
-    department: 'IT • Third Year',
-    avatar: 'https://i.pravatar.cc/300?img=20',
-    bio: 'Amplifying the Citronics brand across campuses and social platforms.',
-    socials: { linkedin: '#', twitter: '#' },
-    colorKey: 'info'
-  },
-  {
-    name: 'Vikram Rao',
-    role: 'Cultural Events Lead',
-    department: 'ME • Final Year',
-    avatar: 'https://i.pravatar.cc/300?img=53',
-    bio: 'Curating electrifying performances and cultural showcases that captivate audiences.',
-    socials: { linkedin: '#', github: '#' },
-    colorKey: 'primary'
-  },
-  {
-    name: 'Ishita Gupta',
-    role: 'Workshops Coordinator',
-    department: 'CSE • Third Year',
-    avatar: 'https://i.pravatar.cc/300?img=25',
-    bio: 'Organizing hands-on learning experiences with industry experts and mentors.',
-    socials: { linkedin: '#', github: '#', twitter: '#' },
-    colorKey: 'success'
-  }
-]
+const CORE_TEAM = []
 
-const FACULTY = [
-  {
-    name: 'Dr. Rajesh Kumar',
-    role: 'Faculty In Charge',
-    department: 'Head, CSE Department',
-    avatar: 'https://i.pravatar.cc/300?img=60',
-    colorKey: 'primary'
-  },
-  {
-    name: 'Prof. Suman Agarwal',
-    role: 'Faculty Co-Coordinator',
-    department: 'Associate Professor, IT',
-    avatar: 'https://i.pravatar.cc/300?img=36',
-    colorKey: 'info'
-  }
-]
+const FACULTY = []
 
 const SOCIAL_ICONS = {
   linkedin: 'tabler:brand-linkedin',
@@ -454,13 +366,7 @@ export default function CoreTeamView() {
           </Box>
         </MotionBox>
 
-        <Grid container spacing={3} justifyContent='center'>
-          {FACULTY.map((member, i) => (
-            <Grid item xs={12} sm={6} md={5} key={member.name}>
-              <FacultyCard member={member} index={i} />
-            </Grid>
-          ))}
-        </Grid>
+
       </Container>
 
       {/* ── Student Core Team ────────────────────────────────── */}
@@ -499,13 +405,7 @@ export default function CoreTeamView() {
             </Box>
           </MotionBox>
 
-          <Grid container spacing={3}>
-            {CORE_TEAM.map((member, i) => (
-              <Grid item xs={12} sm={6} md={3} key={member.name}>
-                <TeamMemberCard member={member} index={i} />
-              </Grid>
-            ))}
-          </Grid>
+
         </Container>
       </Box>
 
@@ -536,47 +436,8 @@ export default function CoreTeamView() {
             }
           }}
         >
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              borderRadius: '16px',
-              background: alpha(c.primary, 0.1),
-              border: `1px solid ${alpha(c.primary, 0.2)}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mx: 'auto',
-              mb: 3
-            }}
-          >
-            <Icon icon='tabler:heart-handshake' fontSize={28} style={{ color: c.primary }} />
-          </Box>
-          <Typography variant='h4' sx={{ fontWeight: 800, mb: 1.5, letterSpacing: '-0.5px' }}>
-            Want to Be Part of the Team?
-          </Typography>
-          <Typography variant='body1' sx={{ color: c.textSecondary, maxWidth: 480, mx: 'auto', lineHeight: 1.8, mb: 3 }}>
-            We're always looking for passionate individuals to join the Citronics family.
-            Reach out to any core member or drop us an email!
-          </Typography>
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 1,
-              px: 3,
-              py: 1,
-              borderRadius: '14px',
-              background: alpha(c.primary, 0.08),
-              border: `1px solid ${alpha(c.primary, 0.2)}`,
-              cursor: 'default'
-            }}
-          >
-            <Icon icon='tabler:mail' fontSize={18} style={{ color: c.primary }} />
-            <Typography sx={{ color: c.primary, fontWeight: 600, fontSize: '0.95rem' }}>
-              citronics@cdgi.edu.in
-            </Typography>
-          </Box>
+         
+        
         </MotionBox>
       </Container>
     </>

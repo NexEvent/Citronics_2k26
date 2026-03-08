@@ -165,3 +165,18 @@ CREATE INDEX idx_payments_status ON payments(status);
 CREATE INDEX idx_payments_idempotency_key ON payments(idempotency_key);
 CREATE INDEX idx_payments_juspay_order_id ON payments(juspay_order_id);
 CREATE INDEX idx_payments_transaction_id ON payments(transaction_id);
+
+-- Page media table (images/videos for static pages)
+CREATE TABLE page_media (
+    id BIGSERIAL PRIMARY KEY,
+    page VARCHAR(100) NOT NULL,
+    name TEXT,
+    post TEXT,
+    description TEXT,
+    links TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_page_media_page ON page_media(page);
+

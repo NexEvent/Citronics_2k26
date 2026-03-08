@@ -22,6 +22,7 @@ import Icon from 'src/components/Icon'
 import themeConfig from 'src/configs/themeConfig'
 import { useAppPalette } from 'src/components/palette'
 import { lookupIdentifier, registerUser, verifyUser, setExistingUser } from 'src/store/slices/checkoutSlice'
+import { LoginSEO } from 'src/components/SEO'
 
 /* ═══════════════════════════════════════════════════════════════════════════
  *  Validation helpers
@@ -270,6 +271,7 @@ const LoginPage = () => {
 
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', alignItems: 'stretch' }}>
+        <LoginSEO />
         {/* ══ LEFT — brand + animated characters (desktop only) ══ */}
         <Box
           sx={{

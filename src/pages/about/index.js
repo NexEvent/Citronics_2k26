@@ -10,6 +10,7 @@ import PublicNavbar from 'src/views/home/PublicNavbar'
 import PublicFooter from 'src/views/home/PublicFooter'
 import Icon from 'src/components/Icon'
 import { useAppPalette } from 'src/components/palette'
+import { AboutSEO } from 'src/components/SEO'
 
 const MotionBox = motion(Box)
 
@@ -200,6 +201,7 @@ export default function AboutPage() {
 
   return (
     <Box sx={{ overflowX: 'hidden', pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 } }}>
+      <AboutSEO />
       <PublicNavbar />
 
       {/* ── Hero Banner ─────────────────────────────────────────── */}

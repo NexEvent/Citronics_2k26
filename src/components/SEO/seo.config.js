@@ -41,6 +41,11 @@ export const SITE = {
   // Contact
   email: 'citronics@cdgi.edu.in',
 
+  // Fest stats (used by schemas.js to avoid hardcoded strings)
+  competitionCount: '35+',
+  participantCount: '5000+',
+  departmentCount:  '14+',
+
   // Geo coordinates — CDGI campus, Indore
   geo: { lat: 22.7196, lng: 75.8577 },
 }

@@ -81,7 +81,7 @@ const SEOHead = ({
         <script
           key={`ld-${i}`}
           type='application/ld+json'
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\u003c') }}
         />
       ))}
     </Head>

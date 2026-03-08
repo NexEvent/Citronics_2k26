@@ -12,15 +12,17 @@ Allow: /register
 
 # Exclude auth, transactional, and private pages from indexation
 Disallow: /login
-Disallow: /cart
-Disallow: /checkout
 Disallow: /dashboard
 Disallow: /tickets
 Disallow: /api/
 Disallow: /401
 Disallow: /404
 Disallow: /500
+
+# Next.js internals — allow render-critical JS/CSS but block image optimizer
 Disallow: /_next/
+Allow: /_next/static/
+Disallow: /_next/image
 
 # Exclude admin routes
 Disallow: /admin

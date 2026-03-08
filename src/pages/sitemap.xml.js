@@ -51,10 +51,19 @@ export default async function SitemapPage() {
 export async function getServerSideProps({ res }) {
   const today = new Date().toISOString().slice(0, 10)
 
-  // Fetch all published event IDs
+  // Fetch all published event IDs (paginate to handle >500)
   let events = []
   try {
-    events = await eventService.getEvents({ limit: 500, offset: 0 })
+    const PAGE_SIZE = 500
+    let offset = 0
+    let batch
+    do {
+      batch = await eventService.getEvents({ limit: PAGE_SIZE, offset })
+      if (batch && batch.length) {
+        events = events.concat(batch)
+        offset += PAGE_SIZE
+      }
+    } while (batch && batch.length === PAGE_SIZE)
   } catch {
     // If DB is unreachable, serve a static-only sitemap rather than failing
     events = []

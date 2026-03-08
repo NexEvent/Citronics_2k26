@@ -38,6 +38,9 @@ export { default as CartSEO }        from './pages/CartSEO'
 export { default as CheckoutSEO }    from './pages/CheckoutSEO'
 export { default as LoginSEO }       from './pages/LoginSEO'
 export { default as RegisterSEO }    from './pages/RegisterSEO'
+export { default as TicketsSEO }      from './pages/TicketsSEO'
+export { default as TicketVerifySEO } from './pages/TicketVerifySEO'
+export { default as PaymentStatusSEO } from './pages/PaymentStatusSEO'
 
 // Low-level exports (for advanced use / sitemap / events/[id] getServerSideProps)
 export { SITE, buildCanonical } from './seo.config'

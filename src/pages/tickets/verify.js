@@ -10,6 +10,7 @@ import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
+import { TicketVerifySEO } from 'src/components/SEO'
 import Icon from 'src/components/Icon'
 import PublicNavbar from 'src/views/home/PublicNavbar'
 import PublicFooter from 'src/views/home/PublicFooter'
@@ -305,6 +306,7 @@ const VerifyTicketPage = () => (
       pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 }
     }}
   >
+    <TicketVerifySEO />
     <PublicNavbar />
     <Box sx={{ pt: { xs: 2, md: 10 }, pb: { xs: 4, md: 6 } }}>
       <VerifyView />

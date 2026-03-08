@@ -10,6 +10,7 @@ import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
+import { TicketsSEO } from 'src/components/SEO'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import Icon from 'src/components/Icon'
@@ -379,6 +380,7 @@ const MyTicketsPage = () => (
       pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 }
     }}
   >
+    <TicketsSEO />
     <PublicNavbar />
     <Box sx={{ pt: { xs: 2, md: 10 }, pb: { xs: 4, md: 6 } }}>
       <MyTicketsView />

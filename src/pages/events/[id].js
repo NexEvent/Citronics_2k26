@@ -40,15 +40,15 @@ export async function getServerSideProps({ params }) {
 
     const seoEvent = {
       id:              event.id                ?? null,
-      name:            event.name              ?? null,
+      name:            event.title             ?? null,
       tagline:         event.tagline           ?? null,
       description:     event.description       ?? null,
       venue:           event.venue             ?? null,
       ticket_price:    event.ticket_price      ?? null,
-      banner_url:      event.banner_url        ?? null,
+      banner_url:      event.images            ?? null,
       start_time:      event.start_time        ? String(event.start_time) : null,
       end_time:        event.end_time          ? String(event.end_time)   : null,
-      department_name: event.department_name   ?? null,
+      department_name: event.departmentName    ?? null,
     }
 
     return { props: { seoEvent } }

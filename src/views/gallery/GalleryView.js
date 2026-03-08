@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -121,7 +121,7 @@ function Lightbox({ image, onClose }) {
 
 /* ── Gallery Card ───────────────────────────────────────────── */
 
-function GalleryCard({ image, index, onClick }) {
+const GalleryCard = memo(function GalleryCard({ image, index, onClick }) {
   const c = useAppPalette()
   const colorKey = CATEGORY_COLORS[image.category] || 'primary'
   const color = c.theme.palette[colorKey]?.main || c.primary
@@ -198,7 +198,7 @@ function GalleryCard({ image, index, onClick }) {
       </Box>
     </MotionBox>
   )
-}
+})
 
 /* ── Main View ──────────────────────────────────────────────── */
 

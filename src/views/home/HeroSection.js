@@ -148,9 +148,7 @@ function CountColon() {
   const c = useAppPalette()
 
   return (
-    <MotionBox
-      animate={{ opacity: [1, 0.2, 1] }}
-      transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+    <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -164,7 +162,8 @@ function CountColon() {
           width: 6,
           height: 6,
           borderRadius: '50%',
-          bgcolor: c.primary
+          bgcolor: c.primary,
+          opacity: 1
         }}
       />
       <Box
@@ -172,10 +171,11 @@ function CountColon() {
           width: 6,
           height: 6,
           borderRadius: '50%',
-          bgcolor: c.primary
+          bgcolor: c.primary,
+          opacity: 1
         }}
       />
-    </MotionBox>
+    </Box>
   )
 }
 
@@ -187,7 +187,16 @@ function CountColon() {
 export default function HeroSection() {
   const c = useAppPalette()
   const isDark = c.isDark
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const diff = new Date('2026-04-07T09:00:00') - Date.now()
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+    return {
+      days: Math.floor(diff / 86400000),
+      hours: Math.floor((diff % 86400000) / 3600000),
+      minutes: Math.floor((diff % 3600000) / 60000),
+      seconds: Math.floor((diff % 60000) / 1000)
+    }
+  })
 
 
   /* ── Theme-aware color helpers ──────────────────────────────── */
@@ -199,18 +208,23 @@ export default function HeroSection() {
   const imageBg = c.heroImageBg
 
   useEffect(() => {
+    const target = new Date('2026-04-07T09:00:00').getTime()
     const tick = () => {
-      const targetDate = new Date('2026-04-07T09:00:00')
-      const diff = targetDate - Date.now()
-      if (diff <= 0) return setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-      setTimeLeft({
+      const diff = target - Date.now()
+      if (diff <= 0) return setTimeLeft(prev => prev.seconds === 0 && prev.days === 0 ? prev : { days: 0, hours: 0, minutes: 0, seconds: 0 })
+      const next = {
         days: Math.floor(diff / 86400000),
         hours: Math.floor((diff % 86400000) / 3600000),
         minutes: Math.floor((diff % 3600000) / 60000),
         seconds: Math.floor((diff % 60000) / 1000)
-      })
+      }
+      setTimeLeft(prev =>
+        prev.days === next.days && prev.hours === next.hours &&
+        prev.minutes === next.minutes && prev.seconds === next.seconds
+          ? prev
+          : next
+      )
     }
-    tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [])

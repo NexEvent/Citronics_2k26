@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, memo } from 'react'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -51,7 +51,7 @@ function getImage(event) {
  * @param {object} props.event - Event data object
  * @param {number} props.index - Card index for staggered animation
  * @param {string} props.accent - Accent color from the theme
- */function SiloCard({ event, index, accent }) {
+ */const SiloCard = memo(function SiloCard({ event, index, accent }) {
   const c = useAppPalette()
   const router = useRouter()
   const dispatch = useDispatch()
@@ -381,7 +381,7 @@ function getImage(event) {
       </Box>
     </MotionBox>
   )
-}
+})
 
 /* ── Slide variants ─────────────────────────────────────────────────────── */
 const slideVariants = {

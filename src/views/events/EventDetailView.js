@@ -63,23 +63,37 @@ function getEventImage(event) {
 const FEST_START = new Date('2026-04-07T09:00:00').getTime()
 
 function useCountdown() {
-  const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 })
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const diff = FEST_START - Date.now()
+    if (diff <= 0) return { d: 0, h: 0, m: 0, s: 0 }
+    return {
+      d: Math.floor(diff / 86400000),
+      h: Math.floor((diff % 86400000) / 3600000),
+      m: Math.floor((diff % 3600000) / 60000),
+      s: Math.floor((diff % 60000) / 1000)
+    }
+  })
 
   useEffect(() => {
     const tick = () => {
       const diff = FEST_START - Date.now()
       if (diff <= 0) {
-        setTimeLeft({ d: 0, h: 0, m: 0, s: 0 })
+        setTimeLeft(prev => prev.s === 0 && prev.d === 0 ? prev : { d: 0, h: 0, m: 0, s: 0 })
         return
       }
-      setTimeLeft({
+      const next = {
         d: Math.floor(diff / 86400000),
         h: Math.floor((diff % 86400000) / 3600000),
         m: Math.floor((diff % 3600000) / 60000),
         s: Math.floor((diff % 60000) / 1000)
-      })
+      }
+      setTimeLeft(prev =>
+        prev.d === next.d && prev.h === next.h &&
+        prev.m === next.m && prev.s === next.s
+          ? prev
+          : next
+      )
     }
-    tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [])

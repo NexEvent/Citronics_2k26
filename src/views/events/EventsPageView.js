@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, memo } from 'react'
 import { useRouter } from 'next/router'
 import { useDispatch, useSelector } from 'react-redux'
 import Box from '@mui/material/Box'
@@ -93,7 +93,7 @@ function getEventImage(event) {
  * @param {object} props.event - Event data object from the API
  * @param {number} props.index - Card index used to stagger animation delay
  */
-function EventCard({ event, index }) {
+const EventCard = memo(function EventCard({ event, index }) {
   const c = useAppPalette()
   const router = useRouter()
   const dispatch = useDispatch()
@@ -352,7 +352,7 @@ function EventCard({ event, index }) {
       </Box>
     </MotionBox>
   )
-}
+})
 
 
 /* ═══════════════════════════════════════════════════════════════════════════

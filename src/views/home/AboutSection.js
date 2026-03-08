@@ -45,14 +45,14 @@ export default function AboutSection() {
   useEffect(() => {
     const timer = setInterval(() => {
       setProgress(prev => {
-        const next = prev + 100 / (autoPlayInterval / 100)
+        const next = prev + 100 / (autoPlayInterval / 500)
         if (next >= 100) {
           setCurrent(f => (f + 1) % FEATURES.length)
           return 0
         }
         return next
       })
-    }, 100)
+    }, 500)
     return () => clearInterval(timer)
   }, [])
 

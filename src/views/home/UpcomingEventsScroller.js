@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useRouter } from 'next/router'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
@@ -45,7 +46,7 @@ function getImage(event) {
  * @param {object} props
  * @param {object} props.event - Event data object
  */
-function ScrollerCard({ event }) {
+const ScrollerCard = memo(function ScrollerCard({ event }) {
   const c = useAppPalette()
   const router = useRouter()
   const imageUrl = getImage(event)
@@ -188,7 +189,7 @@ function ScrollerCard({ event }) {
       </Box>
     </Box>
   )
-}
+})
 
 /* ── Infinite auto-scrolling row ──────────────────────────────────────── */
 /**

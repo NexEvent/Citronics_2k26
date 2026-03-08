@@ -132,10 +132,10 @@ export default function SponsorsSection() {
   const [logoSets, setLogoSets] = useState([])
   const [currentTime, setCurrentTime] = useState(0)
 
-  const updateTime = useCallback(() => setCurrentTime(prev => prev + 100), [])
+  const updateTime = useCallback(() => setCurrentTime(prev => prev + 300), [])
 
   useEffect(() => {
-    const id = setInterval(updateTime, 100)
+    const id = setInterval(updateTime, 300)
     return () => clearInterval(id)
   }, [updateTime])
 

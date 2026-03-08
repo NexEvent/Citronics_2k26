@@ -261,14 +261,13 @@ function getImage(event) {
         <Box
           sx={{
             display: 'flex',
-            gap: 0.75,
+            gap: 1,
             px: 1.5,
-            pt: 1
+            pt: 1.25
           }}
         >
           <Button
             variant='contained'
-            size='small'
             onClick={e => {
               e.stopPropagation()
               router.push(`/events/${event.id}`)
@@ -278,11 +277,11 @@ function getImage(event) {
               bgcolor: accent,
               color: c.isDark ? c.black : c.white,
               fontWeight: 700,
-              fontSize: '0.65rem',
-              letterSpacing: 0.5,
+              fontSize: '0.78rem',
+              letterSpacing: 0.6,
               textTransform: 'uppercase',
-              py: 0.6,
-              borderRadius: '6px',
+              py: 0.9,
+              borderRadius: '8px',
               '&:hover': { bgcolor: alpha(accent, 0.85) }
             }}
           >
@@ -290,7 +289,6 @@ function getImage(event) {
           </Button>
           <Button
             variant='outlined'
-            size='small'
             disabled={isInCart}
             onClick={e => {
               e.stopPropagation()
@@ -310,11 +308,11 @@ function getImage(event) {
               borderColor: alpha(accent, 0.5),
               color: accent,
               fontWeight: 700,
-              fontSize: '0.65rem',
-              letterSpacing: 0.5,
+              fontSize: '0.78rem',
+              letterSpacing: 0.6,
               textTransform: 'uppercase',
-              py: 0.6,
-              borderRadius: '6px',
+              py: 0.9,
+              borderRadius: '8px',
               '&:hover': { borderColor: accent, bgcolor: alpha(accent, 0.08) }
             }}
           >
@@ -324,15 +322,15 @@ function getImage(event) {
       )}
 
       {/* ── Event info below image ────────────────────────────────────── */}
-      <Box sx={{ px: { xs: 1.5, md: 2.5 }, pt: { xs: 1.25, md: 2 }, pb: { xs: 1.5, md: 2.5 } }}>
+      <Box sx={{ px: { xs: 1.5, md: 2.5 }, pt: { xs: 1.5, md: 2 }, pb: { xs: 2.5, md: 2.5 } }}>
         <Typography
           variant='h6'
           sx={{
             fontWeight: 700,
             color: c.textPrimary,
-            mb: { xs: 0.75, md: 1.5 },
+            mb: { xs: 1, md: 1.5 },
             lineHeight: 1.25,
-            fontSize: { xs: '0.85rem', md: '1.05rem' }
+            fontSize: { xs: '1rem', md: '1.05rem' }
           }}
         >
           {event.title}
@@ -345,9 +343,9 @@ function getImage(event) {
             width: '100%',
             borderCollapse: 'collapse',
             '& td': {
-              py: { xs: 0.35, md: 0.5 },
+              py: { xs: 0.55, md: 0.5 },
               verticalAlign: 'top',
-              fontSize: { xs: '0.78rem', md: '0.82rem' },
+              fontSize: { xs: '0.88rem', md: '0.82rem' },
               lineHeight: 1.5
             }
           }}
@@ -442,7 +440,7 @@ export default function FeaturedEvents({ categoryEvents = [] }) {
       if (pausedRef.current) return
       setDirection(1)
       setActiveIndex(prev => (prev + 1) % totalCategories)
-    }, 1800)
+    }, 3900)
     return () => clearInterval(id)
   }, [totalCategories])
 
@@ -634,7 +632,7 @@ export default function FeaturedEvents({ categoryEvents = [] }) {
         </Box>
 
         {/* ── Cards carousel ─────────────────────────────────────────── */}
-        <Box sx={{ position: 'relative', overflow: 'hidden', minHeight: { xs: 340, md: 480 } }}>
+        <Box sx={{ position: 'relative', overflow: 'hidden', minHeight: { xs: 430, md: 480 } }}>
           <AnimatePresence mode='wait' custom={direction}>
             <MotionBox
               key={current.categoryId}
@@ -652,8 +650,7 @@ export default function FeaturedEvents({ categoryEvents = [] }) {
                   md: 'repeat(3, 1fr)'
                 },
                 gap: { xs: 1.5, md: 3 },
-                maxWidth: { xs: 320, sm: '100%' },
-                mx: 'auto'
+                mx: { xs: 1.5, sm: 0 }
               }}
             >
               {current.events.map((event, i) => (

@@ -107,10 +107,16 @@ function EventCard({ event, index }) {
   const displayDate = event.date || parseEventDate(event.start_time).full
   const time = formatEventTime(event.start_time)
 
+  const timeDisplay = (() => {
+    if (!event.start_time) return null
+    const start = formatEventTime(event.start_time)
+    const end = event.end_time ? formatEventTime(event.end_time) : null
+    return end ? `${start} – ${end}` : start
+  })()
+
   const meta = [
     { label: 'Date', value: displayDate },
-    { label: 'Time', value: time },
-    event.venue && { label: 'Venue', value: event.venue },
+    timeDisplay && { label: 'Time', value: timeDisplay },
     event.prize && { label: 'Prize Pool', value: formatPrizeTotal(event.prize) }
   ].filter(Boolean)
 
@@ -139,12 +145,12 @@ function EventCard({ event, index }) {
       {/* Image */}
       <Box
         sx={{
-          width: { xs: '100%', md: 200 },
-          minHeight: { xs: 180, md: 180 },
+          width: { xs: '100%', md: 220 },
+          height: { xs: 200, md: 200 },
           flexShrink: 0,
           position: 'relative',
           overflow: 'hidden',
-          p: 2.4,
+          p: 2,
           bgcolor: 'transparent'
         }}
       >
@@ -200,22 +206,6 @@ function EventCard({ event, index }) {
             {event.title}
           </Typography>
 
-          {event.tagline && (
-            <Typography
-              variant='body2'
-              sx={{
-                color: 'text.secondary',
-                fontSize: '0.82rem',
-                lineHeight: 1.55,
-                mb: 2,
-                maxWidth: 520,
-                opacity: 0.85
-              }}
-            >
-              {event.tagline}
-            </Typography>
-          )}
-
           {almostFull && spotsLeft !== null && (
             <CustomChip
               label={spotsLeft <= 0 ? 'Sold Out' : `${spotsLeft} Spot${spotsLeft !== 1 ? 's' : ''} Left`}
@@ -239,9 +229,9 @@ function EventCard({ event, index }) {
             component='table'
             sx={{
               borderCollapse: 'collapse',
-              '& td': { py: 0.35, verticalAlign: 'top', fontSize: '0.8rem', lineHeight: 1.6 },
-              '& td:first-of-type': { color: 'text.disabled', pr: 3, whiteSpace: 'nowrap', fontWeight: 500 },
-              '& td:last-of-type': { color: 'text.primary', fontWeight: 600 }
+              '& td': { py: 0.6, verticalAlign: 'top', fontSize: '0.95rem', lineHeight: 1.6 },
+              '& td:first-of-type': { color: 'text.disabled', pr: 2.5, whiteSpace: 'nowrap', fontWeight: 600, fontSize: '0.9rem' },
+              '& td:last-of-type': { color: 'text.primary', fontWeight: 700, fontSize: '1rem' }
             }}
           >
             <tbody>
@@ -262,9 +252,10 @@ function EventCard({ event, index }) {
             flexDirection: 'column',
             justifyContent: 'flex-start',
             alignItems: { xs: 'stretch', sm: 'flex-end' },
-            gap: 1.25,
+            gap: 1,
             flexShrink: 0,
-            pt: { xs: 0, sm: 0.5 }
+            pt: { xs: 0, sm: 0.5 },
+            minWidth: { sm: 150 }
           }}
         >
           <Button
@@ -283,11 +274,12 @@ function EventCard({ event, index }) {
               maxAvailable: event.seats > 0 ? Math.max(0, event.seats - (event.registered || 0)) : null
             }))}
             sx={{
-              minWidth: 130,
-              height: 38,
-              borderRadius: '8px',
+              width: '100%',
+              minWidth: 150,
+              height: 40,
+              borderRadius: '10px',
               fontWeight: 700,
-              fontSize: '0.78rem',
+              fontSize: '0.8rem',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               bgcolor: accent,
@@ -316,11 +308,12 @@ function EventCard({ event, index }) {
               }
             }}
             sx={{
-              minWidth: 130,
-              height: 38,
-              borderRadius: '8px',
+              width: '100%',
+              minWidth: 150,
+              height: 40,
+              borderRadius: '10px',
               fontWeight: 700,
-              fontSize: '0.78rem',
+              fontSize: '0.8rem',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               bgcolor: 'transparent',
@@ -336,14 +329,14 @@ function EventCard({ event, index }) {
             variant='text'
             size='small'
             onClick={() => router.push(`/events/${event.id}`)}
-            sx={{
-              minWidth: 130,
-              height: 36,
-              borderRadius: '8px',
-              fontWeight: 600,
-              fontSize: '0.76rem',
-              letterSpacing: '0.03em',
-              textTransform: 'none',
+            sx={{ width: '100%',
+              minWidth: 150,
+              height: 40,
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
               color: 'text.secondary',
               border: `1px solid ${alpha(accent, 0.18)}`,
               '&:hover': {
@@ -417,7 +410,7 @@ function EventCardSkeleton() {
 export default function EventsPageView() {
   const c = useAppPalette()
   const dispatch = useDispatch()
-  const { events, pagination, eventsLoading, categories, categoriesLoaded, error: eventsError } = useSelector(state => state.events)
+  const { events, pagination, eventsLoading, categories, categoriesLoaded, eventsError } = useSelector(state => state.events)
 
   const [activeCategory, setActiveCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -569,13 +562,14 @@ export default function EventsPageView() {
             }}
           />
 
-          <FormControl size='small' sx={{ minWidth: 170, ...inputSx }}>
+          <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 260 }, ...inputSx }}>
             <Select
               value={activeCategory}
               onChange={handleCategoryChange}
               displayEmpty
               aria-label='Filter by category'
-              sx={{ '& .MuiSelect-select': { py: 1 } }}
+              sx={{ '& .MuiSelect-select': { py: 1, whiteSpace: 'normal', wordBreak: 'break-word' } }}
+              MenuProps={{ PaperProps: { sx: { maxHeight: 300, '& .MuiMenuItem-root': { whiteSpace: 'normal', wordBreak: 'break-word' } } } }}
             >
               <MenuItem value='all'>All Categories</MenuItem>
               {categories.map(cat => (

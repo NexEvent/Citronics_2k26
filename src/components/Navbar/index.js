@@ -161,12 +161,14 @@ const NavDropdownLink = ({ link, active, onNavigate, router }) => {
         <Box
           sx={{
             minWidth: 210,
-            borderRadius: 3,
-            bgcolor: glass.bgSolid,
+            borderRadius: 1,
+            bgcolor: c.isDark ? glass.bgSolid : 'rgba(255,255,255,0.97)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            border: `1px solid ${c.whiteA10}`,
-            boxShadow: `0 12px 40px rgba(0,0,0,0.45), 0 0 0 0.5px ${c.whiteA6} inset`,
+            border: `1px solid ${c.isDark ? c.whiteA10 : 'rgba(0,0,0,0.08)'}`,
+            boxShadow: c.isDark
+              ? `0 12px 40px rgba(0,0,0,0.45), 0 0 0 0.5px ${c.whiteA6} inset`
+              : '0 12px 40px rgba(0,0,0,0.12)',
             py: 1,
             opacity: open ? 1 : 0,
             transform: open ? 'translateY(0)' : 'translateY(-8px)',
@@ -195,12 +197,16 @@ const NavDropdownLink = ({ link, active, onNavigate, router }) => {
                   mx: 0.75,
                   borderRadius: 2,
                   textDecoration: 'none',
-                  color: isActive ? c.white : glass.textSubtle,
-                  bgcolor: isActive ? c.whiteA10 : 'transparent',
+                  color: isActive
+                    ? (c.isDark ? c.white : c.primary)
+                    : (c.isDark ? glass.textSubtle : 'rgba(30,30,30,0.8)'),
+                  bgcolor: isActive
+                    ? (c.isDark ? c.whiteA10 : alpha(c.primary, 0.08))
+                    : 'transparent',
                   transition: 'all 0.18s ease',
                   '&:hover': {
-                    color: c.white,
-                    bgcolor: c.whiteA10
+                    color: c.isDark ? c.white : c.primary,
+                    bgcolor: c.isDark ? c.whiteA10 : alpha(c.primary, 0.06)
                   }
                 }}
               >

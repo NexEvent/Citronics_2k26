@@ -123,71 +123,11 @@ function ContentSection({ badge, title, paragraphs, bulletTitle, bullets, childr
   )
 }
 
-/* ── Stat Card ────────────────────────────────────────────── */
-
-function StatCard({ value, label, icon, colorKey }) {
-  const c = useAppPalette()
-  const color = c.theme.palette[colorKey]?.main || c.primary
-
-  return (
-    <MotionBox
-      initial='hidden'
-      whileInView='show'
-      viewport={{ once: true, amount: 0.4 }}
-      variants={fadeUp}
-      sx={{
-        p: { xs: 3, md: 4 },
-        borderRadius: '20px',
-        textAlign: 'center',
-        background: c.isDark ? alpha(color, 0.07) : alpha(color, 0.04),
-        border: `1px solid ${alpha(color, 0.15)}`,
-        backdropFilter: 'blur(12px)',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: `0 16px 40px ${alpha(color, 0.12)}`
-        }
-      }}
-    >
-      <Box
-        sx={{
-          width: 52,
-          height: 52,
-          borderRadius: '14px',
-          background: alpha(color, 0.12),
-          border: `1px solid ${alpha(color, 0.2)}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mx: 'auto',
-          mb: 2
-        }}
-      >
-        <Icon icon={icon} fontSize={26} style={{ color }} />
-      </Box>
-      <Typography
-        sx={{
-          fontSize: { xs: '2rem', md: '2.5rem' },
-          fontWeight: 800,
-          color,
-          lineHeight: 1,
-          mb: 0.5
-        }}
-      >
-        {value}
-      </Typography>
-      <Typography variant='body2' sx={{ color: c.textSecondary, fontWeight: 500 }}>
-        {label}
-      </Typography>
-    </MotionBox>
-  )
-}
-
 /* ════════════════════════════════════════════════════════════
-   Main About Page
+   About Citronics Page
    ════════════════════════════════════════════════════════════ */
 
-export default function AboutPage() {
+export default function AboutCitronicsPage() {
   const c = useAppPalette()
 
   return (
@@ -252,9 +192,9 @@ export default function AboutPage() {
                 mb: 3
               }}
             >
-              <Icon icon='tabler:school' fontSize={14} style={{ color: c.primary }} />
+              <Icon icon='tabler:rocket' fontSize={14} style={{ color: c.primary }} />
               <Typography variant='caption' sx={{ color: c.primary, fontWeight: 700, letterSpacing: 1.5 }}>
-                CDGI • INDORE
+                CITRONICS • TECHNO-MANAGEMENT FEST
               </Typography>
             </Box>
 
@@ -272,7 +212,7 @@ export default function AboutPage() {
                 backgroundClip: 'text'
               }}
             >
-              About CDGI
+              About Citronics
             </Typography>
 
             <Typography
@@ -286,8 +226,8 @@ export default function AboutPage() {
                 mb: 5
               }}
             >
-              Learn about Chameli Devi Group of Institutions — one of Central India's most prominent educational
-              groups dedicated to delivering excellence in technical, professional, management, pharmacy & law education.
+              Discover CITRONICS — Central India's largest and most vibrant annual Techno-Management Fest
+              that brings together the brightest minds in technology, management, and innovation.
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -312,9 +252,9 @@ export default function AboutPage() {
               </Button>
               <Button
                 variant='outlined'
-                href='/about-citronics'
+                href='/about'
                 size='large'
-                startIcon={<Icon icon='tabler:rocket' />}
+                startIcon={<Icon icon='tabler:school' />}
                 sx={{
                   px: 4,
                   py: 1.6,
@@ -327,32 +267,29 @@ export default function AboutPage() {
                   transition: 'all 0.3s ease'
                 }}
               >
-                About Citronics
+                About CDGI
               </Button>
             </Box>
           </MotionBox>
         </Container>
       </Box>
 
-     
-
       {/* ══════════════════════════════════════════════════════════
-          Section 1 — About CDGI
+          Section 1 — About CITRONICS
           ══════════════════════════════════════════════════════════ */}
       <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: c.isDark ? alpha(c.bgPaper, 0.3) : alpha(c.bgPaper, 0.6) }}>
         <Container maxWidth='md'>
           <Grid container justifyContent='center'>
             <Grid item xs={12}>
               <ContentSection
-                badge={<SectionBadge icon='tabler:school' label='ABOUT CDGI' color={c.info} />}
-                title='Chameli Devi Group of Institutions'
+                badge={<SectionBadge icon='tabler:rocket' label='ABOUT CITRONICS' color={c.primary} />}
+                title={"CITRONICS — Central India's Largest Techno-Management Fest"}
                 paragraphs={[
-                  'Chameli Devi Group of Institutions (CDGI), Indore, is one of the most prominent educational groups in Central India, dedicated to delivering excellence in technical, professional, management, pharmacy & law education.',
-                  'Established under the esteemed aegis of the Agarwal Group, CDGI has consistently focused on fostering academic excellence, industry engagement, research, innovation, and holistic student development.',
-                  'The group offers a wide spectrum of undergraduate and postgraduate programs across diverse disciplines including Engineering, Management, Professional Courses, Pharmacy, and Law, catering to students from varied academic backgrounds and nurturing them into competent professionals.',
-                  'Recognized for its commitment to quality education, CDGI is accredited with NAAC A+ and hosts NBA-accredited program in UG-CSE, reflecting its dedication to maintaining high academic standards. The institution boasts strong placement records, extensive industry collaborations, and opportunities for global certifications, enabling students to stay aligned with evolving industry requirements.',
-                  'Through strategic partnerships with leading technology giants such as Microsoft and Google, along with active participation in hackathons, research initiatives, innovation challenges, and national-level competitions, CDGI has built a dynamic learning ecosystem that encourages students to think creatively, innovate fearlessly, and emerge as future leaders.',
-                  'By blending academic rigor with practical exposure, CDGI continues to shape talented individuals who are ready to contribute meaningfully to society, industry, and the global technological landscape.'
+                  'CITRONICS is one of Central India\'s largest and most vibrant annual Techno-Management Fests, dedicated to bringing together the brightest minds in technology, management, and innovation.',
+                  'Since its inception in 2009, CITRONICS has evolved into a prestigious platform where talented students, innovators, and future leaders from institutions across India come together to showcase their skills, creativity, and technological excellence.',
+                  'Over the years, CITRONICS has grown beyond a conventional college fest to become a national-level platform for innovation, competition, and collaboration. The fest hosts a wide range of technical competitions, management challenges, workshops, expert talks, hackathons, and cultural experiences, creating an environment that encourages learning, networking, and idea exchange.',
+                  'CITRONICS aims to inspire young minds to think beyond conventional boundaries by providing exposure to emerging technologies, entrepreneurial thinking, and industry-driven management practices.',
+                  'By bridging the gap between academia, industry, and innovation, CITRONICS continues to nurture the next generation of technologists, leaders, and changemakers.'
                 ]}
               />
             </Grid>
@@ -360,9 +297,118 @@ export default function AboutPage() {
         </Container>
       </Box>
 
+      {/* ══════════════════════════════════════════════════════════
+          Section 2 — About CITRONICS 2K26
+          ══════════════════════════════════════════════════════════ */}
+      <Box sx={{ py: { xs: 8, md: 12 } }}>
+        <Container maxWidth='md'>
+          <Grid container justifyContent='center'>
+            <Grid item xs={12}>
+              <ContentSection
+                badge={<SectionBadge icon='tabler:sparkles' label='CITRONICS 2K26' color={c.warning} />}
+                title='CITRONICS 2K26 — AI for Sustainable Tomorrow'
+                paragraphs={[
+                  'CITRONICS 2K26 is the flagship edition of our institute\'s Techno-Management Fest, designed to integrate technology, management, innovation, and social responsibility on one dynamic platform.',
+                  'This edition aims to inspire students to explore how cutting-edge technologies can address real-world challenges and contribute to a sustainable future.'
+                ]}
+              >
+                {/* Theme highlight */}
+                <Box
+                  sx={{
+                    p: { xs: 2.5, md: 3 },
+                    borderRadius: '18px',
+                    background: c.isDark ? alpha(c.warning, 0.06) : alpha(c.warning, 0.04),
+                    border: `1px solid ${alpha(c.warning, 0.18)}`,
+                    mb: 3
+                  }}
+                >
+                  <Typography
+                    variant='overline'
+                    sx={{ color: c.warning, fontWeight: 700, letterSpacing: '0.12em', display: 'block', mb: 1 }}
+                  >
+                    Theme
+                  </Typography>
+                  <Typography
+                    variant='h6'
+                    sx={{
+                      fontWeight: 700,
+                      fontStyle: 'italic',
+                      lineHeight: 1.4,
+                      fontSize: { xs: '1rem', md: '1.15rem' }
+                    }}
+                  >
+                    "AI for Sustainable Tomorrow: Where Innovation Meets Sustainable Vision"
+                  </Typography>
+                </Box>
 
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 2.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  This theme highlights the transformative potential of Artificial Intelligence in solving modern urban
+                  and environmental challenges while creating smart, efficient, and sustainable communities.
+                </Typography>
 
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 2.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  Through innovative competitions, idea-pitching platforms, technical events, and collaborative initiatives,
+                  participants will explore how AI can be leveraged to develop solutions for real-world sustainability problems.
+                </Typography>
 
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 2.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  A key highlight of CITRONICS 2K26 is our collaboration with the Indore Municipal Corporation, aimed at
+                  spreading awareness about the responsible and impactful use of Artificial Intelligence for sustainable
+                  urban development.
+                </Typography>
+
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 2.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  This partnership encourages participants to propose AI-driven solutions for smart city challenges,
+                  promoting innovative ideas that can contribute to the future development of Indore as a smarter and
+                  greener city.
+                </Typography>
+
+                <Typography
+                  variant='body1'
+                  sx={{ color: c.textSecondary, lineHeight: 1.85, mb: 1.5, fontSize: { xs: '0.95rem', md: '1.05rem' } }}
+                >
+                  CITRONICS 2K26 will provide participants with an exceptional opportunity to:
+                </Typography>
+
+                <Box component='ul' sx={{ pl: 2.5, m: '0 auto 20px', mb: 2.5, display: 'inline-block', textAlign: 'left' }}>
+                  {[
+                    'Compete with some of the brightest technical minds from across the country',
+                    'Gain exposure to emerging technologies',
+                    'Interact with industry experts',
+                    'Showcase their innovative potential on a national stage'
+                  ].map((item, i) => (
+                    <Box
+                      component='li'
+                      key={i}
+                      sx={{
+                        color: c.textSecondary,
+                        fontSize: { xs: '0.95rem', md: '1.05rem' },
+                        lineHeight: 1.85,
+                        mb: 0.75,
+                        '&::marker': { color: c.warning, fontWeight: 700 }
+                      }}
+                    >
+                      {item}
+                    </Box>
+                  ))}
+                </Box>
+              </ContentSection>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
 
       {/* ── CTA Strip ────────────────────────────────────────────── */}
       <Box
@@ -419,6 +465,6 @@ export default function AboutPage() {
 }
 
 // ── Page-level config ─────────────────────────────────────────────────────────
-AboutPage.authGuard = false
-AboutPage.guestGuard = false
-AboutPage.getLayout = page => page
+AboutCitronicsPage.authGuard = false
+AboutCitronicsPage.guestGuard = false
+AboutCitronicsPage.getLayout = page => page

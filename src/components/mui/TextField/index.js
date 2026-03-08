@@ -66,8 +66,8 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
   // ── Inner input ──────────────────────────────────────────────────────────
   '& .MuiInputBase-input': {
     color: theme.palette.text.primary,
-    '&:not(textarea)': { padding: '10px 14px' },
-    '&:not(textarea).MuiInputBase-inputSizeSmall': { padding: '7px 10px' },
+    '&:not(textarea)': { padding: '7px 12px' },
+    '&:not(textarea).MuiInputBase-inputSizeSmall': { padding: '5px 10px' },
     '&::placeholder': {
       color: theme.palette.text.disabled,
       transition: theme.transitions.create(['opacity', 'transform'], {

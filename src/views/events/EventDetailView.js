@@ -287,31 +287,26 @@ export default function EventDetailView() {
           </Button>
 
           {/* Image */}
-          <Box
-            sx={{
-              position: 'relative',
-              borderRadius: '20px',
-              overflow: 'hidden',
-              border: '1px solid',
-              borderColor: c.dividerA30,
-              /* ~30% shorter on mobile while keeping desktop as-is */
-              aspectRatio: { xs: '8 / 7', md: '4 / 5' },
-              maxHeight: { md: '60vh' },
-              bgcolor: alpha(color, 0.04)
-            }}
-          >
+          <Box sx={{ position: 'relative', width: '100%' }}>
             {imageUrl ? (
               <Box
                 component='img'
                 src={imageUrl}
                 alt={event.title}
-                sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                sx={{
+                  width: '100%',
+                  height: 'auto',
+                  maxHeight: { xs: '50vh', md: '70vh' },
+                  objectFit: 'contain',
+                  display: 'block',
+                  borderRadius: '12px'
+                }}
               />
             ) : (
               <Box
                 sx={{
                   width: '100%',
-                  height: '100%',
+                  height: 300,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -362,25 +357,6 @@ export default function EventDetailView() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Department chip */}
-            {event.departmentName && (
-              <CustomChip
-                icon={<Icon icon='tabler:building' fontSize={13} />}
-                label={event.departmentName}
-                size='small'
-                sx={{
-                  mb: 2,
-                  fontWeight: 600,
-                  fontSize: '0.72rem',
-                  background: alpha(color, 0.08),
-                  color,
-                  border: '1px solid',
-                  borderColor: alpha(color, 0.18),
-                  '& .MuiChip-icon': { color }
-                }}
-              />
-            )}
-
             {/* Title */}
             <Typography
               variant='h3'
@@ -443,7 +419,9 @@ export default function EventDetailView() {
                     background: 'transparent',
                     mb: 2,
                     overflow: 'hidden',
-                    maxWidth: { md: 420 }
+                    maxWidth: { md: 520 },
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }
                   }}
                 >
                   {rows.map((row, i) => (
@@ -489,13 +467,15 @@ export default function EventDetailView() {
 
             {/* ── Description ── */}
             {event.description && (
-              <Box sx={{ mt: 3 }}>
-                <Typography
-                  variant='overline'
-                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
-                >
-                  About This Event
-                </Typography>
+              <Box sx={{ mt: 5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
+                  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: alpha(color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon icon='tabler:info-circle' fontSize={20} style={{ color }} />
+                  </Box>
+                  <Typography variant='h6' sx={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.01em', color: 'text.primary' }}>
+                    About This Event
+                  </Typography>
+                </Box>
                 <Typography
                   variant='body1'
                   sx={{
@@ -512,20 +492,34 @@ export default function EventDetailView() {
 
             {/* ── Brief ── */}
             {details.brief && (
-              <Box sx={{ mt: 3 }}>
-                <Typography
-                  variant='overline'
-                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
-                >
-                  Brief
-                </Typography>
+              <Box
+                sx={{
+                  mt: 5,
+                  p: { xs: 2.5, md: 3.5 },
+                  borderRadius: '16px',
+                  border: `1px solid ${alpha(color, 0.12)}`,
+                  background: alpha(color, 0.03),
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <Box sx={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', bgcolor: color, borderRadius: '4px 0 0 4px' }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: alpha(color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon icon='tabler:file-description' fontSize={20} style={{ color }} />
+                  </Box>
+                  <Typography variant='h6' sx={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.01em', color: 'text.primary' }}>
+                    Brief
+                  </Typography>
+                </Box>
                 <Typography
                   variant='body1'
                   sx={{
                     color: 'text.secondary',
                     lineHeight: 1.85,
                     fontSize: '0.95rem',
-                    whiteSpace: 'pre-line'
+                    whiteSpace: 'pre-line',
+                    pl: 1
                   }}
                 >
                   {details.brief}
@@ -535,60 +529,61 @@ export default function EventDetailView() {
 
             {/* ── Prizes ── */}
             {details.prize && typeof details.prize === 'object' && Object.keys(details.prize).length > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <Typography
-                  variant='overline'
-                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
-                >
-                  Prizes
-                </Typography>
-                <Box component='ul' sx={{ pl: 2.5, m: 0, listStyle: 'none' }}>
+              <Box sx={{ mt: 5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: alpha(color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon icon='tabler:trophy' fontSize={20} style={{ color }} />
+                  </Box>
+                  <Typography variant='h6' sx={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.01em', color: 'text.primary' }}>
+                    Prizes
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
                   {details.prize.total && (
                     <Box
-                      component='li'
                       sx={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 1.5,
-                        mb: 1.25
+                        gridColumn: { sm: '1 / -1' },
+                        p: 3,
+                        borderRadius: '14px',
+                        background: `linear-gradient(135deg, ${alpha(color, 0.12)} 0%, ${alpha(color, 0.04)} 100%)`,
+                        border: `1px solid ${alpha(color, 0.15)}`,
+                        textAlign: 'center'
                       }}
                     >
-                      <Icon
-                        icon='tabler:trophy'
-                        fontSize={18}
-                        style={{ color, marginTop: 3, flexShrink: 0 }}
-                      />
-                      <Typography
-                        variant='body1'
-                        sx={{ color: 'text.secondary', fontSize: '0.95rem', lineHeight: 1.6, fontWeight: 600 }}
-                      >
-                        Total Prize Pool: ₹{details.prize.total.toLocaleString('en-IN')}
+                      <Typography sx={{ color: 'text.disabled', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.5 }}>
+                        Total Prize Pool
+                      </Typography>
+                      <Typography sx={{ color, fontWeight: 900, fontSize: '1.8rem', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                        ₹{details.prize.total.toLocaleString('en-IN')}
                       </Typography>
                     </Box>
                   )}
-                  {['1st', '2nd', '3rd'].map((place) => (
+                  {['1st', '2nd', '3rd'].map((place, idx) => (
                     details.prize[place] ? (
                       <Box
-                        component='li'
                         key={place}
                         sx={{
+                          p: 2.5,
+                          borderRadius: '12px',
+                          border: `1px solid ${c.dividerA30}`,
                           display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 1.5,
-                          mb: 1.25
+                          alignItems: 'center',
+                          gap: 2,
+                          transition: 'all 0.2s ease',
+                          '&:hover': { borderColor: alpha(color, 0.3), bgcolor: alpha(color, 0.03) }
                         }}
                       >
-                        <Icon
-                          icon='tabler:trophy'
-                          fontSize={18}
-                          style={{ color, marginTop: 3, flexShrink: 0 }}
-                        />
-                        <Typography
-                          variant='body1'
-                          sx={{ color: 'text.secondary', fontSize: '0.95rem', lineHeight: 1.6 }}
-                        >
-                          {place} Prize: ₹{details.prize[place].toLocaleString('en-IN')}
-                        </Typography>
+                        <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: alpha(color, 0.08), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Typography sx={{ fontWeight: 900, fontSize: '0.85rem', color }}>{idx + 1}</Typography>
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontSize: '0.72rem', color: 'text.disabled', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            {place} Prize
+                          </Typography>
+                          <Typography sx={{ fontWeight: 800, fontSize: '1.15rem', color: 'text.primary', lineHeight: 1.3 }}>
+                            ₹{details.prize[place].toLocaleString('en-IN')}
+                          </Typography>
+                        </Box>
                       </Box>
                     ) : null
                   ))}
@@ -598,27 +593,36 @@ export default function EventDetailView() {
 
             {/* ── Rules ── */}
             {details.rules && details.rules.length > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <Typography
-                  variant='overline'
-                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
-                >
-                  Rules
-                </Typography>
-                <Box component='ol' sx={{ pl: 2.5, m: 0 }}>
+              <Box sx={{ mt: 5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: alpha(color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon icon='tabler:list-check' fontSize={20} style={{ color }} />
+                  </Box>
+                  <Typography variant='h6' sx={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.01em', color: 'text.primary' }}>
+                    Rules
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   {details.rules.map((rule, i) => (
                     <Box
-                      component='li'
                       key={i}
                       sx={{
-                        color: 'text.secondary',
-                        fontSize: '0.95rem',
-                        lineHeight: 1.75,
-                        mb: 0.75,
-                        '&::marker': { color, fontWeight: 700 }
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 2,
+                        p: 2,
+                        borderRadius: '12px',
+                        border: `1px solid ${c.dividerA30}`,
+                        transition: 'all 0.2s ease',
+                        '&:hover': { borderColor: alpha(color, 0.25), bgcolor: alpha(color, 0.02) }
                       }}
                     >
-                      {rule}
+                      <Box sx={{ width: 28, height: 28, borderRadius: '8px', bgcolor: alpha(color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, mt: 0.25 }}>
+                        <Typography sx={{ fontWeight: 800, fontSize: '0.75rem', color }}>{i + 1}</Typography>
+                      </Box>
+                      <Typography sx={{ color: 'text.secondary', fontSize: '0.92rem', lineHeight: 1.7, flex: 1 }}>
+                        {rule}
+                      </Typography>
                     </Box>
                   ))}
                 </Box>
@@ -627,55 +631,33 @@ export default function EventDetailView() {
 
             {/* ── Rounds ── */}
             {details.rounds > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <Typography
-                  variant='overline'
-                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
-                >
-                  Rounds
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Icon
-                    icon='tabler:list-numbers'
-                    fontSize={20}
-                    style={{ color, flexShrink: 0 }}
-                  />
-                  <Typography
-                    variant='body1'
-                    sx={{ color: 'text.secondary', fontSize: '0.95rem', lineHeight: 1.6 }}
-                  >
-                    {details.rounds} {details.rounds === 1 ? 'Round' : 'Rounds'}
+              <Box sx={{ mt: 5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
+                  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: alpha(color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon icon='tabler:topology-ring-3' fontSize={20} style={{ color }} />
+                  </Box>
+                  <Typography variant='h6' sx={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.01em', color: 'text.primary' }}>
+                    Rounds
                   </Typography>
                 </Box>
-              </Box>
-            )}
-
-            {/* ── Tags ── */}
-            {event.tags && event.tags.length > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <Typography
-                  variant='overline'
-                  sx={{ color, fontWeight: 700, letterSpacing: '0.12em', mb: 1.5, display: 'block' }}
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    px: 3,
+                    py: 2,
+                    borderRadius: '14px',
+                    background: `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.03)} 100%)`,
+                    border: `1px solid ${alpha(color, 0.15)}`
+                  }}
                 >
-                  Tags
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {event.tags.map(tag => (
-                    <CustomChip
-                      key={tag}
-                      label={tag}
-                      size='small'
-                      sx={{
-                        fontWeight: 600,
-                        fontSize: '0.78rem',
-                        background: alpha(color, 0.08),
-                        color,
-                        border: '1px solid',
-                        borderColor: alpha(color, 0.15),
-                        '& .MuiChip-label': { px: 1.5 }
-                      }}
-                    />
-                  ))}
+                  <Box sx={{ width: 44, height: 44, borderRadius: '50%', bgcolor: alpha(color, 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Typography sx={{ fontWeight: 900, fontSize: '1.2rem', color }}>{details.rounds}</Typography>
+                  </Box>
+                  <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: 'text.primary' }}>
+                    {details.rounds === 1 ? 'Round' : 'Rounds'}
+                  </Typography>
                 </Box>
               </Box>
             )}

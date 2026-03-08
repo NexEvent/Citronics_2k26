@@ -13,6 +13,8 @@ import themeConfig from 'src/configs/themeConfig'
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const LINK_COLUMN_1 = [
+  { label: 'About CDGI', href: '/about' },
+  { label: 'About Citronics', href: '/about-citronics' },
   { label: 'Contact Us', href: '#' },
 
   { label: 'Privacy Policy', href: '/privacy-policy' }

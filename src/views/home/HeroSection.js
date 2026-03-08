@@ -2,60 +2,14 @@
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import { alpha } from '@mui/material/styles'
 import { useAppPalette } from 'src/components/palette'
 import { motion, AnimatePresence } from 'framer-motion'
-import Icon from 'src/components/Icon'
+import axios from 'axios'
 
 const MotionBox = motion(Box)
 const MotionTypography = motion(Typography)
-
-/* ── Animated grid background ─────────────────────────────────── */
-function GridBackground() {
-  const c = useAppPalette()
-  const primary = c.primary
-
-  return (
-    <Box
-      sx={{
-        position: 'absolute',
-        inset: 0,
-        overflow: 'hidden',
-        zIndex: 0,
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `
-            linear-gradient(${alpha(primary, 0.06)} 1px, transparent 1px),
-            linear-gradient(90deg, ${alpha(primary, 0.06)} 1px, transparent 1px)
-          `,
-          backgroundSize: '72px 72px',
-          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 100%)'
-        }
-      }}
-    >
-      <Box
-        sx={{
-          position: 'absolute',
-          width: '60vw',
-          height: '60vw',
-          maxWidth: 900,
-          maxHeight: 900,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${c.primaryA12} 0%, transparent 70%)`,
-          top: '-20%',
-          left: '-10%',
-          filter: 'blur(80px)',
-          pointerEvents: 'none'
-        }}
-      />
-
-    </Box>
-  )
-}
 
 
 
@@ -75,9 +29,9 @@ function CountCard({ value, label }) {
       <Box
         sx={{
           position: 'relative',
-          width: { xs: 72, sm: 88, md: 100 },
-          height: { xs: 80, sm: 96, md: 108 },
-          borderRadius: '20px',
+          width: { xs: 80, sm: 100, md: 120 },
+          height: { xs: 90, sm: 110, md: 130 },
+          borderRadius: '8px',
           background: cardBg,
           border: `1px solid ${borderCol}`,
           backdropFilter: 'blur(16px)',
@@ -93,40 +47,21 @@ function CountCard({ value, label }) {
             top: 0, left: 0, right: 0,
             height: '1px',
             background: `linear-gradient(90deg, transparent, ${c.primaryA40}, transparent)`
-          },
-          /* Divider line across middle */
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            top: '50%',
-            left: 0,
-            right: 0,
-            height: '1px',
-            background: c.dividerA40
           }
         }}
       >
-        <AnimatePresence mode='popLayout'>
-          <MotionTypography
-            key={value}
-            initial={{ y: 12, opacity: 0, scale: 0.9 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: -12, opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          <Typography
             sx={{
               fontWeight: 700,
               fontVariantNumeric: 'tabular-nums',
               color: numColor,
-              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+              fontSize: { xs: '2.2rem', sm: '2.8rem', md: '3.4rem' },
               lineHeight: 1,
-              fontFamily: '"Inter", "SF Mono", monospace',
-              position: 'relative',
-              zIndex: 1
+              fontFamily: '"Inter", "SF Mono", monospace'
             }}
           >
             {String(value).padStart(2, '0')}
-          </MotionTypography>
-        </AnimatePresence>
+          </Typography>
       </Box>
       {/* Label */}
       <Typography
@@ -181,7 +116,14 @@ function CountColon() {
 
 
 
-
+/* ── Extract first image from an event ───────────────────────── */
+function getEventImage(event) {
+  if (event?.images && Array.isArray(event.images) && event.images.length > 0) {
+    const img = event.images[0]
+    return typeof img === 'string' ? img : img?.url || null
+  }
+  return null
+}
 
 /* ═══════════ HERO SECTION ═══════════════════════════════════════ */
 export default function HeroSection() {
@@ -198,14 +140,43 @@ export default function HeroSection() {
     }
   })
 
+  /* ── Fetch logos from page_media table ─────────────────────── */
+  const [logos, setLogos] = useState({})
+
+  useEffect(() => {
+    let cancelled = false
+    axios.get('/api/media/hero').then(res => {
+      if (cancelled || !res.data?.success) return
+      const map = {}
+      res.data.data.forEach(row => {
+        if (row.name && row.links) map[row.name] = row.links
+      })
+      setLogos(map)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  /* ── Fetch event images for marquee ────────────────────────── */
+  const [eventImages, setEventImages] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    axios.get('/api/events?limit=50').then(res => {
+      if (cancelled || !res.data?.success) return
+      const imgs = []
+      res.data.data.forEach(ev => {
+        const url = getEventImage(ev)
+        if (url) imgs.push(url)
+      })
+      setEventImages(imgs)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   /* ── Theme-aware color helpers ──────────────────────────────── */
   const heroText = c.heroText
   const heroTextMuted = alpha(heroText, 0.5)
-  const heroTextSoft = alpha(heroText, 0.8)
   const heroBorder = alpha(heroText, isDark ? 0.08 : 0.1)
-  const heroOverlayEnd = c.heroOverlayEnd
-  const imageBg = c.heroImageBg
 
   useEffect(() => {
     const target = new Date('2026-04-07T09:00:00').getTime()
@@ -236,10 +207,6 @@ export default function HeroSection() {
     hidden: { opacity: 0, y: 40 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
   }
-  const fadeIn = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 1, ease: [0.22, 1, 0.36, 1] } }
-  }
 
   return (
     <Box
@@ -258,8 +225,6 @@ export default function HeroSection() {
         pb: { xs: 6, md: 10 }
       }}
     >
-      <GridBackground />
-
       {/* Top fade */}
       <Box
         sx={{
@@ -275,14 +240,137 @@ export default function HeroSection() {
         <MotionBox variants={stagger} initial='hidden' animate='visible'>
 
           {/* ── Logo ────────────────────────────────────────────────── */}
-          <MotionBox variants={fadeUp} sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 3, md: 4 } }}>
+          <MotionBox variants={fadeUp} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: { xs: 1.5, md: 1 }, mb: { xs: 3, md: 4 } }}>
+
+            {/* Mobile: 4 partner logos above citronics */}
+            <Box
+              sx={{
+                display: { xs: 'flex', md: 'none' },
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: 2,
+                width: '100%',
+                mb: 1
+              }}
+            >
+              {['agr2', 'cdgi', 'nacc', 'nba'].map((name) => (
+                <Box
+                  key={name}
+                  component='img'
+                  src={logos[name]}
+                  alt={name}
+                  sx={{
+                    width: 90,
+                    height: 90,
+                    objectFit: 'contain',
+                    filter: isDark ? 'drop-shadow(0 0 8px rgba(255,255,255,0.10))' : 'drop-shadow(0 2px 6px rgba(0,0,0,0.12))'
+                  }}
+                />
+              ))}
+            </Box>
+
+            {/* Desktop: [agr2][cdgi]  ──  [citronics]  ──  [nacc][nba] */}
+            <Box
+              sx={{
+                display: { xs: 'none', md: 'flex' },
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                px: { md: 4, lg: 6 }
+              }}
+            >
+              {/* Left group */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { md: 3, lg: 4 } }}>
+                <Box
+                  component='img'
+                  src={logos.agr2}
+                  alt='agr2'
+                  sx={{
+                    width: { md: 120, lg: 140 },
+                    height: 'auto',
+                    objectFit: 'contain',
+                    filter: isDark ? 'drop-shadow(0 0 10px rgba(255,255,255,0.10))' : 'drop-shadow(0 2px 8px rgba(0,0,0,0.12))',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': { transform: 'scale(1.08)' }
+                  }}
+                />
+                <Box
+                  component='img'
+                  src={logos.cdgi}
+                  alt='cdgi'
+                  sx={{
+                    width: { md: 120, lg: 140 },
+                    height: 'auto',
+                    objectFit: 'contain',
+                    ml: { md: 2, lg: 7},
+                    filter: isDark ? 'drop-shadow(0 0 10px rgba(255,255,255,0.10))' : 'drop-shadow(0 2px 8px rgba(0,0,0,0.12))',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': { transform: 'scale(1.08)' }
+                  }}
+                />
+              </Box>
+
+              {/* Citronics logo (centre) */}
+              <Box
+                component='img'
+                src={logos.citronics}
+                alt='Citronics Logo'
+                sx={{
+                  width: { md: '38vw', lg: '32vw' },
+                  maxWidth: 560,
+                  minWidth: 220,
+                  height: 'auto',
+                  objectFit: 'contain',
+                  filter: isDark ? 'drop-shadow(0 0 40px rgba(255,255,255,0.08))' : 'drop-shadow(0 4px 24px rgba(0,0,0,0.10))',
+                  transition: 'transform 0.4s ease',
+                  '&:hover': { transform: 'scale(1.03)' }
+                }}
+              />
+
+              {/* Right group */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { md: 3, lg: 4 } }}>
+                <Box
+                  component='img'
+                  src={logos.nacc}
+                  alt='nacc'
+                  sx={{
+                    width: { md: 120, lg: 140 },
+                    height: 'auto',
+                    objectFit: 'contain',
+                    mr: { md: 2, lg: 6 },
+                    filter: isDark ? 'drop-shadow(0 0 10px rgba(255,255,255,0.10))' : 'drop-shadow(0 2px 8px rgba(0,0,0,0.12))',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': { transform: 'scale(1.08)' }
+                  }}
+                />
+                <Box
+                  component='img'
+                  src={logos.nba}
+                  alt='nba'
+                  sx={{
+                    width: { md: 120, lg: 140 },
+                    height: 'auto',
+                    objectFit: 'contain',
+                    filter: isDark ? 'drop-shadow(0 0 10px rgba(255,255,255,0.10))' : 'drop-shadow(0 2px 8px rgba(0,0,0,0.12))',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': { transform: 'scale(1.08)' }
+                  }}
+                />
+              </Box>
+            </Box>
+
+            {/* Mobile: citronics logo below the partner row */}
             <Box
               component='img'
-              src='/logo/citronics2.png'
+              src={logos.citronics}
               alt='Citronics Logo'
               sx={{
-                width: { xs: '70vw', sm: '50vw', md: '38vw', lg: '32vw' },
-                maxWidth: 600,
+                display: { xs: 'block', md: 'none' },
+                width: { xs: '70vw', sm: '50vw' },
+                maxWidth: 480,
                 minWidth: 220,
                 height: 'auto',
                 objectFit: 'contain',
@@ -291,37 +379,104 @@ export default function HeroSection() {
                 '&:hover': { transform: 'scale(1.03)' }
               }}
             />
-          </MotionBox>
 
-          {/* ── Tagline ──────────────────────────────────────────────── */}
-          <MotionBox variants={fadeUp} sx={{ textAlign: 'center', mb: { xs: 2, md: 3 } }}>
+            {/* "In Collaboration With IMC" + nagar logo */}
             <Typography
               variant='h4'
               sx={{
                 fontWeight: 800,
-                fontSize: { xs: '1.25rem', sm: '1.6rem', md: '2rem', lg: '2.4rem' },
+                fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
                 lineHeight: 1.3,
                 background: c.gradientTriple,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                maxWidth: 800,
+                textAlign: 'center',
+                mt: { xs: 1, md: -2 }
+              }}
+            >
+              In Collaboration With IMC
+            </Typography>
+            <Box
+              component='img'
+              src={logos.nagar}
+              alt='Indore Nagar Palika Nigam'
+              sx={{
+                width: { xs: 160, sm: 200, md: 260 },
+                height: 'auto',
+                objectFit: 'contain',
+                filter: isDark ? 'drop-shadow(0 0 12px rgba(255,255,255,0.10))' : 'drop-shadow(0 2px 8px rgba(0,0,0,0.12))',
+                transition: 'transform 0.4s ease',
+                '&:hover': { transform: 'scale(1.05)' }
+              }}
+            />
+          </MotionBox>
+
+          {/* ── Tagline pill ─────────────────────────────────────────── */}
+          <MotionBox variants={fadeUp} sx={{ textAlign: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                display: 'inline-block',
+                borderRadius: '9999px',
+                border: `1px solid ${heroBorder}`,
+                bgcolor: isDark ? alpha(c.bgPaper, 0.5) : alpha(c.bgPaper, 0.5),
+                backdropFilter: 'blur(8px)',
+                px: 2.5,
+                py: 0.75,
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: heroTextMuted
+              }}
+            >
+              Citronics 2026 • The Annual Tech Fest
+            </Box>
+          </MotionBox>
+
+          {/* ── Headline (word-by-word stagger) ──────────────────────── */}
+          <MotionBox
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
+            }}
+            sx={{ textAlign: 'center', mb: { xs: 2, md: 3 } }}
+          >
+            <Typography
+              component='h1'
+              sx={{
+                fontWeight: 700,
+                fontSize: { xs: '1.6rem', sm: '2rem', md: '2.6rem', lg: '3rem' },
+                lineHeight: 1.15,
+                letterSpacing: '-0.02em',
+                color: c.textPrimary,
+                maxWidth: 900,
                 mx: 'auto',
                 px: { xs: 2, md: 0 }
               }}
             >
-              AI for Sustainable Tomorrow: Where Innovation Meets Sustainable Vision
+              {'AI for Sustainable Tomorrow: Where Innovation Meets Sustainable Vision'.split(' ').map((word, i) => (
+                <MotionBox
+                  key={i}
+                  component='span'
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 20 } }
+                  }}
+                  sx={{ display: 'inline-block', mr: '0.3em' }}
+                >
+                  {word}
+                </MotionBox>
+              ))}
             </Typography>
           </MotionBox>
 
-          {/* ── Description paragraph ────────────────────────────────── */}
-          <MotionBox variants={fadeUp} sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
+          {/* ── Description ──────────────────────────────────────────── */}
+          <MotionBox variants={fadeUp} sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
             <Typography
               sx={{
                 color: heroTextMuted,
                 fontWeight: 400,
-                fontSize: { xs: '0.95rem', sm: '1.05rem', md: '1.15rem' },
-                lineHeight: 1.8,
-                maxWidth: 680,
+                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.15rem' },
+                lineHeight: 1.7,
+                maxWidth: 640,
                 mx: 'auto',
                 px: { xs: 2, md: 0 }
               }}
@@ -332,171 +487,115 @@ export default function HeroSection() {
             </Typography>
           </MotionBox>
 
-          {/* ── Hero image with starburst badges ─────────────────────── */}
-          <MotionBox variants={fadeIn} sx={{ position: 'relative', mb: { xs: 5, md: 7 } }}>
-
-
-            {/* Image container with rounded corners */}
-            <Box
-              sx={{
-                position: 'relative',
-                zIndex: 1,
-                width: '100%',
-                height: { xs: 220, sm: 320, md: 420 },
-                borderRadius: '24px',
-                overflow: 'hidden',
-                border: `1px solid ${heroBorder}`,
-                bgcolor: imageBg
-              }}
-            >
-              {/* Placeholder gradient (replace src with actual event image) */}
-              <Box
-                component='img'
-                src='/imagesB.jpg'
-                alt='Citronics Technical Fest'
-                sx={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  filter: isDark ? 'brightness(0.7) contrast(1.1)' : 'brightness(0.85) contrast(1.05)',
-                  transition: 'transform 0.6s ease',
-                  '&:hover': { transform: 'scale(1.03)' }
-                }}
-              />
-
-              {/* Gradient overlay on image */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: `linear-gradient(90deg, ${c.primaryA10} 0%, transparent 50%)`
-                }}
-              />
-            </Box>
-
-
-          </MotionBox>
-
-          {/* ── CTAs ────────────────────────────────────────────────── */}
-          <MotionBox variants={fadeUp} sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap', mb: { xs: 6, md: 8 } }}>
-            <Button
-              variant='contained'
-              size='large'
+          {/* ── CTA Button (pill) ────────────────────────────────────── */}
+          <MotionBox
+            variants={fadeUp}
+            sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 3, md: 4 } }}
+          >
+            <MotionBox
+              component='a'
               href='/events'
-              endIcon={<Icon icon='tabler:arrow-right' />}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
                 px: 4,
-                py: 1.8,
-                borderRadius: '14px',
-                fontSize: '1rem',
-                fontWeight: 700,
-                textTransform: 'none',
+                py: 1.5,
+                borderRadius: '9999px',
                 background: c.gradientPrimary,
-                boxShadow: `0 0 40px ${c.primaryA50}, 0 8px 32px ${c.primaryA30}`,
-                '&:hover': {
-                  boxShadow: `0 0 60px ${c.primaryA60}, 0 12px 40px ${c.primaryA40}`,
-                  transform: 'translateY(-2px)'
-                },
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Explore Events
-            </Button>
-            <Button
-              variant='outlined'
-              size='large'
-              href='/about'
-              startIcon={<Icon icon='tabler:info-circle' />}
-              sx={{
-                px: 4,
-                py: 1.8,
-                borderRadius: '14px',
-                fontSize: '1rem',
+                color: '#fff',
                 fontWeight: 600,
-                textTransform: 'none',
-                borderColor: alpha(heroText, 0.15),
-                color: heroTextSoft,
-                backdropFilter: 'blur(8px)',
+                fontSize: '1rem',
+                textDecoration: 'none',
+                boxShadow: `0 8px 32px ${c.primaryA30}`,
+                cursor: 'pointer',
+                transition: 'box-shadow 0.3s ease',
                 '&:hover': {
-                  borderColor: c.primaryA50,
-                  background: c.primaryA8,
-                  color: heroText
-                },
-                transition: 'all 0.3s ease'
+                  boxShadow: `0 12px 40px ${c.primaryA40}`
+                }
               }}
             >
-              About Us
-            </Button>
-          </MotionBox>
-
-          {/* ── Countdown (21st.dev style) ────────────────────────────── */}
-          <MotionBox variants={fadeUp} sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
-            <Typography
-              variant='overline'
-              sx={{
-                color: c.textSecondaryA60,
-                letterSpacing: 4,
-                mb: 3,
-                display: 'block',
-                fontSize: '0.7rem',
-                fontWeight: 600
-              }}
-            >
-              COUNTDOWN TO LAUNCH
-            </Typography>
-            <Stack
-              direction='row'
-              justifyContent='center'
-              alignItems='flex-start'
-              sx={{ gap: { xs: 0.5, sm: 1.5, md: 2 } }}
-            >
-              <CountCard value={timeLeft.days} label='Days' />
-              <CountColon />
-              <CountCard value={timeLeft.hours} label='Hours' />
-              <CountColon />
-              <CountCard value={timeLeft.minutes} label='Min' />
-              <CountColon />
-              <CountCard value={timeLeft.seconds} label='Sec' />
-            </Stack>
+              Explore All Events
+            </MotionBox>
           </MotionBox>
 
         </MotionBox>
       </Container>
 
-      {/* Scroll indicator */}
-      <MotionBox
-        animate={{ y: [0, 8, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        sx={{
-          position: 'absolute',
-          bottom: { xs: 20, md: 40 },
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 1,
-          zIndex: 2
-        }}
-      >
+      {/* ── Animated Image Marquee ──────────────────────────────── */}
+      {eventImages.length > 0 && (
         <Box
           sx={{
-            width: 24,
-            height: 40,
-            borderRadius: '12px',
-            border: `2px solid ${alpha(heroText, 0.15)}`,
-            display: 'flex',
-            justifyContent: 'center',
-            pt: 1
+            position: 'relative',
+            width: '100%',
+            height: { xs: 220, sm: 260, md: 320 },
+            maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+            overflow: 'hidden',
+            mb: { xs: 4, md: 6 }
           }}
         >
           <MotionBox
-            animate={{ y: [0, 10, 0], opacity: [1, 0, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            sx={{ width: 3, height: 8, borderRadius: 2, bgcolor: alpha(heroText, 0.4) }}
-          />
+            animate={{ x: ['0%', '-50%'] }}
+            transition={{ ease: 'linear', duration: 30, repeat: Infinity }}
+            sx={{ display: 'flex', gap: 2, height: '100%', alignItems: 'center' }}
+          >
+            {[...eventImages, ...eventImages].map((src, i) => (
+              <Box
+                key={i}
+                sx={{
+                  position: 'relative',
+                  aspectRatio: '3/4',
+                  height: { xs: 180, md: 250 },
+                  flexShrink: 0,
+                  transform: `rotate(${i % 2 === 0 ? -2 : 5}deg)`
+                }}
+              >
+                <Box
+                  component='img'
+                  src={src}
+                  alt={`Event ${(i % eventImages.length) + 1}`}
+                  loading='lazy'
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    borderRadius: '16px',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
+                  }}
+                />
+              </Box>
+            ))}
+          </MotionBox>
         </Box>
-      </MotionBox>
+      )}
+
+      {/* ── Countdown ────────────────────────────────────────────── */}
+      <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 }, position: 'relative', zIndex: 2 }}>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: { xs: '1.4rem', sm: '1.8rem', md: '2.2rem' },
+            letterSpacing: 1,
+            mb: { xs: 3, md: 4 },
+            color: c.textPrimary
+          }}
+        >
+          Reserve Your Spot
+        </Typography>
+        <Stack
+          direction='row'
+          justifyContent='center'
+          alignItems='flex-start'
+          sx={{ gap: { xs: 1.5, sm: 2.5, md: 3 } }}
+        >
+          <CountCard value={timeLeft.days} label='Days' />
+          <CountCard value={timeLeft.hours} label='Hours' />
+          <CountCard value={timeLeft.minutes} label='Min' />
+          <CountCard value={timeLeft.seconds} label='Sec' />
+        </Stack>
+      </Box>
 
       {/* Bottom fade */}
       <Box

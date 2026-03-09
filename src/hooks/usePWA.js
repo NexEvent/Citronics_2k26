@@ -39,12 +39,20 @@ const usePWA = () => {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
 
+    // Reload once when a new SW takes control (skipWaiting + clients.claim)
+    let refreshing = false
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return
+      refreshing = true
+      window.location.reload()
+    })
+
     const register = async () => {
       try {
         const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
         setSwRegistration(reg)
 
-        // Detect update
+        // Detect update (for manual applyUpdate callers)
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing
           if (!newWorker) return

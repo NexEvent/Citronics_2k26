@@ -6,7 +6,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import Collapse from '@mui/material/Collapse'
 import { useRouter } from 'next/router'
 import { useSelector } from 'react-redux'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import Icon from 'src/components/Icon'
 import { selectCartEventCount } from 'src/store/slices/cartSlice'
 import { useAppPalette } from 'src/components/palette'
@@ -29,7 +29,16 @@ const NAV_ITEMS = [
   },
   { label: 'Cart', href: '/cart', icon: 'tabler:shopping-cart', showBadge: true },
   { label: 'Login', href: '/login', icon: 'tabler:login', guestOnly: true },
-  { label: 'Dashboard', href: '/dashboard', icon: 'tabler:layout-dashboard', authOnly: true }
+  {
+    label: 'Profile',
+    href: '#',
+    icon: 'tabler:user-circle',
+    authOnly: true,
+    children: [
+      { label: 'Dashboard', href: '/dashboard', icon: 'tabler:layout-dashboard' },
+      { label: 'Sign Out', href: '#', icon: 'tabler:logout', isSignOut: true }
+    ]
+  }
 ]
 
 /**
@@ -47,7 +56,7 @@ const MobileBottomNav = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const cartEventCount = useSelector(selectCartEventCount)
   const { data: session } = useSession()
-  const [submenuOpen, setSubmenuOpen] = useState(false)
+  const [openSubmenu, setOpenSubmenu] = useState(null)
 
   const items = useMemo(() => {
     return NAV_ITEMS.filter(item => {
@@ -72,10 +81,10 @@ const MobileBottomNav = () => {
 
   const handleNavClick = (item) => {
     if (item.children) {
-      setSubmenuOpen(prev => !prev)
+      setOpenSubmenu(prev => prev === item.label ? null : item.label)
       return
     }
-    setSubmenuOpen(false)
+    setOpenSubmenu(null)
     if (item.isAnchor) {
       if (router.pathname === '/') {
         const el = document.getElementById('about')
@@ -88,9 +97,18 @@ const MobileBottomNav = () => {
     router.push(item.href)
   }
 
-  const handleSubItemClick = (href) => {
-    setSubmenuOpen(false)
-    router.push(href)
+  const handleSubItemClick = async (child) => {
+    setOpenSubmenu(null)
+    if (child.isSignOut) {
+      try {
+        const result = await signOut({ redirect: false })
+        router.push(result?.url || '/login')
+      } catch {
+        router.push('/login')
+      }
+      return
+    }
+    router.push(child.href)
   }
 
   return (
@@ -106,7 +124,7 @@ const MobileBottomNav = () => {
       }}
     >
       {/* Submenu panel */}
-      <Collapse in={submenuOpen} timeout={250}>
+      <Collapse in={openSubmenu !== null} timeout={250}>
         <Box
           sx={{
             mx: 1,
@@ -123,15 +141,25 @@ const MobileBottomNav = () => {
             gap: 0.5
           }}
         >
-          {NAV_ITEMS.find(i => i.children)?.children.map(child => {
-            const childActive = router.pathname === child.href
+          {openSubmenu === 'Profile' && session?.user && (
+            <Box sx={{ px: 1.5, pb: 0.5, gridColumn: '1 / -1' }}>
+              <Typography variant='body2' fontWeight={600} noWrap sx={{ color: c.isDark ? alpha(c.white, 0.9) : alpha(c.black, 0.8) }}>
+                {session.user.name || session.user.email}
+              </Typography>
+              <Typography variant='caption' sx={{ color: c.isDark ? alpha(c.white, 0.5) : alpha(c.black, 0.45) }} noWrap>
+                {session.user.role || 'Student'}
+              </Typography>
+            </Box>
+          )}
+          {NAV_ITEMS.find(i => i.label === openSubmenu)?.children.map(child => {
+            const childActive = !child.isSignOut && router.pathname === child.href
             return (
               <Box
-                key={child.href}
+                key={child.label}
                 role='button'
                 tabIndex={0}
-                onClick={() => handleSubItemClick(child.href)}
-                onKeyDown={e => e.key === 'Enter' && handleSubItemClick(child.href)}
+                onClick={() => handleSubItemClick(child)}
+                onKeyDown={e => e.key === 'Enter' && handleSubItemClick(child)}
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
@@ -149,14 +177,14 @@ const MobileBottomNav = () => {
                 <Icon
                   icon={child.icon}
                   fontSize={18}
-                  color={childActive ? c.primary : c.isDark ? alpha(c.white, 0.6) : alpha(c.black, 0.5)}
+                  color={child.isSignOut ? c.error : childActive ? c.primary : c.isDark ? alpha(c.white, 0.6) : alpha(c.black, 0.5)}
                 />
                 <Typography
                   component='span'
                   sx={{
                     fontSize: '0.78rem',
                     fontWeight: childActive ? 700 : 500,
-                    color: childActive ? c.primary : c.isDark ? alpha(c.white, 0.7) : alpha(c.black, 0.6),
+                    color: child.isSignOut ? c.error : childActive ? c.primary : c.isDark ? alpha(c.white, 0.7) : alpha(c.black, 0.6),
                     lineHeight: 1.2
                   }}
                 >
@@ -187,7 +215,7 @@ const MobileBottomNav = () => {
         }}
       >
         {items.map(item => {
-          const active = item.children ? isChildActive(item) || submenuOpen : isActive(item.href, item.matchExact, item.isAnchor)
+          const active = item.children ? isChildActive(item) || openSubmenu === item.label : isActive(item.href, item.matchExact, item.isAnchor)
 
           return (
             <Box

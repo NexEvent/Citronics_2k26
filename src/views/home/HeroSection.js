@@ -140,21 +140,15 @@ export default function HeroSection() {
     }
   })
 
-  /* ── Fetch logos from page_media table ─────────────────────── */
-  const [logos, setLogos] = useState({})
-
-  useEffect(() => {
-    let cancelled = false
-    axios.get('/api/media/hero').then(res => {
-      if (cancelled || !res.data?.success) return
-      const map = {}
-      res.data.data.forEach(row => {
-        if (row.name && row.links) map[row.name] = row.links
-      })
-      setLogos(map)
-    }).catch(() => {})
-    return () => { cancelled = true }
-  }, [])
+  /* ── Static logos from public/logo/ ─────── */
+  const logos = {
+    agr2: '/logo/agr.png',
+    cdgi: '/logo/cdgi.png',
+    citronics: '/logo/citronics2.png',
+    nacc: '/logo/naac.png',
+    nba: '/logo/nba.png',
+    nagar: '/logo/nagar.png'
+  }
 
   /* ── Fetch event images for marquee ────────────────────────── */
   const [eventImages, setEventImages] = useState([])
@@ -538,7 +532,7 @@ export default function HeroSection() {
         >
           <MotionBox
             animate={{ x: ['0%', '-50%'] }}
-            transition={{ ease: 'linear', duration: 30, repeat: Infinity }}
+            transition={{ ease: 'linear', duration: 4, repeat: Infinity }}
             sx={{ display: 'flex', gap: 2, height: '100%', alignItems: 'center' }}
           >
             {[...eventImages, ...eventImages].map((src, i) => (

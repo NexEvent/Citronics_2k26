@@ -562,7 +562,7 @@ export default function EventsPageView() {
             }}
           />
 
-          <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 260 }, ...inputSx }}>
+          <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 420 }, ...inputSx }}>
             <Select
               value={activeCategory}
               onChange={handleCategoryChange}

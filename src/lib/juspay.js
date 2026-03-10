@@ -11,6 +11,8 @@
  *   JUSPAY_PAYMENT_PAGE_CLIENT_ID  — payment page client id
  *   JUSPAY_RESPONSE_KEY            — response key for webhook HMAC verification
  *   JUSPAY_ENV                     — 'sandbox' | 'production' (default: sandbox)
+ *   JUSPAY_RESELLER_ID             — reseller id header (e.g. hdfc_reseller)
+ *   JUSPAY_API_VERSION             — API version header (default: 2024-06-24)
  *   JUSPAY_BASE_URL                — (optional) override the gateway base URL
  */
 
@@ -19,7 +21,7 @@ const https = require('https')
 
 // ── HDFC SmartGateway base URLs ───────────────────────────────────────────────
 const SANDBOX_BASE_URL = 'https://smartgateway.hdfcuat.bank.in'
-const PRODUCTION_BASE_URL = 'https://smartgateway.hdfcbank.com'
+const PRODUCTION_BASE_URL = 'https://smartgateway.hdfc.bank.in'
 
 // ── APIError (matches the interface payment-service.js expects) ───────────────
 class APIError extends Error {
@@ -54,9 +56,15 @@ function makeServiceCall({ apiTag, path, method, body }) {
     const headers = {
       'Content-Type': isPost ? 'application/json' : 'application/x-www-form-urlencoded',
       'User-Agent': 'NODEJS_KIT/1.0.0',
-      'version': '2024-06-24',
+      'version': process.env.JUSPAY_API_VERSION || '2024-06-24',
       'x-merchantid': merchantId,
       'Authorization': 'Basic ' + Buffer.from(apiKey).toString('base64'),
+    }
+
+    // Reseller ID header — required by HDFC SmartGateway
+    const resellerId = process.env.JUSPAY_RESELLER_ID
+    if (resellerId) {
+      headers['x-resellerid'] = resellerId
     }
 
     let payload = ''

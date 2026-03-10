@@ -84,9 +84,26 @@ const paymentService = {
         const totalAmount = parseFloat((ticketPrice * quantity).toFixed(2))
 
         // Cancel any stale pending bookings for this event to avoid seat-reservation leaks
+        // BUT skip bookings that belong to a payment already sent to Juspay
+        // (the user might be completing that payment right now)
         const stalePending = await t.any(`
-          SELECT id, quantity FROM bookings
-          WHERE user_id = $1 AND event_id = $2 AND status = 'pending'
+          SELECT b.id, b.quantity FROM bookings b
+          WHERE b.user_id = $1 AND b.event_id = $2 AND b.status = 'pending'
+            AND NOT EXISTS (
+              SELECT 1 FROM payments p
+              WHERE p.status = 'pending' AND p.sdk_payload IS NOT NULL
+                AND (
+                  p.booking_id = b.id
+                  OR (
+                    p.raw_payload IS NOT NULL
+                    AND p.raw_payload ? 'bookingIds'
+                    AND (
+                      p.raw_payload->'bookingIds' @> to_jsonb(b.id)
+                      OR p.raw_payload->'bookingIds' @> to_jsonb(b.id::text)
+                    )
+                  )
+                )
+            )
           FOR UPDATE
         `, [userId, eventId])
 
@@ -167,6 +184,11 @@ const paymentService = {
         FROM users u WHERE u.id = $1
       `, [userId])
 
+      // Split name into first/last for Juspay customer fields
+      const nameParts = (user?.name || '').trim().split(/\s+/)
+      const firstName = nameParts[0] || undefined
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined
+
       const orderPayload = {
         order_id: juspayOrderId,
         amount: grandTotal,
@@ -174,9 +196,19 @@ const paymentService = {
         customer_id: `cit-user-${userId}`,
         customer_email: user?.email || undefined,
         customer_phone: user?.phone || undefined,
+        first_name: firstName,
+        last_name: lastName,
         action: 'paymentPage',
         return_url: returnUrl,
         currency: 'INR'
+        // NOTE: UPI availability is controlled by the HDFC merchant dashboard,
+        // not the API payload. UPI is NOT available in sandbox — only production.
+        // customer_phone + first_name/last_name are required for UPI flows in production.
+      }
+
+      // If customer_phone is missing, UPI intent/collect will not work — warn but don't block
+      if (!user?.phone) {
+        console.warn(`[PaymentService] User ${userId} has no phone number — UPI intent/collect may be unavailable`)
       }
 
       const sessionResponse = await juspay.order.create(orderPayload)
@@ -633,10 +665,25 @@ const paymentService = {
    */
   async expireStaleBookings() {
     return dbTx(async t => {
-      // Find expired pending bookings
+      // Find expired pending bookings that are NOT linked to an in-flight payment
       const expired = await t.any(`
-        SELECT id, event_id, quantity FROM bookings
-        WHERE status = 'pending' AND expires_at < CURRENT_TIMESTAMP
+        SELECT b.id, b.event_id, b.quantity FROM bookings b
+        WHERE b.status = 'pending' AND b.expires_at < CURRENT_TIMESTAMP
+          AND NOT EXISTS (
+            SELECT 1 FROM payments p
+            WHERE p.status = 'pending' AND p.sdk_payload IS NOT NULL
+              AND (
+                p.booking_id = b.id
+                OR (
+                  p.raw_payload IS NOT NULL
+                  AND p.raw_payload ? 'bookingIds'
+                  AND (
+                    p.raw_payload->'bookingIds' @> to_jsonb(b.id)
+                    OR p.raw_payload->'bookingIds' @> to_jsonb(b.id::text)
+                  )
+                )
+              )
+          )
         FOR UPDATE
       `)
 
@@ -719,20 +766,13 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
 
     // Confirm bookings and generate tickets
     const allTickets = []
+    let missingBookings = 0
 
     for (const bookingId of bookingIds) {
-      // Update booking status
-      await t.none(`
-        UPDATE bookings SET
-          status = 'confirmed',
-          expires_at = NULL,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1 AND status = 'pending'
-      `, [bookingId])
-
-      // Get booking details for ticket generation
+      // Get booking details — needed regardless of status
       const booking = await t.oneOrNone(`
-        SELECT b.id, b.event_id, b.quantity, b.user_id, b.price_at_booking,
+        SELECT b.id, b.event_id, b.quantity, b.user_id, b.status AS current_status,
+               b.price_at_booking,
                e.name AS event_title, e.venue, e.start_time, e.end_time,
                u.name AS attendee_name, u.email AS attendee_email
         FROM bookings b
@@ -741,7 +781,40 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
         WHERE b.id = $1
       `, [bookingId])
 
-      if (!booking) continue
+      if (!booking) {
+        // Booking row is completely missing — critical data integrity issue
+        console.error(`[PaymentService] CRITICAL: Booking #${bookingId} not found in DB for payment #${paymentId} (order ${orderId}). Possible data loss.`)
+        missingBookings++
+        continue
+      }
+
+      // If the booking was cancelled (e.g., by stale-pending cleanup or expiry while
+      // the user was completing payment), re-confirm it and re-reserve seats.
+      if (booking.current_status === 'cancelled') {
+        console.warn(`[PaymentService] Booking #${bookingId} was cancelled but payment ${orderId} succeeded — re-confirming and re-reserving seats`)
+        await t.none(`
+          UPDATE bookings SET
+            status = 'confirmed',
+            expires_at = NULL,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1
+        `, [bookingId])
+
+        // Re-reserve seats that were released when the booking was cancelled
+        await t.none(`
+          UPDATE events SET registered = registered + $1, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $2
+        `, [booking.quantity, booking.event_id])
+      } else {
+        // Normal case: pending → confirmed
+        await t.none(`
+          UPDATE bookings SET
+            status = 'confirmed',
+            expires_at = NULL,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1 AND status = 'pending'
+        `, [bookingId])
+      }
 
       // Generate one ticket per quantity unit
       for (let i = 0; i < booking.quantity; i++) {
@@ -769,6 +842,22 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
           orderId: orderId || null
         })
       }
+    }
+
+    // CRITICAL: If payment is CHARGED but we generated 0 tickets, something is very wrong.
+    // Do NOT silently succeed — roll back by throwing so payment stays non-success.
+    if (allTickets.length === 0) {
+      throw new Error(
+        `CRITICAL: Payment #${paymentId} (order ${orderId}) was CHARGED but 0 tickets could be generated. ` +
+        `${missingBookings} of ${bookingIds.length} booking(s) missing from DB. Manual investigation required.`
+      )
+    }
+
+    if (missingBookings > 0) {
+      console.error(
+        `[PaymentService] WARNING: Payment #${paymentId} (order ${orderId}) generated ${allTickets.length} tickets ` +
+        `but ${missingBookings} of ${bookingIds.length} booking(s) were missing. Partial ticket generation.`
+      )
     }
 
     return {

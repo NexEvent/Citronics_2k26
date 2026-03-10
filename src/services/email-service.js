@@ -1,5 +1,5 @@
 import { enqueueEmail } from 'src/services/email-queue'
-import { generateTicketPDFBuffer, generateAllTicketsPDFBuffer } from 'src/lib/generateTicketPDF-server'
+import { generateTicketPDFBuffer } from 'src/lib/generateTicketPDF-server'
 
 /**
  * Email Service — Citronics 2026
@@ -40,7 +40,7 @@ function fmtCurrency(amount) {
  * Enqueue ticket confirmation email(s) for a user after successful payment.
  *
  * For each unique attendee email in the tickets array, one email is sent
- * with ALL their tickets attached as a combined PDF.
+ * with each ticket attached as a separate PDF.
  *
  * @param {Array<Object>} tickets - Ticket objects (same shape as payment-service output)
  * @param {string} orderId - Order reference
@@ -72,21 +72,24 @@ export async function enqueueTicketEmails(tickets, orderId) {
   // For each attendee, generate PDF and enqueue email
   for (const [email, { name, tickets: userTickets }] of byEmail) {
     try {
-      // Generate PDF attachment
-      let pdfBuffer
-      let pdfFilename
-
-      if (userTickets.length === 1) {
-        pdfBuffer = await generateTicketPDFBuffer(userTickets[0])
-        const safeTitle = (userTickets[0].eventTitle || 'Event').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30)
-        pdfFilename = `Citronics-Ticket-${userTickets[0].ticketId}-${safeTitle}.pdf`
-      } else {
-        pdfBuffer = await generateAllTicketsPDFBuffer(userTickets)
-        pdfFilename = `Citronics-Tickets-${orderId || Date.now()}.pdf`
+      // Generate one PDF per ticket (separate attachments for each event)
+      const attachments = []
+      for (const t of userTickets) {
+        const buf = await generateTicketPDFBuffer(t)
+        if (!buf) {
+          console.error(`[EmailService] PDF generation returned null for ticket #${t.ticketId}`)
+          continue
+        }
+        const safeTitle = (t.eventTitle || 'Event').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30)
+        attachments.push({
+          filename: `Citronics-Ticket-${t.ticketId}-${safeTitle}.pdf`,
+          content: buf,
+          contentType: 'application/pdf'
+        })
       }
 
-      if (!pdfBuffer) {
-        console.error(`[EmailService] PDF generation returned null for ${email}`)
+      if (attachments.length === 0) {
+        console.error(`[EmailService] All PDF generations returned null for ${email}`)
         continue
       }
 
@@ -102,13 +105,7 @@ export async function enqueueTicketEmails(tickets, orderId) {
         subject,
         html,
         text: _buildTicketEmailText(name, userTickets, orderId),
-        attachments: [
-          {
-            filename: pdfFilename,
-            content: pdfBuffer,
-            contentType: 'application/pdf'
-          }
-        ],
+        attachments,
         tag: `tickets-${orderId || 'unknown'}-${email}`
       })
     } catch (err) {
@@ -234,7 +231,7 @@ function _buildTicketEmailHTML(name, tickets, orderId) {
                       📎 Your ticket${tickets.length > 1 ? 's are' : ' is'} attached
                     </p>
                     <p style="margin: 0; font-size: 13px; color: #6B7280; line-height: 1.5;">
-                      The PDF attached to this email contains your e-ticket${tickets.length > 1 ? 's' : ''} with a QR code.
+                      ${tickets.length > 1 ? 'Each ticket is attached as a separate PDF' : 'The PDF attached to this email contains your e-ticket'} with a QR code.
                       Present the QR code at the event entrance for verification.
                     </p>
                   </td>

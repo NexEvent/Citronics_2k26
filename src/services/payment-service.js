@@ -91,7 +91,11 @@ const paymentService = {
           WHERE b.user_id = $1 AND b.event_id = $2 AND b.status = 'pending'
             AND NOT EXISTS (
               SELECT 1 FROM payments p
-              WHERE p.status = 'pending' AND p.sdk_payload IS NOT NULL
+              WHERE p.status = 'pending'
+                AND (
+                  p.sdk_payload IS NOT NULL
+                  OR p.created_at > CURRENT_TIMESTAMP - INTERVAL '5 minutes'
+                )
                 AND (
                   p.booking_id = b.id
                   OR (
@@ -671,7 +675,11 @@ const paymentService = {
         WHERE b.status = 'pending' AND b.expires_at < CURRENT_TIMESTAMP
           AND NOT EXISTS (
             SELECT 1 FROM payments p
-            WHERE p.status = 'pending' AND p.sdk_payload IS NOT NULL
+            WHERE p.status = 'pending'
+              AND (
+                p.sdk_payload IS NOT NULL
+                OR p.created_at > CURRENT_TIMESTAMP - INTERVAL '5 minutes'
+              )
               AND (
                 p.booking_id = b.id
                 OR (
@@ -766,7 +774,6 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
 
     // Confirm bookings and generate tickets
     const allTickets = []
-    let missingBookings = 0
 
     for (const bookingId of bookingIds) {
       // Get booking details — needed regardless of status
@@ -782,15 +789,43 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
       `, [bookingId])
 
       if (!booking) {
-        // Booking row is completely missing — critical data integrity issue
-        console.error(`[PaymentService] CRITICAL: Booking #${bookingId} not found in DB for payment #${paymentId} (order ${orderId}). Possible data loss.`)
-        missingBookings++
-        continue
+        // Booking row is completely missing — critical data integrity issue.
+        // Abort the entire transaction so payment stays non-success and no
+        // partial tickets are generated.  Manual investigation required.
+        throw new Error(
+          `CRITICAL: Booking #${bookingId} not found in DB for payment #${paymentId} ` +
+          `(order ${orderId}). Aborting — no tickets generated. Manual investigation required.`
+        )
       }
 
       // If the booking was cancelled (e.g., by stale-pending cleanup or expiry while
       // the user was completing payment), re-confirm it and re-reserve seats.
       if (booking.current_status === 'cancelled') {
+        // Lock the event row and verify capacity before re-reserving seats
+        const event = await t.oneOrNone(`
+          SELECT id, registered, max_tickets AS capacity
+          FROM events WHERE id = $1 FOR UPDATE
+        `, [booking.event_id])
+
+        const available = Math.max(0, (event?.capacity || 0) - (event?.registered || 0))
+
+        if (available < booking.quantity) {
+          // Event has since sold out — cannot re-reserve seats.
+          // Leave booking cancelled and skip ticket generation for this booking.
+          console.error(
+            `[PaymentService] Booking #${bookingId} (order ${orderId}): event ${booking.event_id} has only ` +
+            `${available} seat(s) but ${booking.quantity} needed. Cannot re-confirm — marking as capacity_exceeded.`
+          )
+          await t.none(`
+            UPDATE bookings SET
+              status = 'cancelled',
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+          `, [bookingId])
+          // Skip ticket generation for this booking — a refund is needed
+          continue
+        }
+
         console.warn(`[PaymentService] Booking #${bookingId} was cancelled but payment ${orderId} succeeded — re-confirming and re-reserving seats`)
         await t.none(`
           UPDATE bookings SET
@@ -800,7 +835,7 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
           WHERE id = $1
         `, [bookingId])
 
-        // Re-reserve seats that were released when the booking was cancelled
+        // Re-reserve seats (safe — capacity checked above)
         await t.none(`
           UPDATE events SET registered = registered + $1, updated_at = CURRENT_TIMESTAMP
           WHERE id = $2
@@ -849,14 +884,7 @@ async function _confirmPaymentAndGenerateTickets(paymentId, primaryBookingId, ra
     if (allTickets.length === 0) {
       throw new Error(
         `CRITICAL: Payment #${paymentId} (order ${orderId}) was CHARGED but 0 tickets could be generated. ` +
-        `${missingBookings} of ${bookingIds.length} booking(s) missing from DB. Manual investigation required.`
-      )
-    }
-
-    if (missingBookings > 0) {
-      console.error(
-        `[PaymentService] WARNING: Payment #${paymentId} (order ${orderId}) generated ${allTickets.length} tickets ` +
-        `but ${missingBookings} of ${bookingIds.length} booking(s) were missing. Partial ticket generation.`
+        `All ${bookingIds.length} booking(s) missing or failed. Manual investigation required.`
       )
     }
 

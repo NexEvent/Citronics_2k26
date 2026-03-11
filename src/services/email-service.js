@@ -93,6 +93,15 @@ export async function enqueueTicketEmails(tickets, orderId) {
         continue
       }
 
+      // Guard: if some (but not all) PDFs failed, skip sending to avoid
+      // an email that claims "all tickets attached" when some are missing
+      if (attachments.length !== userTickets.length) {
+        console.error(
+          `[EmailService] Only ${attachments.length}/${userTickets.length} PDFs generated for ${email} — skipping email to avoid partial attachments`
+        )
+        continue
+      }
+
       // Build email HTML
       const html = _buildTicketEmailHTML(name, userTickets, orderId)
       const subject = userTickets.length === 1

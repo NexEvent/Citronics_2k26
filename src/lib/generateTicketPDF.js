@@ -103,7 +103,7 @@ function getVerifyUrl(qrCode) {
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/tickets/verify?code=${qrCode}`
   }
-  return `https://citronics.in/tickets/verify?code=${qrCode}`
+  return `https://cdgicitronics.in/tickets/verify?code=${qrCode}`
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

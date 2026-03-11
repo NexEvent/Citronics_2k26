@@ -257,7 +257,7 @@ function _buildTicketEmailHTML(name, tickets, orderId) {
                     <ul style="margin: 0; padding-left: 16px; font-size: 13px; color: #6B7280; line-height: 1.8;">
                       <li>Tickets are non-transferable</li>
                       <li>Keep your QR code safe — it's your entry pass</li>
-                      <li>You can also access your tickets from your dashboard at citronics.in</li>
+                      <li>You can also access your tickets from your dashboard at cdgicitronics.in</li>
                     </ul>
                   </td>
                 </tr>

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
-import CustomChip from 'src/components/mui/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
 import { alpha } from '@mui/material/styles'
@@ -12,21 +11,7 @@ import { useAppPalette } from 'src/components/palette'
 
 const MotionBox = motion(Box)
 
-/* ── Mock Data ──────────────────────────────────────────────── */
-
-const CATEGORIES = ['All', 'Events', 'Cultural','Campus', 'Behind the Scenes']
-
-const ALL_IMAGES = []
 const BATCH_SIZE = 8
-
-const CATEGORY_COLORS = {
-  All: 'primary',
-  Events: 'info',
-  Cultural: 'warning',
-  Workshops: 'success',
-  Campus: 'primary',
-  'Behind the Scenes': 'error'
-}
 
 /* ── Lightbox ───────────────────────────────────────────────── */
 
@@ -123,8 +108,6 @@ function Lightbox({ image, onClose }) {
 
 const GalleryCard = memo(function GalleryCard({ image, index, onClick }) {
   const c = useAppPalette()
-  const colorKey = CATEGORY_COLORS[image.category] || 'primary'
-  const color = c.theme.palette[colorKey]?.main || c.primary
 
   return (
     <MotionBox
@@ -182,19 +165,6 @@ const GalleryCard = memo(function GalleryCard({ image, index, onClick }) {
         <Typography sx={{ color: c.white, fontWeight: 700, fontSize: '0.95rem', mb: 0.5 }}>
           {image.title}
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-          <Box
-            sx={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              bgcolor: color
-            }}
-          />
-          <Typography variant='caption' sx={{ color: alpha(c.white, 0.7), fontWeight: 500 }}>
-            {image.category}
-          </Typography>
-        </Box>
       </Box>
     </MotionBox>
   )
@@ -204,33 +174,50 @@ const GalleryCard = memo(function GalleryCard({ image, index, onClick }) {
 
 export default function GalleryView() {
   const c = useAppPalette()
-  const [activeCategory, setActiveCategory] = useState('All')
+  const [allImages, setAllImages] = useState([])
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE)
   const [lightboxImage, setLightboxImage] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const sentinelRef = useRef(null)
 
-  const filteredImages =
-    activeCategory === 'All' ? ALL_IMAGES : ALL_IMAGES.filter(img => img.category === activeCategory)
-
-  const visibleImages = filteredImages.slice(0, visibleCount)
-  const hasMore = visibleCount < filteredImages.length
-
-  // Reset visible count when category changes
+  // Fetch gallery images from API
   useEffect(() => {
-    setVisibleCount(BATCH_SIZE)
-  }, [activeCategory])
+    async function fetchGallery() {
+      try {
+        const res = await fetch('/api/media/gallery')
+        const json = await res.json()
+        if (json.success && Array.isArray(json.data)) {
+          setAllImages(
+            json.data.map(item => ({
+              id: item.id,
+              url: item.links,
+              title: item.name || '',
+              category: 'All'
+            }))
+          )
+        }
+      } catch (err) {
+        console.error('Failed to load gallery images', err)
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+    fetchGallery()
+  }, [])
+
+  const visibleImages = allImages.slice(0, visibleCount)
+  const hasMore = visibleCount < allImages.length
 
   // Infinite scroll with IntersectionObserver
   const loadMore = useCallback(() => {
     if (!hasMore || loading) return
     setLoading(true)
-    // Simulate network delay for smooth UX
     setTimeout(() => {
-      setVisibleCount(prev => Math.min(prev + BATCH_SIZE, filteredImages.length))
+      setVisibleCount(prev => Math.min(prev + BATCH_SIZE, allImages.length))
       setLoading(false)
     }, 600)
-  }, [hasMore, loading, filteredImages.length])
+  }, [hasMore, loading, allImages.length])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -343,56 +330,14 @@ export default function GalleryView() {
         </Container>
       </Box>
 
-      {/* ── Category Filters ─────────────────────────────────── */}
-      <Container maxWidth='lg' sx={{ mb: 5 }}>
-        <MotionBox
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: 1
-          }}
-        >
-          {CATEGORIES.map(cat => {
-            const isActive = activeCategory === cat
-            const colorKey = CATEGORY_COLORS[cat] || 'primary'
-            const color = c.theme.palette[colorKey]?.main || c.primary
-
-            return (
-              <CustomChip
-                key={cat}
-                label={cat}
-                onClick={() => setActiveCategory(cat)}
-                icon={
-                  isActive
-                    ? <Icon icon='tabler:circle-check-filled' fontSize={16} style={{ color }} />
-                    : undefined
-                }
-                sx={{
-                  px: 1,
-                  fontWeight: 600,
-                  fontSize: '0.82rem',
-                  borderRadius: '100px',
-                  border: `1px solid ${isActive ? alpha(color, 0.4) : alpha(c.textDisabled, 0.2)}`,
-                  bgcolor: isActive ? alpha(color, 0.1) : 'transparent',
-                  color: isActive ? color : c.textSecondary,
-                  transition: 'all 0.25s ease',
-                  '&:hover': {
-                    bgcolor: alpha(color, 0.08),
-                    borderColor: alpha(color, 0.3)
-                  }
-                }}
-              />
-            )
-          })}
-        </MotionBox>
-      </Container>
-
       {/* ── Masonry Gallery Grid ─────────────────────────────── */}
       <Container maxWidth='lg' sx={{ pb: { xs: 6, md: 10 } }}>
+        {initialLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+            <CircularProgress size={40} sx={{ color: c.primary }} />
+          </Box>
+        ) : (
+        <>
         <Box
           sx={{
             columnCount: { xs: 1, sm: 2, md: 3 },
@@ -445,10 +390,12 @@ export default function GalleryView() {
             >
               <Icon icon='tabler:checks' fontSize={16} style={{ color: c.textDisabled }} />
               <Typography variant='body2' sx={{ color: c.textDisabled, fontWeight: 500 }}>
-                You've seen all {filteredImages.length} photos
+                You've seen all {allImages.length} photos
               </Typography>
             </Box>
           </MotionBox>
+        )}
+        </>
         )}
       </Container>
 

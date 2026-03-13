@@ -12,7 +12,8 @@
     "format:check": "prettier --check \"src/**/*.{js,jsx,json}\"",
     "db:migrate": "node src/services/database/migrate.js",
     "db:status": "node src/services/database/migrate.js status",
-    "db:reset": "node src/services/database/migrate.js reset"
+    "db:reset": "node src/services/database/migrate.js reset",
+    "hash:payment": "node scripts/generate-file-hashes.js"
   },
   "dependencies": {
     "@casl/ability": "^6.7.2",

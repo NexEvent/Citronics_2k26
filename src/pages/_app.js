@@ -94,25 +94,21 @@ const App = props => {
         <CartHydrator />
         <CacheProvider value={emotionCache}>
           <Head>
-            <title>{themeConfig.templateName}</title>
-            <meta name='description' content='Citronics — The official college event management platform' />
+            {/*
+             * Global fallback <Head> — individual pages override these via <SEOHead>.
+             * Only meta that must be present on every single render lives here.
+             */}
             <meta name='viewport' content='initial-scale=1, width=device-width' />
 
             {/* PWA meta */}
-            <meta name='application-name' content={themeConfig.templateName} />
+            <meta name='application-name' content='Citronics 2026' />
             <meta name='apple-mobile-web-app-capable' content='yes' />
             <meta name='apple-mobile-web-app-status-bar-style' content='default' />
-            <meta name='apple-mobile-web-app-title' content={themeConfig.templateName} />
+            <meta name='apple-mobile-web-app-title' content='Citronics 2026' />
             <meta name='format-detection' content='telephone=no' />
             <meta name='mobile-web-app-capable' content='yes' />
             <meta name='theme-color' content='#7C3AED' />
             <link rel='manifest' href='/manifest.json' />
-
-            {/* Open Graph */}
-            <meta property='og:type' content='website' />
-            <meta property='og:title' content={themeConfig.templateName} />
-            <meta property='og:description' content='Citronics — The official college event management platform' />
-            <meta property='og:image' content='/images/icons/pwa/icon-512x512.png' />
           </Head>
 
           <SettingsProvider {...(setConfig ? { pageSettings: setConfig() } : {})}>

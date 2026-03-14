@@ -2,6 +2,7 @@ import Box from '@mui/material/Box'
 import PublicNavbar from 'src/views/home/PublicNavbar'
 import PublicFooter from 'src/views/home/PublicFooter'
 import EventsPageView from 'src/views/events/EventsPageView'
+import { EventsSEO } from 'src/components/SEO'
 
 /**
  * Public Events Page — Citronics 2026
@@ -11,6 +12,7 @@ import EventsPageView from 'src/views/events/EventsPageView'
 const EventsPage = () => {
   return (
     <Box component='main' sx={{ overflowX: 'hidden', bgcolor: 'background.default', minHeight: '100vh', pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 } }}>
+      <EventsSEO />
       <PublicNavbar />
       <Box sx={{ pt: { xs: 2, md: 12 }, pb: { xs: 4, md: 6 } }}>
         <EventsPageView />

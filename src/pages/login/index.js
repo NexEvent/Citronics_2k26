@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { useDispatch } from 'react-redux'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 
 // MUI
 import Box from '@mui/material/Box'
@@ -21,6 +21,7 @@ import Icon from 'src/components/Icon'
 // Config & helpers
 import themeConfig from 'src/configs/themeConfig'
 import { useAppPalette } from 'src/components/palette'
+import { isAdminRole } from 'src/configs/acl'
 import { lookupIdentifier, registerUser, verifyUser, setExistingUser } from 'src/store/slices/checkoutSlice'
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -207,7 +208,14 @@ const LoginPage = () => {
           })
           if (signInResult?.ok) {
             dispatch(setExistingUser({ userId: result.payload.userId }))
-            router.push(returnUrl)
+
+            // Check if user is admin/owner — redirect to admin dashboard
+            const freshSession = await getSession()
+            if (isAdminRole(freshSession?.user?.role)) {
+              router.push('/admin/dashboard')
+            } else {
+              router.push(returnUrl)
+            }
           } else {
             setServerError('Login failed. Please try again.')
             submittedRef.current = false

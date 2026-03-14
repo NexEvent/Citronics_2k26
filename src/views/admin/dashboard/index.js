@@ -12,7 +12,8 @@ import Button from '@mui/material/Button'
 import Avatar from '@mui/material/Avatar'
 import Divider from '@mui/material/Divider'
 import Alert from '@mui/material/Alert'
-import { useTheme } from '@mui/material/styles'
+import Chip from '@mui/material/Chip'
+import { alpha, useTheme } from '@mui/material/styles'
 import { format } from 'date-fns'
 import Icon from 'src/components/Icon'
 import Can from 'src/layouts/components/acl/Can'
@@ -23,18 +24,21 @@ import { KPICard, CustomChip, CustomDataGrid, AddDialog } from 'src/components/c
 const ApexChart = dynamic(() => import('react-apexcharts'), { ssr: false })
 
 const fmtDate = d => { try { return format(new Date(d), 'dd MMM yy') } catch { return '—' } }
+const fmtCurrency = v => `₹${Number(v || 0).toLocaleString('en-IN')}`
 
 const QuickAction = ({ icon, label, desc, color = 'primary', onClick }) => {
   const theme = useTheme()
   const pal = theme.palette[color] || theme.palette.primary
   return (
     <Box onClick={onClick} sx={{
-      p: 2, borderRadius: 2, cursor: 'pointer', border: `1px solid ${theme.palette.divider}`,
-      display: 'flex', alignItems: 'center', gap: 2, transition: 'all 0.15s',
-      '&:hover': { borderColor: pal.main, bgcolor: `${pal.main}12`, transform: 'translateY(-1px)' }
+      p: 2, borderRadius: 2, cursor: 'pointer',
+      border: `1px solid ${alpha(pal.main, 0.2)}`,
+      background: alpha(pal.main, 0.04),
+      display: 'flex', alignItems: 'center', gap: 2, transition: 'all 0.2s ease',
+      '&:hover': { borderColor: pal.main, bgcolor: alpha(pal.main, 0.1), transform: 'translateY(-2px)', boxShadow: `0 4px 12px ${alpha(pal.main, 0.15)}` }
     }}>
-      <Avatar sx={{ bgcolor: `${pal.main}18`, width: 40, height: 40 }}>
-        <Icon icon={icon} fontSize={20} style={{ color: pal.main }} />
+      <Avatar sx={{ bgcolor: alpha(pal.main, 0.12), width: 44, height: 44 }}>
+        <Icon icon={icon} fontSize={22} style={{ color: pal.main }} />
       </Avatar>
       <Box>
         <Typography variant='body2' fontWeight={700}>{label}</Typography>
@@ -89,19 +93,28 @@ const AdminDashboardView = () => {
 
   useEffect(() => { fetchDashboard() }, [fetchDashboard])
 
+  // Chart data
+  const bookingTrend = analyticsData?.bookingTrend || []
+  const revenueTrend = analyticsData?.revenueTrend || []
+  const eventsByStatus = analyticsData?.eventsByStatus || []
+  const topEvents = analyticsData?.topEvents || []
+
   const eventCols = [
     {
-      field: 'name', headerName: 'Event', minWidth: 280, renderCell: ({ row }) => (
+      field: 'name', headerName: 'Event', minWidth: 380, renderCell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Typography variant='body2' fontWeight={600} noWrap>{row.name}</Typography>
-          {row.venue && <Typography variant='caption' color='text.secondary' noWrap>{row.venue}</Typography>}
+          <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(theme.palette.primary.main, 0.1), fontSize: 14 }}>
+            <Icon icon='tabler:calendar-event' fontSize={16} style={{ color: theme.palette.primary.main }} />
+          </Avatar>
+            <Typography variant='body2' fontWeight={600} noWrap>{row.name}</Typography>
+            {row.venue && <Typography variant='caption' color='text.secondary' noWrap>{row.venue}</Typography>}
         </Box>
       )
     },
-    { field: 'status', headerName: 'Status', minWidth: 280, sortable: false, renderCell: ({ row }) => <CustomChip label={row.status} /> },
-    { field: 'start_time', headerName: 'Date', width: 280, renderCell: ({ row }) => <Typography variant='caption'>{fmtDate(row.start_time)}</Typography> },
+    { field: 'status', headerName: 'Status', width: 200, sortable: false, renderCell: ({ row }) => <CustomChip label={row.status} /> },
+    { field: 'start_time', headerName: 'Date', width: 120, renderCell: ({ row }) => <Typography variant='caption'>{fmtDate(row.start_time)}</Typography> },
     {
-      field: 'actions', headerName: '', width: 80, sortable: false, renderCell: ({ row }) => (
+      field: 'actions', headerName: '', width: 180, sortable: false, renderCell: ({ row }) => (
         <Button size='small' onClick={() => router.push(`/admin/events/${row.id}`)}>View</Button>
       )
     }
@@ -114,8 +127,10 @@ const AdminDashboardView = () => {
           <Avatar sx={{ width: 30, height: 30, bgcolor: 'primary.main', fontSize: 12, fontWeight: 700 }}>
             {row.name?.[0]?.toUpperCase() ?? 'U'}
           </Avatar>
+          <Box sx={{ minWidth: 0 }}>
             <Typography variant='body2' fontWeight={600} noWrap>{row.name}</Typography>
             <Typography variant='caption' color='text.secondary' noWrap>{row.email}</Typography>
+          </Box>
         </Box>
       )
     },
@@ -128,16 +143,18 @@ const AdminDashboardView = () => {
   ]
 
   return (
-    <Box sx={{ px: { xs: 2, md: 4 }, py: 3 }}>
+    <Box sx={{ px: { xs: 2, md: 4 }, py: 3, maxWidth: 1400, mx: 'auto' }}>
       {/* Header */}
       <Card sx={{
-        mb: 3, boxShadow: 2,
-        background: theme => theme.palette.mode === 'dark' ? undefined : 'linear-gradient(135deg,#EEF2FF,#fff)'
+        mb: 3, boxShadow: 3, overflow: 'visible',
+        background: theme.palette.mode === 'dark'
+          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.2)}, ${alpha(theme.palette.background.paper, 0.95)})`
+          : `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.15)}, #fff)`
       }}>
-        <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
+        <CardContent sx={{ p: { xs: 2.5, sm: 3 }, '&:last-child': { pb: { xs: 2.5, sm: 3 } } }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Box>
-              <Typography variant='h5' fontWeight={800}>{greeting}, {firstName} 👋</Typography>
+              <Typography variant='h5' fontWeight={800} sx={{ letterSpacing: -0.5 }}>{greeting}, {firstName} 👋</Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                 <CustomChip label={userRole} />
                 <Typography variant='caption' color='text.secondary'>
@@ -148,11 +165,11 @@ const AdminDashboardView = () => {
             <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
               <Can I='create' a='event'>
                 <Button variant='contained' size='small' startIcon={<Icon icon='tabler:calendar-plus' fontSize={16} />}
-                  onClick={() => setEventDialog(true)}>New Event</Button>
+                  onClick={() => setEventDialog(true)} sx={{ borderRadius: 2 }}>New Event</Button>
               </Can>
               <Can I='create' a='user'>
                 <Button variant='outlined' size='small' startIcon={<Icon icon='tabler:user-plus' fontSize={16} />}
-                  onClick={() => setUserDialog(true)}>Add User</Button>
+                  onClick={() => setUserDialog(true)} sx={{ borderRadius: 2 }}>Add User</Button>
               </Can>
             </Box>
           </Box>
@@ -163,73 +180,149 @@ const AdminDashboardView = () => {
         action={<Button size='small' color='inherit' onClick={fetchDashboard}>Retry</Button>}>{error}</Alert>}
 
       {/* KPIs */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
         {[
           { title: 'Total Events', value: stats?.totalEvents, icon: 'tabler:calendar-event', color: 'primary' },
           { title: 'Active Events', value: stats?.activeEvents, icon: 'tabler:player-play', color: 'success' },
           { title: 'Total Users', value: stats?.totalUsers, icon: 'tabler:users', color: 'info', ownerOnly: true },
+          { title: 'Total Bookings', value: stats?.totalBookings, icon: 'tabler:ticket', color: 'secondary' },
           { title: 'Revenue', value: stats?.totalRevenue ?? 0, icon: 'tabler:currency-rupee', color: 'warning', prefix: '₹' }
         ].filter(k => !k.ownerOnly || ownerFlag).map(k => (
-          <Grid item xs={12} sm={ownerFlag ? 3 : 4} key={k.title}>
-            <KPICard {...k} loading={loading} onClick={() => router.push(k.color === 'warning' ? '/admin/analytics' : k.color === 'info' ? '/admin/users' : '/admin/events')} />
+          <Grid item xs={6} sm={ownerFlag ? 2.4 : 3} key={k.title}>
+            <KPICard {...k} loading={loading} onClick={() =>
+              router.push(k.title === 'Revenue' ? '/admin/payments' : k.title.includes('User') ? '/admin/users' : k.title.includes('Booking') ? '/admin/payments' : '/admin/events')
+            } />
           </Grid>
         ))}
       </Grid>
 
-      {/* Quick Actions */}
-      <Card sx={{ mb: 1, boxShadow: 1 }}>
-        <CardHeader title='Quick Actions' titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }} sx={{ pb: 3 }} />
-        <CardContent sx={{ pt: 1 }}>
-          <Grid container spacing={2}>
-            {[
-              { icon: 'tabler:calendar-plus', label: 'Create Event', desc: 'Add a new event', color: 'primary', fn: () => setEventDialog(true), acl: 'event', ownerOnly: true },
-              { icon: 'tabler:user-plus', label: 'Add User', desc: 'Create a staff user', color: 'success', fn: () => setUserDialog(true), acl: 'user', ownerOnly: true },
-              { icon: 'tabler:chart-bar', label: 'Analytics', desc: 'View stats & revenue', color: 'info', fn: () => router.push('/admin/analytics') },
-              { icon: 'tabler:calendar-event', label: 'All Events', desc: 'Browse & manage', color: 'warning', fn: () => router.push('/admin/events') }
-            ].filter(a => !a.ownerOnly || ownerFlag).map(a => (
-              <Grid item xs={12} sm={ownerFlag ? 3 : 6} key={a.label}>
-                <QuickAction icon={a.icon} label={a.label} desc={a.desc} color={a.color} onClick={a.fn} />
-              </Grid>
-            ))}
-          </Grid>
-        </CardContent>
-      </Card>
+      {/* Charts Row */}
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
+        {/* Booking & Revenue Trend */}
+        <Grid item xs={12} md={7}>
+          <Card sx={{ boxShadow: 2, height: '100%' }}>
+            <CardHeader
+              title='Booking & Revenue Trend'
+              titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
+              action={
+                <Chip label='Last 30 days' size='small' variant='outlined' sx={{ fontSize: 11 }} />
+              }
+              sx={{ pb: 0 }}
+            />
+            <Divider sx={{ mt: 1.5 }} />
+            <CardContent sx={{ pt: 2 }}>
+              {bookingTrend.length > 0 ? (
+                <ApexChart
+                  type='area'
+                  height={300}
+                  options={{
+                    chart: { id: 'dashboard-trend', toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: false } },
+                    xaxis: {
+                      categories: bookingTrend.map(d => {
+                        try { return format(new Date(d.date), 'dd MMM') } catch { return d.date }
+                      }),
+                      labels: { rotate: -45, style: { fontSize: '10px' }, rotateAlways: bookingTrend.length > 14 }
+                    },
+                    yaxis: [
+                      { title: { text: 'Bookings', style: { fontSize: '11px' } }, labels: { style: { fontSize: '10px' } } },
+                      { opposite: true, title: { text: 'Revenue (₹)', style: { fontSize: '11px' } }, labels: { formatter: v => fmtCurrency(v), style: { fontSize: '10px' } } }
+                    ],
+                    stroke: { curve: 'smooth', width: [3, 2] },
+                    colors: [theme.palette.primary.main, theme.palette.success.main],
+                    fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 95, 100] } },
+                    tooltip: { theme: theme.palette.mode, y: { formatter: (v, { seriesIndex }) => seriesIndex === 1 ? fmtCurrency(v) : v } },
+                    legend: { position: 'top', horizontalAlign: 'right', floating: true, offsetY: -8 },
+                    grid: { borderColor: alpha(theme.palette.divider, 0.5), strokeDashArray: 4 },
+                    dataLabels: { enabled: false }
+                  }}
+                  series={[
+                    { name: 'Bookings', data: bookingTrend.map(d => d.count) },
+                    { name: 'Revenue', data: revenueTrend.map(d => parseFloat(d.amount || 0)) }
+                  ]}
+                />
+              ) : (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
+                  <Typography color='text.secondary' variant='body2'>No trend data available yet</Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
 
-      {/* Booking & Revenue Chart */}
-      {analyticsData?.bookingTrend?.length > 0 && (
-        <Card sx={{ mb: 3, boxShadow: 1 }}>
-          <CardHeader title='Booking & Revenue Trend' titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }} sx={{ pb: 1 }} />
-          <Divider sx={{ mt: 1 }} />
+        {/* Events by Status Donut */}
+        <Grid item xs={12} md={5}>
+          <Card sx={{ boxShadow: 2, height: '100%' }}>
+            <CardHeader title='Events by Status' titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }} sx={{ pb: 0 }} />
+            <Divider sx={{ mt: 1.5 }} />
+            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+              {eventsByStatus.length > 0 ? (
+                <ApexChart
+                  type='donut'
+                  height={280}
+                  width='100%'
+                  options={{
+                    labels: eventsByStatus.map(e => e.status?.charAt(0).toUpperCase() + e.status?.slice(1)),
+                    colors: [
+                      theme.palette.warning.main,
+                      theme.palette.success.main,
+                      theme.palette.info.main,
+                      theme.palette.error.main,
+                      theme.palette.primary.main
+                    ],
+                    legend: { position: 'bottom', fontSize: '12px' },
+                    tooltip: { theme: theme.palette.mode },
+                    plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: 'Total', fontSize: '14px', fontWeight: 700 } } } } },
+                    dataLabels: { enabled: false },
+                    stroke: { width: 2, colors: [theme.palette.background.paper] }
+                  }}
+                  series={eventsByStatus.map(e => e.count)}
+                />
+              ) : (
+                <Typography color='text.secondary' variant='body2'>No data</Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Top Revenue Events Bar Chart */}
+      {topEvents.length > 0 && (
+        <Card sx={{ mb: 3, boxShadow: 2 }}>
+          <CardHeader
+            title='Top Events by Revenue'
+            titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
+            action={<Button size='small' onClick={() => router.push('/admin/payments')}>View All</Button>}
+            sx={{ pb: 0 }}
+          />
+          <Divider sx={{ mt: 1.5 }} />
           <CardContent>
             <ApexChart
-              type='area'
+              type='bar'
               height={280}
               options={{
-                chart: { id: 'dashboard-trend', toolbar: { show: false }, zoom: { enabled: false } },
-                xaxis: { categories: (analyticsData.bookingTrend || []).map(d => d.date), labels: { rotate: -45, style: { fontSize: '10px' } } },
-                stroke: { curve: 'smooth', width: 2 },
-                colors: [theme.palette.primary.main, theme.palette.success.main],
-                fill: { type: 'gradient', gradient: { opacityFrom: 0.4, opacityTo: 0.05 } },
-                tooltip: { theme: theme.palette.mode },
-                legend: { position: 'top' },
-                grid: { borderColor: theme.palette.divider }
+                chart: { toolbar: { show: false } },
+                plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '55%' } },
+                xaxis: { labels: { formatter: v => fmtCurrency(v), style: { fontSize: '10px' } } },
+                yaxis: { labels: { style: { fontSize: '11px' } } },
+                categories: topEvents.slice(0, 7).map(e => e.name),
+                colors: [theme.palette.primary.main],
+                tooltip: { theme: theme.palette.mode, y: { formatter: v => fmtCurrency(v) } },
+                grid: { borderColor: alpha(theme.palette.divider, 0.5), strokeDashArray: 4 },
+                dataLabels: { enabled: true, formatter: v => fmtCurrency(v), style: { fontSize: '11px' } }
               }}
-              series={[
-                { name: 'Bookings', data: (analyticsData.bookingTrend || []).map(d => d.count) },
-                { name: 'Revenue', data: (analyticsData.revenueTrend || []).map(d => parseFloat(d.amount || 0)) }
-              ]}
+              series={[{ name: 'Revenue', data: topEvents.slice(0, 7).map(e => ({ x: e.name, y: parseFloat(e.revenue || 0) })) }]}
             />
           </CardContent>
         </Card>
       )}
 
       {/* Tables */}
-      <Grid container spacing={2}>
+      <Grid container spacing={2.5}>
         <Grid item xs={12} lg={ownerFlag ? 7 : 12}>
-          <Card sx={{ boxShadow: 1 }}>
+          <Card sx={{ boxShadow: 2 }}>
             <CardHeader title='Recent Events' titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
-              action={<Button size='small' onClick={() => router.push('/admin/events')}>See all</Button>} sx={{ pb: 1 }} />
-            <Divider sx={{ mt: 1 }} />
+              action={<Button size='small' onClick={() => router.push('/admin/events')}>See all</Button>} sx={{ pb: 0 }} />
+            <Divider sx={{ mt: 1.5 }} />
             <CustomDataGrid columns={eventCols} rows={recentEvents} loading={loading}
               showToolbar={false} paginationMode='client'
               paginationModel={{ page: 0, pageSize: 8 }} rowCount={recentEvents.length} emptyText='No events yet.' />
@@ -237,10 +330,10 @@ const AdminDashboardView = () => {
         </Grid>
         {ownerFlag && (
           <Grid item xs={12} lg={5}>
-            <Card sx={{ boxShadow: 1 }}>
+            <Card sx={{ boxShadow: 2 }}>
               <CardHeader title='Recent Users' titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
-                action={<Button size='small' onClick={() => router.push('/admin/users')}>See all</Button>} sx={{ pb: 1 }} />
-              <Divider sx={{ mt: 1 }} />
+                action={<Button size='small' onClick={() => router.push('/admin/users')}>See all</Button>} sx={{ pb: 0 }} />
+              <Divider sx={{ mt: 1.5 }} />
               <CustomDataGrid columns={userCols} rows={recentUsers} loading={loading}
                 showToolbar={false} paginationMode='client'
                 paginationModel={{ page: 0, pageSize: 6 }} rowCount={recentUsers.length} emptyText='No users found.' />

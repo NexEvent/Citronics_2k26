@@ -95,8 +95,10 @@ CREATE TABLE events (
     visibility    event_visibility NOT NULL DEFAULT 'public',
     created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    manager_id    Int
     FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
-    FOREIGN KEY (created_by)    REFERENCES users(id)       ON DELETE SET NULL
+    FOREIGN KEY (created_by)    REFERENCES users(id)       ON DELETE SET NULL,
+    FOREIGN KEY (manager_id)    REFERENCES users(id)       ON DELETE SET NULL
 );
 
 CREATE INDEX idx_events_department_id    ON events(department_id);

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
+import { isAdminRole } from 'src/configs/acl'
 
 /**
  * Guest Guard Component
@@ -12,10 +13,17 @@ const GuestGuard = ({ children, fallback }) => {
 
   useEffect(() => {
     if (status !== 'loading' && session) {
+      // Admin/Owner users → always redirect to admin dashboard
+      if (isAdminRole(session.user?.role)) {
+        router.replace('/admin/dashboard')
+
+        return
+      }
+
       // Sanitize: coerce to string, require leading '/', block protocol-relative '//'
       const raw = Array.isArray(router.query.returnUrl) ? router.query.returnUrl[0] : router.query.returnUrl
       const safe = (typeof raw === 'string' && raw.startsWith('/') && !raw.startsWith('//')) ? raw : '/'
-      router.push(safe)
+      router.replace(safe)
     }
   }, [session, status, router])
 

@@ -10,7 +10,7 @@
  *
  * Context object now includes `currentPage` for page-relative queries.
  */
-import dashboardService from 'src/services/dashboard-service'
+// import dashboardService from 'src/services/dashboard-service'
 import eventService from 'src/services/event-service'
 import {
   findEvent,
@@ -61,24 +61,24 @@ export async function resolveCommand(intent, entities, context) {
     }
 
     // ── Dashboard stats ───────────────────────────────────────────────────
-    case 'QUERY_STATS': {
-      try {
-        const stats = await dashboardService.getStats()
-        return { success: true, data: stats, ...base }
-      } catch (err) {
-        return { success: false, error: 'Could not fetch stats', ...base }
-      }
-    }
+    // case 'QUERY_STATS': {
+    //   try {
+    //     const stats = await dashboardService.getStats()
+    //     return { success: true, data: stats, ...base }
+    //   } catch (err) {
+    //     return { success: false, error: 'Could not fetch stats', ...base }
+    //   }
+    // }
 
     // ── Upcoming events ───────────────────────────────────────────────────
-    case 'QUERY_UPCOMING_EVENTS': {
-      try {
-        const events = await dashboardService.getUpcomingEvents()
-        return { success: true, data: events, ...base }
-      } catch (err) {
-        return { success: false, error: 'Could not fetch events', ...base }
-      }
-    }
+    // case 'QUERY_UPCOMING_EVENTS': {
+    //   try {
+    //     const events = await dashboardService.getUpcomingEvents()
+    //     return { success: true, data: events, ...base }
+    //   } catch (err) {
+    //     return { success: false, error: 'Could not fetch events', ...base }
+    //   }
+    // }
 
     // ── Search events ─────────────────────────────────────────────────────
     case 'SEARCH_EVENT': {

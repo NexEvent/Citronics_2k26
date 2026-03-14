@@ -23,7 +23,6 @@ const EVENT_STATUS = {
 const ROLE_CONFIG = {
   owner:     { label: 'Owner',     color: 'warning',   icon: 'tabler:crown' },
   admin:     { label: 'Admin',     color: 'primary',   icon: 'tabler:shield' },
-  executive: { label: 'Executive', color: 'info',      icon: 'tabler:user-check' },
   organizer: { label: 'Organizer', color: 'success',   icon: 'tabler:calendar-event' },
   student:   { label: 'Student',   color: 'secondary', icon: 'tabler:user' }
 }

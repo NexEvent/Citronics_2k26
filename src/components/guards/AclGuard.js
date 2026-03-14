@@ -28,7 +28,7 @@ const AclGuard = ({ children, aclAbilities, guestGuard = false, authGuard = true
     return buildAbilityFor(role, meta)
   }, [session])
 
-  // Only redirect staff/admin roles to dashboard from home — students stay on home page
+  // Only redirect staff/admin roles to admin dashboard from home — students stay on home page
   const STAFF_ROLES = ['owner', 'admin', 'head', 'Owner', 'Admin', 'Head']
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const AclGuard = ({ children, aclAbilities, guestGuard = false, authGuard = true
       !guestGuard &&
       router.route === '/'
     ) {
-      router.replace('/dashboard')
+      router.replace('/admin/dashboard')
     }
   }, [session?.user, guestGuard, router])
 

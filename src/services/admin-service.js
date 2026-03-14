@@ -100,7 +100,7 @@ const adminService = {
    * Create new user (admin only — created by Owner)
    */
   async createUser(data) {
-    const { name, email, password, phone, role, createdBy } = data
+    const { name, email, password, phone, role } = data
 
     if (!['admin', 'owner'].includes(role)) {
       throw new Error('Invalid role. Only admin can be created.')
@@ -109,10 +109,10 @@ const adminService = {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     return dbOne(
-      `INSERT INTO users (name, email, phone, password_hash, role, verified, created_by)
-       VALUES ($1, $2, $3, $4, $5, true, $6)
+      `INSERT INTO users (name, email, phone, password_hash, role, verified)
+       VALUES ($1, $2, $3, $4, $5, true)
        RETURNING id, name, email, phone, role, verified, created_at`,
-      [name, email.toLowerCase(), phone || null, hashedPassword, role, createdBy]
+      [name, email.toLowerCase(), phone || null, hashedPassword, role]
     )
   },
 
@@ -444,6 +444,87 @@ const adminService = {
       bookingTrend,
       revenueTrend,
       recentTransactions
+    }
+  },
+
+  /**
+   * Payments with tickets — used by admin payments view
+   * Returns bookings joined with user info, event info, ticket counts, and payment details
+   */
+  async getPaymentsWithTickets(opts = {}) {
+    const { limit = 50, offset = 0, status = null, managerId = null, search = '' } = opts
+    let query = `
+      SELECT b.id, b.quantity, b.total_amount, b.status, b.booked_at,
+             u.id AS user_id, u.name AS user_name, u.email AS user_email, u.phone AS user_phone,
+             e.id AS event_id, e.name AS event_name,
+             COUNT(t.id)::int AS tickets_generated,
+             COUNT(t.check_in_at)::int AS tickets_checked_in,
+             p.transaction_id, p.gateway, p.status AS gateway_status, p.paid_at
+      FROM bookings b
+      JOIN users u ON u.id = b.user_id
+      JOIN events e ON e.id = b.event_id
+      LEFT JOIN tickets t ON t.booking_id = b.id
+      LEFT JOIN payments p ON p.booking_id = b.id
+    `
+    const params = []
+    const conditions = []
+    let p = 1
+
+    if (managerId) {
+      conditions.push(`e.manager_id = $${p++}`)
+      params.push(managerId)
+    }
+    if (status) {
+      conditions.push(`b.status = $${p++}`)
+      params.push(status)
+    }
+    if (search) {
+      conditions.push(`(LOWER(u.name) LIKE LOWER($${p}) OR LOWER(u.email) LIKE LOWER($${p + 1}) OR LOWER(e.name) LIKE LOWER($${p + 2}))`)
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`)
+      p += 3
+    }
+
+    if (conditions.length > 0) query += ` WHERE ${conditions.join(' AND ')}`
+    query += ` GROUP BY b.id, u.id, u.name, u.email, u.phone, e.id, e.name,
+               p.transaction_id, p.gateway, p.status, p.paid_at`
+    query += ` ORDER BY b.booked_at DESC LIMIT $${p++} OFFSET $${p++}`
+    params.push(limit, offset)
+
+    return dbAny(query, params)
+  },
+
+  /**
+   * Payment summary stats for KPI cards
+   */
+  async getPaymentStats(managerId = null) {
+    const scopeFilter = managerId
+      ? `AND b.event_id IN (SELECT id FROM events WHERE manager_id = $1)`
+      : ''
+    const params = managerId ? [managerId] : []
+
+    const row = await dbOneOrNone(`
+      SELECT
+        COUNT(*)::int AS total_payments,
+        COUNT(*) FILTER (WHERE b.status = 'confirmed')::int AS successful_payments,
+        COUNT(*) FILTER (WHERE b.status = 'pending')::int AS pending_payments,
+        COUNT(*) FILTER (WHERE b.status = 'cancelled')::int AS failed_payments,
+        COALESCE(SUM(b.total_amount) FILTER (WHERE b.status = 'confirmed'), 0)::numeric AS total_revenue,
+        COALESCE(AVG(b.total_amount) FILTER (WHERE b.status = 'confirmed'), 0)::numeric AS avg_order_value,
+        (SELECT COUNT(*)::int FROM tickets t JOIN bookings bk ON bk.id = t.booking_id WHERE bk.status = 'confirmed' ${managerId ? `AND bk.event_id IN (SELECT id FROM events WHERE manager_id = $1)` : ''}) AS total_tickets,
+        (SELECT COUNT(*)::int FROM tickets t JOIN bookings bk ON bk.id = t.booking_id WHERE t.check_in_at IS NOT NULL AND bk.status = 'confirmed' ${managerId ? `AND bk.event_id IN (SELECT id FROM events WHERE manager_id = $1)` : ''}) AS checked_in_tickets
+      FROM bookings b
+      WHERE 1=1 ${scopeFilter}
+    `, params)
+
+    return {
+      totalPayments: row?.total_payments || 0,
+      successfulPayments: row?.successful_payments || 0,
+      pendingPayments: row?.pending_payments || 0,
+      failedPayments: row?.failed_payments || 0,
+      totalRevenue: parseFloat(row?.total_revenue) || 0,
+      avgOrderValue: Math.round(parseFloat(row?.avg_order_value) || 0),
+      totalTickets: row?.total_tickets || 0,
+      checkedInTickets: row?.checked_in_tickets || 0
     }
   },
 

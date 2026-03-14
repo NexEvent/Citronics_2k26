@@ -47,7 +47,6 @@ const KPICard = ({
         alignItems: 'center',
         justifyContent: 'center',
         cursor: onClick ? 'pointer' : 'default',
-        mb: 6,
         transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         '&:hover': onClick
           ? { transform: 'translateY(-2px)', boxShadow: theme.shadows[6] }

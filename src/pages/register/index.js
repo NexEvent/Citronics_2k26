@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import axios from 'axios'
 import { signIn } from 'next-auth/react'
+import { RegisterSEO } from 'src/components/SEO'
 
 // MUI
 import Box from '@mui/material/Box'
@@ -169,6 +170,7 @@ const RegisterPage = () => {
         backgroundColor: c.bgDefault
       }}
     >
+      <RegisterSEO />
       <Card
         sx={{
           maxWidth: 520,

@@ -21,6 +21,18 @@ export default function MyDocument() {
         <link rel='icon' type='image/png' sizes='16x16' href='/images/icons/pwa/icon-16x16.png' />
         <meta name='msapplication-TileImage' content='/images/icons/pwa/icon-144x144.png' />
         <meta name='msapplication-TileColor' content='#7C3AED' />
+
+        {/* SEO — document-level signals (cannot be in per-page Head in Pages Router) */}
+        <meta name='author'      content='Citronics — CDGI, Indore' />
+        <meta name='publisher'   content='Chameli Devi Group of Institutions' />
+        <meta name='category'    content='Education, Events, Technology' />
+        <meta name='classification' content='College Event Management' />
+        <meta name='geo.region'  content='IN-MP' />
+        <meta name='geo.placename' content='Indore, Madhya Pradesh, India' />
+        <meta name='geo.position' content='22.7196;75.8577' />
+        <meta name='ICBM'        content='22.7196, 75.8577' />
+        <meta name='rating'      content='general' />
+        <meta name='revisit-after' content='7 days' />
       </Head>
       <body>
         <Main />

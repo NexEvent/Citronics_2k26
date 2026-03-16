@@ -10,6 +10,7 @@ import CustomChip from 'src/components/mui/Chip'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import { alpha } from '@mui/material/styles'
+import { PaymentStatusSEO } from 'src/components/SEO'
 import { useAppPalette } from 'src/components/palette'
 import Icon from 'src/components/Icon'
 import PublicNavbar from 'src/views/home/PublicNavbar'
@@ -409,6 +410,7 @@ const PaymentStatusPage = () => {
         pb: { xs: 'calc(64px + env(safe-area-inset-bottom, 0px))', md: 0 }
       }}
     >
+      <PaymentStatusSEO />
       <PublicNavbar />
       <Box sx={{ pt: { xs: 2, md: 12 }, pb: { xs: 4, md: 6 } }}>
         <PaymentStatusView />

@@ -20,14 +20,16 @@ import axios from 'axios'
 function fmtDate(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleDateString('en-IN', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    timeZone: 'Asia/Kolkata'
   })
 }
 
 function fmtTime(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('en-IN', {
-    hour: 'numeric', minute: '2-digit', hour12: true
+    hour: 'numeric', minute: '2-digit', hour12: true,
+    timeZone: 'Asia/Kolkata'
   })
 }
 

@@ -545,12 +545,18 @@ const adminService = {
              e.id AS event_id, e.name AS event_name,
              COUNT(t.id)::int AS tickets_generated,
              COUNT(t.check_in_at)::int AS tickets_checked_in,
-             p.transaction_id, p.gateway, p.status AS gateway_status, p.paid_at
+             pmt.transaction_id, pmt.juspay_order_id, pmt.gateway, pmt.status AS gateway_status, pmt.paid_at
       FROM bookings b
       JOIN users u ON u.id = b.user_id
       JOIN events e ON e.id = b.event_id
       LEFT JOIN tickets t ON t.booking_id = b.id
-      LEFT JOIN payments p ON p.booking_id = b.id
+      LEFT JOIN LATERAL (
+        SELECT transaction_id, juspay_order_id, gateway, status, paid_at
+        FROM payments
+        WHERE booking_id = b.id
+        ORDER BY CASE status WHEN 'success' THEN 0 WHEN 'pending' THEN 1 WHEN 'refunded' THEN 2 ELSE 3 END, created_at DESC
+        LIMIT 1
+      ) pmt ON TRUE
     `
     const params = []
     const conditions = []
@@ -578,7 +584,7 @@ const adminService = {
 
     if (conditions.length > 0) query += ` WHERE ${conditions.join(' AND ')}`
     query += ` GROUP BY b.id, u.id, u.name, u.email, u.phone, e.id, e.name,
-               p.transaction_id, p.gateway, p.status, p.paid_at`
+               pmt.transaction_id, pmt.juspay_order_id, pmt.gateway, pmt.status, pmt.paid_at`
     query += ` ORDER BY b.booked_at DESC LIMIT $${p++} OFFSET $${p++}`
     params.push(limit, offset)
 

@@ -192,6 +192,26 @@ const PaymentAnalysisView = () => {
       renderCell: ({ row }) => <CustomChip label={row.status} type='payment' />
     },
     {
+      field: 'juspay_order_id', headerName: 'Order ID', width: 200,
+      renderCell: ({ row }) => (
+        <Tooltip title={row.juspay_order_id || '—'} arrow>
+          <Typography variant='caption' color='text.secondary' noWrap sx={{ fontFamily: 'monospace' }}>
+            {row.juspay_order_id || '—'}
+          </Typography>
+        </Tooltip>
+      )
+    },
+    {
+      field: 'transaction_id', headerName: 'Transaction ID', width: 220,
+      renderCell: ({ row }) => (
+        <Tooltip title={row.transaction_id || '—'} arrow>
+          <Typography variant='caption' color='text.secondary' noWrap sx={{ fontFamily: 'monospace' }}>
+            {row.transaction_id || '—'}
+          </Typography>
+        </Tooltip>
+      )
+    },
+    {
       field: 'booked_at', headerName: 'Date', width: 170,
       renderCell: ({ row }) => <Typography variant='caption'>{fmtDate(row.booked_at)}</Typography>
     }

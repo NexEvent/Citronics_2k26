@@ -246,7 +246,7 @@ async function _drawTicketOnPage(doc, ticket) {
   const timeStr = ticket.startTime
     ? `${fmtTime(ticket.startTime)}${ticket.endTime ? ' - ' + fmtTime(ticket.endTime) : ''}`
     : 'TBA'
-  infoCell('Date', fmtDate(ticket.startTime), col1X, rowY, colW)
+  infoCell('Date', ticket.eventDate || fmtDate(ticket.startTime), col1X, rowY, colW)
   infoCell('Time', timeStr, col2X, rowY, colW)
   rowY += rowGap
   hRule(rowY)

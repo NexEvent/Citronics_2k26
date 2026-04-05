@@ -127,7 +127,7 @@ function _buildTicketEmailHTML(name, tickets, orderId) {
   const firstName = name.split(' ')[0]
 
   const ticketRows = tickets.map(t => {
-    const date = fmtDate(t.startTime)
+    const date = t.eventDate || fmtDate(t.startTime)
     const time = t.startTime ? fmtTime(t.startTime) : 'TBA'
     const price = t.priceAtBooking > 0 ? fmtCurrency(t.priceAtBooking) : 'Free'
 

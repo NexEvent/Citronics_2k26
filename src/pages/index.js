@@ -9,7 +9,6 @@ import HeroSection from 'src/views/home/HeroSection'
 import SponsorsSection from 'src/views/home/SponsorsSection'
 
 import FeaturedEvents from 'src/views/home/FeaturedEvents'
-import DJHighlightSection from 'src/views/home/DJHighlightSection'
 import PublicFooter from 'src/views/home/PublicFooter'
 import { fetchHomeData } from 'src/store/slices/eventsSlice'
 
@@ -53,7 +52,6 @@ const Home = () => {
       {/*<AboutSection />*/}
 
       <FeaturedEvents categoryEvents={categoryEvents} loading={homeLoading && !homeData} />
-      <DJHighlightSection />
       <SponsorsSection/>
       <PublicFooter />
     </Box>
